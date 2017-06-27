@@ -10,6 +10,7 @@ let crc_poly_ccitt : uint16 = Uint16.of_int 0x1021;;
 
 let crc_start_ccitt_1d0f : uint16 = Uint16.of_int 0x1d0f;;
 let crc_start_ccitt_ffff : uint16 = Uint16.of_int 0xFFFF;;
+let crc_start_xmodem     : uint16 = Uint16.of_int 0x0000;;
 
 (* Do NOT rely on precedence of the following operators
  * as they are likely to be incorrect
@@ -108,3 +109,12 @@ let crc_ccitt_generic ~(input:bytes) ~(start_val:uint16) : uint16 =
 let crc_ccitt_ffff ~(input:bytes) : uint16 =
   crc_ccitt_generic ~input ~start_val:crc_start_ccitt_ffff
 ;;
+
+let crc_ccitt_1d0f ~(input:bytes) : uint16 =
+  crc_ccitt_generic ~input ~start_val:crc_start_ccitt_1d0f
+;;
+
+let crc_xmodem ~(input:bytes) : uint16 =
+  crc_ccitt_generic ~input ~start_val:crc_start_xmodem
+;;
+
