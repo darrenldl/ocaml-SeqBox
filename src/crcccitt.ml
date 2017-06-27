@@ -88,6 +88,18 @@ let make_crcccitt_tab () : uint16 array =
 
 let crc_tabccitt = make_crcccitt_tab ();;
 
+let update_crc_ccitt ~(crc:uint16) ~(single_byte:uint8) : uint16 =
+  (crc << 8)
+  ^
+  crc_tabccitt.(
+    Uint16.to_int (
+      (crc >> 8)
+      ^
+      (Uint16.of_uint8 single_byte)
+    )
+  )
+;;
+
 let crc_ccitt_generic ~(input:bytes) ~(start_val:uint16) : uint16 =
   let (crc   : uint16 ref) = ref (Uint16.of_int 0) in
 

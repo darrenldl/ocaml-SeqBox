@@ -137,7 +137,17 @@ uint16_t update_crc_ccitt( uint16_t crc, unsigned char c ) {
 
 	if ( ! crc_tabccitt_init ) init_crcccitt_tab();
 
-	return (crc << 8) ^ crc_tabccitt[ ((crc >> 8) ^ (uint16_t) c) & 0x00FF ];
+	return (crc << 8)
+         ^
+         crc_tabccitt[
+           (
+            (crc >> 8)
+            ^
+            (uint16_t) c
+           )
+           &
+           0x00FF
+         ];
 
 }  /* update_crc_ccitt */
 
