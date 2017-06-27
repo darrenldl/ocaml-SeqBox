@@ -1,3 +1,4 @@
 *.swp
 src/_build/
 _build/
+src/*.byte
