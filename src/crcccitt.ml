@@ -101,9 +101,9 @@ let update_crc_ccitt ~(crc:uint16) ~(single_byte:uint8) : uint16 =
 ;;
 
 let crc_ccitt_generic ~(input:bytes) ~(start_val:uint16) : uint16 =
-  let (crc   : uint16 ref) = ref (Uint16.of_int 0) in
+  let (crc : uint16 ref) = ref (Uint16.of_int 0) in
 
-  crc   := start_val;
+  crc := start_val;
 
   for i = 0 to (Bytes.length input) - 1 do
     crc := (!crc << 8)
