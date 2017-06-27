@@ -6,7 +6,8 @@
  *)
 open Stdint
 
-let (crc_poly_ccitt:uint16) = Uint16.of_int 0x1021;;
+let crc_poly_ccitt : uint16 = Uint16.of_int 0x1021;;
+let crc_poly_ffff  : uint16 = Uint16.of_int 0xFFFF;;
 
 (* Do NOT rely on precedence of the following operators
  * as they are likely to be incorrect
@@ -101,3 +102,9 @@ let crc_ccitt_generic ~(input:bytes) ~(start_val:uint16) : uint16 =
   done;
   !crc
 ;;
+
+let crc_ccitt_ffff ~(input:bytes) : uint16 =
+  crc_ccitt_generic ~input ~start_val:crc_poly_ffff
+;;
+
+
