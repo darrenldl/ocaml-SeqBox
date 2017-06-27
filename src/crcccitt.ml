@@ -41,10 +41,6 @@ let (<<) : uint16 -> int -> uint16 =
 let (>>) : uint16 -> int -> uint16 =
   Uint16.shift_right;;
 
-(*let crc_ccitt_generic ~(input:bytes) ~(start_val:int) : bytes
-let (crc      : uint16 ref) := Uint16.of_int 0 in
-let (in_index : int)        := 0 in*)
-
 let make_crcccitt_tab () : uint16 array =
   let open Uint16 in
   let (i      : uint16 ref)   = ref (of_int 0) in
@@ -57,18 +53,22 @@ let make_crcccitt_tab () : uint16 array =
    * which is impossible to do in for loop
    *)
   while (!i < of_int 256) do
+
     crc := of_int 0;
     c   := !i << 8;
+
     (* j in original version is not used *)
     for _ = 0 to 7 do
+
       if ((!crc ^ !c) & (of_int 0x8000)) > (of_int 0) then
         crc := begin (!crc << 1) ^ crc_poly_ccitt end
       else
         crc := begin  !crc << 1                   end;
+
       c := !c << 1
     done;
 
-    Array.set table (to_int !i) !crc;
+    table.(to_int !i) <- !crc;
 
     (* Increment for i *)
     i := !i + (of_int 1);
@@ -77,3 +77,27 @@ let make_crcccitt_tab () : uint16 array =
 ;;
 
 let crc_tabccitt = make_crcccitt_tab ();;
+
+let crc_ccitt_generic ~(input:bytes) ~(start_val:uint16) : uint16 =
+  let open Uint16 in
+  let (crc   : uint16 ref) = ref (of_int 0) in
+
+  crc   := start_val;
+
+  for i = 0 to Bytes.length input do
+    crc := (!crc << 8)
+           ^
+           crc_tabccitt.(
+             to_int (
+               (
+                 (!crc >> 8)
+                 ^ 
+                 (of_bytes_big_endian input i)
+               )
+               &
+               (of_int 0x00FF)
+             )
+           )
+  done;
+  !crc
+;;

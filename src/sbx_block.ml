@@ -21,7 +21,7 @@ type common_header =
 
 type header =
   { com_head   : common_header
-  ; crc16ccitt : bytes option
+  ; crc16ccitt : uint16
   ; seq_num    : uint32
   }
 
