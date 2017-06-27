@@ -45,6 +45,12 @@ let (<<) : uint16 -> int -> uint16 =
 let (>>) : uint16 -> int -> uint16 =
   Uint16.shift_right;;
 
+(* Translated from init_crcccitt_tab
+ *
+ * Behaviour difference:
+ *  Generate the table then return it rather than
+ *  writing to a global table then set a ready flag
+ *)
 let make_crcccitt_tab () : uint16 array =
   let open Uint16 in
   let (i      : uint16 ref)   = ref (of_int 0) in
