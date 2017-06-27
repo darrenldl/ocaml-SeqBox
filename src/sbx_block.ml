@@ -1,5 +1,6 @@
 open Stdint
 
+(* Only version 1 is supported as of time of writing *)
 type version = [ `One ]
 
 type header = 
