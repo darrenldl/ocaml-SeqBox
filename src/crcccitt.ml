@@ -6,7 +6,7 @@
  *)
 open Stdint
 
-let crc_poly_ccitt : uint16 = Uint16.of_int 0x1021;;
+let crc_poly_ccitt       : uint16 = Uint16.of_int 0x1021;;
 
 let crc_start_ccitt_1d0f : uint16 = Uint16.of_int 0x1d0f;;
 let crc_start_ccitt_ffff : uint16 = Uint16.of_int 0xFFFF;;
