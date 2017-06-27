@@ -83,23 +83,23 @@ let make_crcccitt_tab () : uint16 array =
 let crc_tabccitt = make_crcccitt_tab ();;
 
 let crc_ccitt_generic ~(input:bytes) ~(start_val:uint16) : uint16 =
-  let open Uint16 in
-  let (crc   : uint16 ref) = ref (of_int 0) in
+  let (crc   : uint16 ref) = ref (Uint16.of_int 0) in
 
   crc   := start_val;
 
-  for i = 0 to Bytes.length input do
+  for i = 0 to (Bytes.length input) - 1 do
     crc := (!crc << 8)
            ^
            crc_tabccitt.(
-             to_int (
+             Uint16.to_int (
                (
                  (!crc >> 8)
                  ^ 
-                 (of_bytes_big_endian input i)
+                 let byte = (Int8.of_bytes_big_endian input i) in
+                 Uint16.of_int8 byte
                )
                &
-               (of_int 0x00FF)
+               (Uint16.of_int 0x00FF)
              )
            )
   done;
