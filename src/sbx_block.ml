@@ -1,4 +1,5 @@
 open Stdint
+open Crcccitt
 
 (* Only version 1 is supported as of time of writing *)
 type version = V1
@@ -11,18 +12,32 @@ end = struct
   let signature    = "SBx"
 end
 
-exception Length_mismatch of string;
+exception Length_mismatch of string
 
-type common_header =
-  { signature : bytes
-  ; version   : version
-  ; file_uid  : bytes
-  }
+module Header : sig
+  type common_header
+  type header
 
-type header =
-  { com_head   : common_header
-  ; crc16ccitt : uint16
-  ; seq_num    : uint32
+  val to_bytes_big_endian : header -> bytes
+end = struct
+  type common_header =
+    { signature  : bytes
+    ; version    : version
+    ; file_uid   : bytes
+    }
+
+  type header =
+    { com_head   : common_header
+    ; crc16ccitt : uint16 option
+    ; seq_num    : uint32 option
+    }
+end;;
+
+module Encode
+
+type encoded_block =
+  { header    : header
+  ; data      : bytes
   }
 
 type metadata_id = FNM | SNM | FSZ | FDT | SDT | HSH | PID
@@ -55,6 +70,14 @@ type t = metadata_block | data_block | last_data_block
 
 type res = (t, string) result
 
+let ver_to_int (ver:version) = function
+  | V1 -> 1
+;;
+
+let ver_to_uint16 (ver:version) =
+  Uint16.of_int (ver_to_int ~ver)
+;;
+
 let gen_file_uid ~(ver:version) : bytes =
   let uid_len   =
     match ver with
@@ -73,7 +96,7 @@ let gen_file_uid ~(ver:version) : bytes =
     end
 ;;
 
-let create_comm_header ~(ver:version) ?(uid:bytes option) : common_header result =
+let make_comm_header ~(ver:version) ?(uid:bytes option) : common_header result =
   let uid = match uid with
     | Some x ->
       let len =
@@ -89,8 +112,15 @@ let create_comm_header ~(ver:version) ?(uid:bytes option) : common_header result
   ; file_uid  = uid }
 ;;
 
-let create_metadata_header ~(com_head:common_header) ~(fields:metadata list) : header =
-  { com_head = com_head
-  ; 
+let make_metadata_header ~(ver:version) ~(com_head:common_header) ~(data:bytes) : header =
+  { com_head   = com_head
+  ; crc16ccitt = crc_ccitt_generic ~input:data ~start_val:(ver_to_uint16 ~ver)
+  ; seq_num    = 0
+  }
+;;
+
+let make_metadata_block ~(ver:version) ~(com_head:common_header) ~(fields:metadata list) : metadata_block =
+  let data = encode_metadata_list 
+  { header = make_metadata_header ~ver ~com_head
 
 let verify (block : t) (block = 
