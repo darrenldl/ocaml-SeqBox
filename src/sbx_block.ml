@@ -3,26 +3,48 @@ open Crcccitt
 open Sbx_version
 open Exception
 
-module Header : sig
-  type common_header
-  type header
-
-  val to_bytes_big_endian : header -> bytes
-end = struct
-  type common_header =
+module Header = struct
+  type common =
     { signature  : bytes
     ; version    : version
     ; file_uid   : bytes
     }
 
-  type header =
-    { com_head   : common_header
-    ; crc16ccitt : uint16 option
-    ; seq_num    : uint32 option
+  type individual =
+    { com_head   : common
+    ; seq_num    : uint32
     }
-end;;
 
-module Encode
+  let gen_file_uid ~(ver:version) : bytes =
+    let len = ver_to_file_uid_len ver in
+    Random_utils.gen_bytes ~len
+  ;;
+
+  let make_comm_header ?(uid:bytes option) (ver:version) : common result =
+    let uid = match uid with
+      | Some x ->
+        let len = ver_to_file_uid_len ver in
+        if Bytes.length x == len then
+          x
+        else
+          raise (Length_mismatch "length of provided UID does not match specification")
+      | None   -> gen_file_uid ~ver in
+    { signature = ver_to_signature ver
+    ; version   = ver
+    ; file_uid  = uid
+    }
+  ;;
+
+
+  let make_common ?(uid:bytes) (ver:version) : common =
+    let uid = match uid with
+      | None    -> gen_file_uid ~ver
+      | Some id -> id
+end
+
+module Block = struct
+  chunk_to_block
+
 
 type encoded_block =
   { header    : header
@@ -50,37 +72,6 @@ type data_block =
 type t = Meta of metadata_block | Data of data_block
 
 type res = (t, string) result
-
-let gen_file_uid ~(ver:version) : bytes =
-  let uid_len   = ver_to_file_uid_len ver in
-  let gen_bytes () : bytes =
-    Cstruct.to_string (
-      Nocrypto.Rng.generate ~g:!Nocrypto.Rng.generator uid_len
-    ) in
-  try
-    gen_bytes ()
-  with
-  | Uncommon.Boot.Unseeded_generator ->
-    begin
-      let () = Nocrypto_entropy_unix.initialize () |> ignore;;
-      gen_bytes ()
-    end
-;;
-
-let make_comm_header ~(ver:version) ?(uid:bytes option) : common_header result =
-  let uid = match uid with
-    | Some x ->
-      let len = ver_to_file_uid_len ver in
-      if Bytes.length x == len then
-        x
-      else
-        raise (Length_mismatch "length of provided UID does not match specification")
-    | None   -> gen_file_uid ~ver in
-  { signature = ver_to_signature ver
-  ; version   = ver
-  ; file_uid  = uid
-  }
-;;
 
 let make_metadata_header ~(ver:version) ~(com_head:common_header) : header =
   { com_head   = com_head
