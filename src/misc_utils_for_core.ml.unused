@@ -1,0 +1,8 @@
+open Core
+
+let string_to_bytes (input:string) : bytes =
+  let len                 = String.length input in
+  let new_bytes : Bytes.t = Bytes.create len in
+  String.blit ~src:input ~src_pos:0 ~dst:new_bytes ~dst_pos:0 ~len;
+  new_bytes
+;;
