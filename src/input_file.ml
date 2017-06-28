@@ -36,4 +36,4 @@ let test () : unit =
   Printf.printf "multihash : %s\n" (let (`Hex hex_str) = (Hex.of_string hash) in hex_str)
 ;;
 
-test ();;
+(* test ();; *)
