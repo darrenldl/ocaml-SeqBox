@@ -20,7 +20,7 @@ module Header = struct
     Random_utils.gen_bytes ~len
   ;;
 
-  let make_comm_header ?(uid:bytes option) (ver:version) : common result =
+  let make_common ?(uid:bytes option) (ver:version) : common result =
     let uid = match uid with
       | Some x ->
         let len = ver_to_file_uid_len ver in
@@ -36,10 +36,6 @@ module Header = struct
   ;;
 
 
-  let make_common ?(uid:bytes) (ver:version) : common =
-    let uid = match uid with
-      | None    -> gen_file_uid ~ver
-      | Some id -> id
 end
 
 module Block = struct
