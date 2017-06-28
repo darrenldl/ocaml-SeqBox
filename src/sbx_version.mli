@@ -16,5 +16,9 @@ val ver_to_uint16       : version -> uint16
 val ver_to_file_uid_len : version -> int
 
 val ver_to_signature    : version -> bytes
+
+val ver_to_block_size   : version -> int
+
+val ver_to_header_size  : version -> int
   
 val ver_to_data_size    : version -> int

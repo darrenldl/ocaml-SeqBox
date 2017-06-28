@@ -30,7 +30,19 @@ let ver_to_signature    (ver:version) : bytes =
   | `V1 -> Param_for_v1.signature
 ;;
 
+let ver_to_block_size   (ver:version) : int =
+  match ver with
+  | `V1 -> Param_for_v1.block_size
+;;
+
+let ver_to_header_size  (ver:version) : int =
+  match ver with
+  | `V1 -> Param_for_v1.header_size
+;;
+
 let ver_to_data_size    (ver:version) : int =
   match ver with
   | `V1 -> Param_for_v1.data_size
 ;;
+
+
