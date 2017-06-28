@@ -33,7 +33,7 @@ let file_hash_and_split ~(ver:version) ~(filename:string) : multihash_and_chunks
 
 let test () : unit =
   let (hash, chunks) = file_hash_and_split ~ver:`V1 ~filename:"dummy_file" in
-  Printf.printf "multihash : %s\n" (Hex.hexdump_s ~print_row_numbers:false ~print_chars:false (Hex.of_string hash))
+  Printf.printf "multihash : %s\n" (let (`Hex hex_str) = (Hex.of_string hash) in hex_str)
 ;;
 
 test ();;
