@@ -1,1 +1,1 @@
-PKG stdint hex nocrypto
+PKG core stdint hex nocrypto

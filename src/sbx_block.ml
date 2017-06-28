@@ -1,8 +1,7 @@
 open Stdint
 open Crcccitt
 open Sbx_version
-
-exception Length_mismatch of string
+open Exception
 
 module Header : sig
   type common_header
