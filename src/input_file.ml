@@ -7,7 +7,7 @@ type hash_state_and_chunks = SHA256.t * (string list)
 type multihash_and_chunks  = string * (string list)
 
 let file_hash_and_split ~(ver:version) ~(filename:string) : multihash_and_chunks =
-  let read_block_size : int    = 4 in
+  let read_block_size : int    = ver_to_data_size ver in
   let buf             : string = String.make read_block_size '\x00' in  (* Core.In_channel.input needs the buffer to be string instead of bytes as of time of writing - 2017-06-28 *)
   (* let buf             : bytes = Bytes.create read_block_size in *)
 
