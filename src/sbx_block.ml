@@ -59,25 +59,24 @@ module Metadata = struct
     | HSH of bytes
     | PID of bytes
 
-  type id = [
-      `FNM
-    | `SNM
-    | `FSZ
-    | `FDT
-    | `SDT
-    | `HSH
-    | `PID
-  ]
+  type id =
+      FNM
+    | SNM
+    | FSZ
+    | FDT
+    | SDT
+    | HSH
+    | PID
 
   let id_to_string (id:id) : string =
     match id with
-    | `FNM -> "FNM"
-    | `SNM -> "SNM"
-    | `FSZ -> "FSZ"
-    | `FDT -> "FDT"
-    | `SDT -> "SDT"
-    | `HSH -> "HSH"
-    | `PID -> "PID"
+    | FNM -> "FNM"
+    | SNM -> "SNM"
+    | FSZ -> "FSZ"
+    | FDT -> "FDT"
+    | SDT -> "SDT"
+    | HSH -> "HSH"
+    | PID -> "PID"
   ;;
 
   let length_distribution (lst:(id * bytes) list) : string =
@@ -100,13 +99,13 @@ module Metadata = struct
   let to_id_and_bytes (entry:t) : id * bytes =
     let res_bytes = to_bytes entry in
     match entry with
-    | FNM _ -> (`FNM, res_bytes)
-    | SNM _ -> (`SNM, res_bytes)
-    | FSZ _ -> (`FSZ, res_bytes)
-    | FDT _ -> (`FDT, res_bytes)
-    | SDT _ -> (`SDT, res_bytes)
-    | HSH _ -> (`HSH, res_bytes)
-    | PID _ -> (`PID, res_bytes)
+    | FNM _ -> (FNM, res_bytes)
+    | SNM _ -> (SNM, res_bytes)
+    | FSZ _ -> (FSZ, res_bytes)
+    | FDT _ -> (FDT, res_bytes)
+    | SDT _ -> (SDT, res_bytes)
+    | HSH _ -> (HSH, res_bytes)
+    | PID _ -> (PID, res_bytes)
   ;;
 
   let id_and_bytes_to_bytes (entry:id * bytes) : bytes =

@@ -23,16 +23,6 @@ module Metadata : sig
     | HSH of bytes
     | PID of bytes
 
-  type id = [
-      `FNM
-    | `SNM
-    | `FSZ
-    | `FDT
-    | `SDT
-    | `HSH
-    | `PID
-  ]
-
   val to_bytes      : t -> bytes
 
   val list_to_bytes : ver:version -> fields:(t list) -> (bytes, string) result
