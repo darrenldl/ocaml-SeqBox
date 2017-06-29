@@ -1,5 +1,8 @@
 # ocaml-SeqBox
-Port of SeqBox to OCaml
+Implementation of SeqBox in OCaml
+
+The original pharsing was "Port of SeqBox to OCaml", but since no direct porting was actually done due to differences between Python 3(implementation language of SeqBox) and OCaml, this is only an implementation(not a port) of SeqBox according to its technical specifications.
+This is mainly to address the different licenses being used(SeqBox uses AGPL 3.0 while this project uses 3-Clause BSD license).
 
 SeqBox - https://github.com/MarcoPon/SeqBox
 
