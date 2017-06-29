@@ -6,8 +6,17 @@ type block         = Block.t
 
 module Header : sig
   type t
+
   type common_fields
-  val to_bytes_big_endian : header -> bytes
+
+  val make_common_fields   : ?uid:(bytes option) -> ver:version -> common_fields result
+
+  val make_metadata_header : ver:version -> common:common_fields -> t
+
+  val make_data_header     : ver:version -> common:common_fields -> t
+end
+
+module Metadata : sig
 end
 
 module Block : sig
