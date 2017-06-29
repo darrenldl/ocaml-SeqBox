@@ -3,9 +3,11 @@ open Nocrypto.Hash
 open Sbx_version
 
 module Raw_file = struct
-  type hash_state_and_chunks = SHA256.t * (string list)
+  type chunks                = string list
 
-  type multihash_and_chunks  = string   * (string list)
+  type hash_state_and_chunks = SHA256.t * chunks
+
+  type multihash_and_chunks  = string   * chunks
 
   let file_hash_and_split ~(ver:version) ~(filename:string) : (multihash_and_chunks, string) result =
     let read_block_size : int    = ver_to_data_size ver in
@@ -39,10 +41,6 @@ module Raw_file = struct
     with
     | Sys_error msg -> Error msg
   ;;
-end
-
-module Sbx_file = struct
-  type chunks = string list
 
   let file_split ~(ver:version) ~(filename:string) : (chunks, string) result =
     let read_block_size : int    = ver_to_block_size ver in
@@ -69,6 +67,10 @@ module Sbx_file = struct
     with
     | Sys_error msg -> Error msg
   ;; 
+end
+
+module Sbx_file = struct
+
 end
 
 let test () : unit =

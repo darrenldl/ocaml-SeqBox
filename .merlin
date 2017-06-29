@@ -1,0 +1,4 @@
+PKG core stdint hex nocrypto angstrom
+S src
+B _build
+B src/_build
