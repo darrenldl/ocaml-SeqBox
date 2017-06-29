@@ -1,6 +1,11 @@
 open Stdint
 
 let getmtime ~(filename:string) : (float, string) result =
+  (* Unix.stat should also be usable on windows
+   * Reference :
+   *  https://caml.inria.fr/pub/docs/manual-ocaml/libunix.html (Accessed on 2017-06-29)
+   *    See table shown at bottom, Unix.stat is not in the table
+   *)
   try
     let { Unix.st_mtime = mtime; _ } = Unix.stat filename in
     Ok mtime
