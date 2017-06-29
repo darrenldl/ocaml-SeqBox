@@ -20,7 +20,7 @@ module Header = struct
     Random_utils.gen_bytes ~len
   ;;
 
-  let make_common_fields ?(uid:bytes option) ~(ver:version) : (common_fields, string) result =
+  let make_common_fields ?(uid:bytes option) (ver:version) : (common_fields, string) result =
     let uid:(bytes, string) result = match uid with
       | Some x ->
         let len = ver_to_file_uid_len ver in
@@ -173,3 +173,25 @@ type header_common = Header.common_fields
 type block         = Block.t
 
 type metadata      = Metadata.t
+
+let test_metadata_block () : unit =
+  let open Metadata in
+  let fields : t list = [ FNM (String.make 368 '0')
+                        ; SNM "filename.sbx"
+                        ; FSZ (Uint64.of_int 100)
+                        ; FDT (Uint64.of_int 100000)
+                        ; SDT (Uint64.of_int 100001)
+                        ; HSH "1220edeaaff3f1774ad2888673770c6d64097e391bc362d7d6fb34982ddf0efd18cb"
+                        ] in
+  let common = Header.make_common_fields `V1 in
+  match common with
+  | Ok v ->
+    let metadata_block = Block.make_metadata_block ~common:v ~fields in begin
+      match metadata_block with
+      | Ok _      -> print_endline "Okay"
+      | Error msg -> Printf.printf "Error : %s" msg
+    end
+  | Error msg -> Printf.printf "Error : %s" msg
+;;
+
+test_metadata_block ()
