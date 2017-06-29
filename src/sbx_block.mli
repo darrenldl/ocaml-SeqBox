@@ -7,10 +7,6 @@ module Header : sig
   type common_fields
 
   val make_common_fields   : ?uid:bytes -> ver:version -> (common_fields, string) result
-
-  val make_metadata_header : common:common_fields -> t
-
-  val make_data_header     : common:common_fields -> t
 end
 
 module Metadata : sig
