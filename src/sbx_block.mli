@@ -23,9 +23,9 @@ end
 module Block : sig
   type t
 
-  val make_metadata_block : common:Header.common_fields -> fields:(Metadata.t list) -> t
+  val make_metadata_block : common:Header.common_fields -> fields:(Metadata.t list) -> (t, string) result
 
-  val make_data_block     : common:Header.common_fields -> data:bytes -> t
+  val make_data_block     : common:Header.common_fields -> data:bytes -> (t, string) result
 end
 
 type header        = Header.t

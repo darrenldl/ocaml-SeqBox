@@ -137,18 +137,32 @@ module Block = struct
       Data of { header : Header.t
               ; data   : bytes }
     | Meta of { header : Header.t
-              ; data   : Metadata.t list }
+              ; fields : Metadata.t list
+              ; data   : bytes }
 
-  let make_metadata_block ~(common:Header.common_fields) ~(fields:Metadata.t list) : t =
-    Meta { header  = Header.make_metadata_header ~common
-         ; data    = fields
-         }
+  let make_metadata_block ~(common:Header.common_fields) ~(fields:Metadata.t list) : (t, string) result =
+    (* encode once to make sure the size is okay *)
+    let ver              = common.version in
+    let encoded_metadata = Metadata.list_to_bytes ~ver ~fields in
+    match encoded_metadata with
+    | Ok data   -> Ok (Meta { header  = Header.make_metadata_header ~common
+                            ; fields
+                            ; data })
+    | Error msg -> Error msg
   ;;
 
-  let make_data_block ~(common:Header.common_fields) ~(data:bytes) : t =
-    Data { header = Header.make_data_header ~common
-         ; data
-         }
+  let make_data_block ~(common:Header.common_fields) ~(data:bytes) : (t, string) result =
+    let ver           = common.version in
+    let max_data_size = ver_to_data_size ver in
+    let len           = Bytes.length data in
+    if      len < max_data_size then
+      Ok (Data { header = Header.make_data_header ~common
+               ; data   = Misc_utils.pad_bytes data max_data_size })
+    else if len = max_data_size then
+      Ok (Data { header = Header.make_data_header ~common
+               ; data })
+    else
+      Error "data is too long"
   ;;
 end
 
