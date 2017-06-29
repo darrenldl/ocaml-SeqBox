@@ -18,10 +18,6 @@ module Metadata : sig
     | SDT of uint64
     | HSH of bytes
     | PID of bytes
-
-  val to_bytes      : t -> bytes
-
-  val list_to_bytes : ver:version -> fields:(t list) -> (bytes, string) result
 end
 
 module Block : sig
