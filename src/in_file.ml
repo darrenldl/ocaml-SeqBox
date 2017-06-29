@@ -1,6 +1,7 @@
 open Core
 open Nocrypto.Hash
 open Sbx_version
+open Error
 
 module Raw_file = struct
   type chunks                = string list
@@ -30,16 +31,16 @@ module Raw_file = struct
       try
         Ok (acc_chunks_helper ~acc:((SHA256.init ()), []) ~file)
       with
-      | _ -> Error (Printf.sprintf "Failed to read file : %s" filename) in
+      | _ -> Error (Failed_to_read_file filename) in
 
     try
       match In_channel.with_file ~binary:true filename ~f:(fun file -> acc_chunks ~file) with
       | Ok (final_hash_state, all_chunks) ->
         let hash_bytes = Cstruct.to_string (SHA256.get final_hash_state) in
         Ok ((Multihash.raw_hash_to_multihash ~hash_type:`SHA256 ~raw:hash_bytes), all_chunks)
-      | Error msg -> Error msg
+      | Error v -> Error v
     with
-    | Sys_error msg -> Error msg
+    | Sys_error msg -> Error (Failed_to_read_file filename)
   ;;
 
   let file_split ~(ver:version) ~(filename:string) : (chunks, string) result =
@@ -60,12 +61,12 @@ module Raw_file = struct
       try
         Ok (acc_chunks_helper ~acc:[] ~file)
       with
-      | _ -> Error (Printf.sprintf "Failed to read file : %s" filename) in
+      | _ -> Error (Failed_to_read_file filename) in
 
     try
       In_channel.with_file ~binary:true filename ~f:(fun file -> acc_chunks ~file)
     with
-    | Sys_error msg -> Error msg
+    | Sys_error msg -> Error (Failed_to_read_file filename)
   ;; 
 end
 
@@ -78,7 +79,7 @@ let test () : unit =
   | Ok (hash, chunks) ->
     Printf.printf "multihash        : %s\n" (let (`Hex hex_str) = (Hex.of_string hash) in hex_str);
     Printf.printf "number of chunks : %d\n" (List.length chunks)
-  | Error msg ->
+  | Error v ->
     Printf.printf "Got and error    : %s\n" msg
 ;;
 
