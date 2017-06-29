@@ -189,9 +189,23 @@ let test_metadata_block () : unit =
     let metadata_block = Block.make_metadata_block ~common:v ~fields in begin
       match metadata_block with
       | Ok _      -> print_endline "Okay"
-      | Error msg -> Printf.printf "Error : %s" msg
+      | Error msg -> Printf.printf "Error : %s\n" msg
     end
-  | Error msg -> Printf.printf "Error : %s" msg
+  | Error msg -> Printf.printf "Error : %s\n" msg
 ;;
 
-test_metadata_block ()
+let test_data_block () : unit =
+  let data = (Bytes.make 496 '0') in
+  let common = Header.make_common_fields `V1 in
+  match common with
+  | Ok v ->
+    let data_block = Block.make_data_block ~common:v ~data in begin
+      match data_block with
+      | Ok _      -> print_endline "Okay"
+      | Error msg -> Printf.printf "Error : %s\n" msg
+    end
+  | Error msg -> Printf.printf "Error : %s\n" msg
+;;
+
+test_metadata_block ();
+test_data_block ()
