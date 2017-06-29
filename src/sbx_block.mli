@@ -1,8 +1,10 @@
 type header        = Header.t
 
-type header_common = Header.common
+type header_common = Header.common_fields
 
 type block         = Block.t
+
+type metadata      = Metadata.t
 
 module Header : sig
   type t
@@ -17,6 +19,16 @@ module Header : sig
 end
 
 module Metadata : sig
+  type t =
+      FNM of string
+    | SNM of string
+    | FSZ of uint64
+    | FDT of uint64
+    | SDT of uint64
+    | HSH of bytes
+    | PID of bytes
+
+  val to_bytes : entry:t -> bytes
 end
 
 module Block : sig

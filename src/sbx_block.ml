@@ -27,14 +27,15 @@ module Header = struct
     Random_utils.gen_bytes ~len
   ;;
 
-  let make_common_fields ?(uid:bytes option) ~(ver:version) : common_fields result =
+  let make_common_fields ?(uid:bytes option) ~(ver:version) : common_fields =
     let uid = match uid with
       | Some x ->
         let len = ver_to_file_uid_len ver in
         if Bytes.length x == len then
           x
         else
-          raise (Length_mismatch "length of provided UID does not match specification")
+          (* length of provided uid does not match specification *)
+          assert false
       | None   -> gen_file_uid ~ver in
     { signature = ver_to_signature ver
     ; version   = ver
@@ -56,15 +57,31 @@ module Header = struct
 end
 
 module Metadata = struct
-  type metadata_id = [ `FNM | `SNM | `FSZ | `FDT | `SDT | `HSH | `PID ]
-
-  type metadata =
+  type t =
       FNM of string
     | SNM of string
     | FSZ of uint64
     | FDT of uint64
+    | SDT of uint64
+    | HSH of bytes
+    | PID of bytes
 
-  let make_metadata 
+  (*let check_against_specs ~(entry:metadata) : (unit, string) result =
+    match entry with
+    | FNM str -> Ok ()
+    | SNM str -> Ok ()
+    | FSZ v   -> Ok ()
+    | FDT v   -> Ok ()
+    | SDT v   -> Ok ()
+    | HSH hsh -> let len = (Bytes.length hsh) in
+      if len == *)
+
+  let to_bytes (entry:t) : bytes =
+    match entry with
+    | FNM v | SNM v         -> Conv_utils.string_to_bytes v
+    | FSZ v | FDT v | SDT v -> Conv_utils.uint64_to_bytes v
+    | HSH v | PID v         -> Conv_utils.string_to_bytes v
+  ;;
 end
 
 module Block = struct
