@@ -11,7 +11,7 @@ module Param_for_v1 = struct
   let data_size    = block_size - header_size
 end
 
-let ver_to_int (ver:version)    : int =
+let ver_to_int          (ver:version) : int =
   match ver with
   | `V1 -> 1
 ;;

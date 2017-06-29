@@ -1,18 +1,25 @@
 open Stdint
 open Crcccitt
+open Angstrom
 open Sbx_version
 open Exception
 
+type header        = Header.t
+
+type header_common = Header.common
+
+type block         = Block.t
+
 module Header = struct
-  type common =
+  type common_fields =
     { signature  : bytes
     ; version    : version
     ; file_uid   : bytes
     }
 
-  type individual =
-    { com_head   : common
-    ; seq_num    : uint32
+  type t =
+    { common     : common_fields
+    ; seq_num    : uint32 option
     }
 
   let gen_file_uid ~(ver:version) : bytes =
@@ -20,7 +27,7 @@ module Header = struct
     Random_utils.gen_bytes ~len
   ;;
 
-  let make_common ?(uid:bytes option) (ver:version) : common result =
+  let make_common_fields ?(uid:bytes option) (ver:version) : common_fields result =
     let uid = match uid with
       | Some x ->
         let len = ver_to_file_uid_len ver in
@@ -35,49 +42,33 @@ module Header = struct
     }
   ;;
 
+  let of_bytes (raw:bytes) : individual
 
 end
 
 module Block = struct
-  chunk_to_block
+  type metadata_id = FNM | SNM | FSZ | FDT | SDT | HSH | PID
 
+  type metadata =
+    { id   : meta_id
+    ; len  : uint8
+    ; data : bytes
+    }
 
-type encoded_block =
-  { header    : header
-  ; data      : bytes
-  }
+  type block =
+      Data of { header : Header.t
+              ; data   : bytes }
+    | Meta of { header : Header.t
+              ; data   : metadata list }
 
-type metadata_id = FNM | SNM | FSZ | FDT | SDT | HSH | PID
+  type t = block
 
-type metadata =
-  { id   : meta_id
-  ; len  : uint8
-  ; data : bytes
-  }
+  let make_metadata_header ~(ver:version) ~(common:common_fields) : Header.t =
+    { common
+    ; seq_num = None
+    }
+  ;;
 
-type metadata_block =
-  { header : header
-  ; data   : metadata list
-  }
-
-type data_block =
-  { header : header
-  ; data   : bytes
-  }
-
-type t = Meta of metadata_block | Data of data_block
-
-type res = (t, string) result
-
-let make_metadata_header ~(ver:version) ~(com_head:common_header) : header =
-  { com_head   = com_head
-  ; crc16ccitt = None
-  ; seq_num    = None
-  }
-;;
-
-let make_metadata_block ~(ver:version) ~(com_head:common_header) ~(fields:metadata list) : block =
-  let data = encode_metadata_list in
-  { header = make_metadata_header ~ver ~com_head
-
-let verify (block : t) (block = 
+  let make_metadata_block ~(ver:version) ~(common:common_fields) ~(fields:metadata list) : t =
+    let data = encode_metadata_list in
+    { header = make_metadata_header ~ver ~com_head
