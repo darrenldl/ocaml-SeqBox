@@ -1,21 +1,16 @@
-type header        = Header.t
-
-type header_common = Header.common_fields
-
-type block         = Block.t
-
-type metadata      = Metadata.t
+open Sbx_version
+open Stdint
 
 module Header : sig
   type t
 
   type common_fields
 
-  val make_common_fields   : ?uid:(bytes option) -> ver:version -> common_fields result
+  val make_common_fields   : ?uid:bytes -> ver:version -> (common_fields, string) result
 
-  val make_metadata_header : ver:version -> common:common_fields -> t
+  val make_metadata_header : common:common_fields -> t
 
-  val make_data_header     : ver:version -> common:common_fields -> t
+  val make_data_header     : common:common_fields -> t
 end
 
 module Metadata : sig
@@ -28,22 +23,33 @@ module Metadata : sig
     | HSH of bytes
     | PID of bytes
 
-  val to_bytes : entry:t -> bytes
+  type id = [
+      `FNM
+    | `SNM
+    | `FSZ
+    | `FDT
+    | `SDT
+    | `HSH
+    | `PID
+  ]
+
+  val to_bytes      : t -> bytes
+
+  val list_to_bytes : ver:version -> fields:(t list) -> (bytes, string) result
 end
 
 module Block : sig
   type t
-  (* chunk_to_block : Header.common -> *)
+
+  val make_metadata_block : common:Header.common_fields -> fields:(Metadata.t list) -> t
+
+  val make_data_block     : common:Header.common_fields -> data:bytes -> t
 end
 
-type common_header = Header.common_header
+type header        = Header.t
 
-exception Length_mismatch of string;
+type header_common = Header.common_fields
 
-(* Only version 1 is supported as of time of writing *)
-type version = [ `One ]
+type block         = Block.t
 
-type block_type = [ `Meta | `Data | `Last_data ]
-
-type res = (t, string) result
-
+type metadata      = Metadata.t

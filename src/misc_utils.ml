@@ -1,3 +1,5 @@
+open Stdint
+
 let pad_bytes (old_bytes:bytes) (new_len:int) : bytes =
   let old_len = Bytes.length old_bytes in
   if old_len < new_len then

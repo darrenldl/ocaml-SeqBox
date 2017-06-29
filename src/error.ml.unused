@@ -1,0 +1,15 @@
+type error = [
+    `Bytes_too_long      of (Sbx_block.Metadata.id * int) list
+  | `Failed_to_read_file of string
+  | `Length_mismatch     of string
+]
+
+let error_to_string (err:error result) : string =
+  match err with
+  | Ok _    -> ""
+  | Error v ->
+    match v with
+    | Bytes_too_long      v -> bytes_too_long_to_string v
+    | Failed_to_read_file v -> Printf.sprintf "failed to read file : %s" v
+    | Length_mismatch     v -> Printf.sprintf "length mismatch, description : %s" v
+;;

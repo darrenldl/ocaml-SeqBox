@@ -6,7 +6,7 @@ let gen_bytes ~(len:int) : bytes =
   try
     gen_bytes_helper ()
   with
-  | Uncommon.Boot.Unseeded_generator ->
+  | Nocrypto.Rng.Unseeded_generator ->
     begin
       Nocrypto_entropy_unix.initialize ();
       gen_bytes_helper ()
