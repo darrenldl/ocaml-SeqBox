@@ -66,16 +66,6 @@ module Metadata = struct
     | HSH of bytes
     | PID of bytes
 
-  (*let check_against_specs ~(entry:metadata) : (unit, string) result =
-    match entry with
-    | FNM str -> Ok ()
-    | SNM str -> Ok ()
-    | FSZ v   -> Ok ()
-    | FDT v   -> Ok ()
-    | SDT v   -> Ok ()
-    | HSH hsh -> let len = (Bytes.length hsh) in
-      if len == *)
-
   let to_bytes (entry:t) : bytes =
     match entry with
     | FNM v | SNM v         -> Conv_utils.string_to_bytes v
