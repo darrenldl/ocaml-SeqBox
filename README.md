@@ -12,8 +12,7 @@ CRC-CCITT implementation is translated from libcrc (https://github.com/lammertb/
 See License section for details on licensing
 
 ## Technical Specification
-The following specification fully follows the official specs for version 1.
-Version 2, 3 are not implemented (see below).
+The following specification is copied directly from the official specification with slight modification(version 2, 3 are stated excplicitly as not implemented).
 
 Byte order: Big Endian
 ### Common blocks header:
