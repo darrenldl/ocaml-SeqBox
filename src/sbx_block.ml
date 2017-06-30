@@ -3,6 +3,10 @@ open Crcccitt
 open Angstrom
 open Sbx_version
 
+let pad_header_or_block_bytes (old_bytes:bytes) (new_len:int) : bytes =
+  Misc_utils.pad_bytes ~filler:(Uint8.of_int 0x1a) old_bytes new_len
+;;
+
 module Header = struct
   type common_fields =
     { signature  : bytes
@@ -46,6 +50,39 @@ module Header = struct
     { common
     ; seq_num = None
     }
+  ;;
+
+  let crc_ccitt_sbx ~(ver:version) ~(input:bytes) : bytes =
+    let res = crc_ccitt_generic ~input ~start_val:(ver_to_uint16 ver) in
+    Conv_utils.uint16_to_bytes res
+  ;;
+
+  let make_header_bytes ~(alt_seq_num:uint32 option) ~(header:t) ~(data:bytes) : (bytes, string) result =
+    let seq_num =
+      match (alt_seq_num, header.seq_num) with
+      | (Some s, Some _) -> Some s    (* prefer provided number over existing one *)
+      | (None,   Some s) -> Some s
+      | (Some s, None)   -> Some s
+      | (None,   None)   -> None   in
+    match seq_num with
+    | Some seq_num ->
+      let seq_num_bytes : bytes      = Conv_utils.uint32_to_bytes seq_num in
+      let things_to_crc : bytes list = [ header.common.file_uid
+                                       ; seq_num_bytes
+                                       ; data
+                                       ] in
+      let bytes_to_crc  : bytes      = Bytes.concat "" things_to_crc in
+      let crc_result    : bytes      = crc_ccitt_sbx ~ver:header.common.version ~input:bytes_to_crc in
+      let header_parts  : bytes list = [ header.common.signature
+                                       ; Conv_utils.uint16_to_bytes (ver_to_uint16 header.common.version)
+                                       ; crc_result
+                                       ; header.common.file_uid
+                                       ; seq_num_bytes
+                                       ] in
+      let header_bytes  : bytes      = Bytes.concat "" header_parts in
+      Ok header_bytes
+    | None ->
+      Error "sequence number of block is not set, and an alternative number is not provided"
   ;;
 end
 
@@ -124,7 +161,7 @@ module Metadata = struct
     let all_bytes     = Bytes.concat (Bytes.create 0) bytes_list in
     let all_bytes_len = Bytes.length all_bytes in
     if      all_bytes_len < max_data_size then
-      Ok (Misc_utils.pad_bytes all_bytes max_data_size)
+      Ok (pad_header_or_block_bytes all_bytes max_data_size)
     else if all_bytes_len = max_data_size then
       Ok all_bytes
     else
@@ -157,12 +194,22 @@ module Block = struct
     let len           = Bytes.length data in
     if      len < max_data_size then
       Ok (Data { header = Header.make_data_header ~common
-               ; data   = Misc_utils.pad_bytes data max_data_size })
+               ; data   = pad_header_or_block_bytes data max_data_size })
     else if len = max_data_size then
       Ok (Data { header = Header.make_data_header ~common
                ; data })
     else
       Error "data is too long"
+  ;;
+
+  let make_block_bytes ?(alt_seq_num:uint32 option) (block:t) : (bytes, string) result =
+    let (header, data) =
+      match block with
+      | Data { header; data } | Meta { header; data; _ } -> (header, data) in
+    let header_bytes = Header.make_header_bytes ~alt_seq_num ~header ~data in
+    match header_bytes with
+    | Ok bytes  -> Ok (Bytes.concat "" [bytes; data])
+    | Error msg -> Error msg
   ;;
 end
 
@@ -176,7 +223,7 @@ type metadata      = Metadata.t
 
 let test_metadata_block () : unit =
   let open Metadata in
-  let fields : t list = [ FNM (String.make 3680 '0')
+  let fields : t list = [ FNM "filename"
                         ; SNM "filename.sbx"
                         ; FSZ (Uint64.of_int 100)
                         ; FDT (Uint64.of_int 100000)
@@ -188,20 +235,30 @@ let test_metadata_block () : unit =
   | Ok v ->
     let metadata_block = Block.make_metadata_block ~common:v ~fields in begin
       match metadata_block with
-      | Ok _      -> print_endline "Okay"
+      | Ok v      ->
+        begin
+          match Block.make_block_bytes v with
+          | Ok v      -> Printf.printf "Okay :\n%s\n" (Conv_utils.bytes_to_hex_string v)
+          | Error msg -> Printf.printf "Error : %s\n" msg
+        end
       | Error msg -> Printf.printf "Error : %s\n" msg
     end
   | Error msg -> Printf.printf "Error : %s\n" msg
 ;;
 
 let test_data_block () : unit =
-  let data = (Bytes.make 496 '0') in
+  let data = (Bytes.make 496 '\x00') in
   let common = Header.make_common_fields `V1 in
   match common with
   | Ok v ->
     let data_block = Block.make_data_block ~common:v ~data in begin
       match data_block with
-      | Ok _      -> print_endline "Okay"
+      | Ok v      ->
+        begin
+          match (Block.make_block_bytes ~alt_seq_num:(Uint32.of_int 0) v) with
+          | Ok v      -> Printf.printf "Okay :\n%s\n" (Conv_utils.bytes_to_hex_string v)
+          | Error msg -> Printf.printf "Error : %s\n" msg
+        end
       | Error msg -> Printf.printf "Error : %s\n" msg
     end
   | Error msg -> Printf.printf "Error : %s\n" msg
