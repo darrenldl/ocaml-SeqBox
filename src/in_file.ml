@@ -1,7 +1,6 @@
 open Core
 open Nocrypto.Hash
 open Sbx_version
-open Error
 
 module Raw_file = struct
   type chunks                = string list

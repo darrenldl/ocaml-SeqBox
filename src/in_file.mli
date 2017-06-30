@@ -1,3 +1,9 @@
+(* All functions within In_file module put all data in memory
+ *  Pros
+ *    - good if you need in memory processing of all data
+ *  Cons
+ *    - bad if you need to process larger than memory files(will probably crash)
+ *)
 open Sbx_version
 
 module Raw_file : sig
@@ -13,4 +19,7 @@ end
 module Sbx_file : sig
 
   (* val file_to_blocks        : ver:version -> filename:string -> Block.t list *)
+end
+
+module Encode : sig
 end
