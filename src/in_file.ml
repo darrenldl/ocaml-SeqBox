@@ -10,6 +10,10 @@ module Raw_file = struct
 
   type multihash_and_chunks  = string   * chunks
 
+  let sprintf_failed_to_read_file ~(filename:string) : string =
+    Printf.sprintf "failed to read file : %s" filename
+  ;;
+
   let file_hash_and_split ~(ver:version) ~(filename:string) : (multihash_and_chunks, string) result =
     let read_block_size : int    = ver_to_data_size ver in
     let buf             : string = String.make read_block_size '\x00' in  (* Core.In_channel.input needs the buffer to be string instead of bytes as of time of writing - 2017-06-28 *)
@@ -31,7 +35,7 @@ module Raw_file = struct
       try
         Ok (acc_chunks_helper ~acc:((SHA256.init ()), []) ~file)
       with
-      | _ -> Error (Printf.sprintf "failed to read file : %s" filename) in
+      | _ -> Error (sprintf_failed_to_read_file ~filename) in
 
     try
       match In_channel.with_file ~binary:true filename ~f:(fun file -> acc_chunks ~file) with
@@ -40,7 +44,7 @@ module Raw_file = struct
         Ok ((Multihash.raw_hash_to_multihash ~hash_type:`SHA256 ~raw:hash_bytes), all_chunks)
       | Error v -> Error v
     with
-    | _ -> Error (Printf.sprintf "failed to read file : %s" filename)
+    | _ -> Error (sprintf_failed_to_read_file ~filename)
   ;;
 
   let file_split ~(ver:version) ~(filename:string) : (chunks, string) result =
@@ -61,17 +65,18 @@ module Raw_file = struct
       try
         Ok (acc_chunks_helper ~acc:[] ~file)
       with
-      | _ -> Error (Printf.sprintf "failed to read file : %s" filename) in
+      | _ -> Error (sprintf_failed_to_read_file ~filename) in
 
     try
       In_channel.with_file ~binary:true filename ~f:(fun file -> acc_chunks ~file)
     with
-    | _ -> Error (Printf.sprintf "failed to read file : %s" filename)
+    | _ -> Error (sprintf_failed_to_read_file ~filename)
   ;; 
 end
 
 module Sbx_file = struct
 
+  let parse_sbx_file ~(filename:string) : (Sbx_block.Block.t list, string) result =
 end
 
 let test () : unit =
