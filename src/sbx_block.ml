@@ -82,11 +82,11 @@ module Metadata = struct
   let length_distribution (lst:(id * bytes) list) : string =
     let rec length_distribution_helper (lst:(id * bytes) list) (acc:string list) : string =
       match lst with
-      | []              -> (String.concat "" (List.rev acc))
-      | (id, data) :: vs -> let str = Printf.sprintf "id : %s, len : %d\n" (id_to_string id) (Bytes.length data) in
+      | []              -> (String.concat "\n" (List.rev acc))
+      | (id, data) :: vs -> let str = Printf.sprintf "id : %s, len : %d" (id_to_string id) (Bytes.length data) in
         length_distribution_helper vs (str :: acc) in
     let distribution_str = length_distribution_helper lst [] in
-    String.concat "" ["the length distribution of the metadata:\n"; distribution_str]
+    String.concat "\n" ["the length distribution of the metadata:"; distribution_str]
   ;;
 
   let to_bytes (entry:t) : bytes =
@@ -128,7 +128,7 @@ module Metadata = struct
     else if all_bytes_len = max_data_size then
       Ok all_bytes
     else
-      Error (Printf.sprintf "metadata is too long when converted to bytes:\n%s" (length_distribution id_bytes_list))
+      Error (Printf.sprintf "metadata is too long when converted to bytes\n%s" (length_distribution id_bytes_list))
   ;;
 end
 
@@ -176,7 +176,7 @@ type metadata      = Metadata.t
 
 let test_metadata_block () : unit =
   let open Metadata in
-  let fields : t list = [ FNM (String.make 368 '0')
+  let fields : t list = [ FNM (String.make 3680 '0')
                         ; SNM "filename.sbx"
                         ; FSZ (Uint64.of_int 100)
                         ; FDT (Uint64.of_int 100000)
