@@ -19,3 +19,22 @@ module Stream = struct
     | _ -> Error (sprintf_failed_to_rw ~in_filename ~out_filename)
   ;;
 end
+
+let test_copy () : unit =
+  let copy_processor (in_file:In_channel.t) (out_file:Out_channel.t) : (unit, string) result =
+    let read_block_size : int = 100 in
+    let buf                   = String.make read_block_size '\x00' in
+    let rec copy_processor_helper () =
+      let read_count = In_channel.input in_file ~buf ~pos:0 ~len:read_block_size in
+      Out_channel.output out_file ~buf ~pos:0 ~len:read_count;
+      if read_count < read_block_size then
+        Ok ()
+      else
+        copy_processor_helper () in
+    copy_processor_helper () in
+  match Stream.process_in_out ~in_filename:"dummy_file" ~out_filename:"dummy_file_copy" ~processor:copy_processor with
+  | Ok _      -> Printf.printf "Okay\n"
+  | Error msg -> Printf.printf "Error : %s\n" msg
+;;
+
+test_copy ()
