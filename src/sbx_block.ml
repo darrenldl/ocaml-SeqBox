@@ -238,7 +238,7 @@ let test_metadata_block () : unit =
       | Ok v      ->
         begin
           match Block.make_block_bytes v with
-          | Ok v      -> Printf.printf "Okay :\n%s\n" (Conv_utils.bytes_to_hex_string v)
+          | Ok v      -> Printf.printf "Okay :\n%s\n" (Hex.hexdump_s (Hex.of_string v))
           | Error msg -> Printf.printf "Error : %s\n" msg
         end
       | Error msg -> Printf.printf "Error : %s\n" msg
@@ -256,7 +256,7 @@ let test_data_block () : unit =
       | Ok v      ->
         begin
           match (Block.make_block_bytes ~alt_seq_num:(Uint32.of_int 0) v) with
-          | Ok v      -> Printf.printf "Okay :\n%s\n" (Conv_utils.bytes_to_hex_string v)
+          | Ok v      -> Printf.printf "Okay :\n%s\n" (Hex.hexdump_s (Hex.of_string v))
           | Error msg -> Printf.printf "Error : %s\n" msg
         end
       | Error msg -> Printf.printf "Error : %s\n" msg
