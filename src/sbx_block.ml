@@ -93,7 +93,7 @@ module Metadata = struct
     match entry with
     | FNM v | SNM v         -> Conv_utils.string_to_bytes v
     | FSZ v | FDT v | SDT v -> Conv_utils.uint64_to_bytes v
-    | HSH v | PID v         -> Conv_utils.string_to_bytes v
+    | HSH v | PID v         ->                            v
   ;;
 
   let to_id_and_bytes (entry:t) : id * bytes =
