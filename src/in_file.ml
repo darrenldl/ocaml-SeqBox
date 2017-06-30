@@ -31,7 +31,7 @@ module Raw_file = struct
       try
         Ok (acc_chunks_helper ~acc:((SHA256.init ()), []) ~file)
       with
-      | _ -> Error (Failed_to_read_file filename) in
+      | _ -> Error (Printf.sprintf "failed to read file : %s" filename) in
 
     try
       match In_channel.with_file ~binary:true filename ~f:(fun file -> acc_chunks ~file) with
@@ -40,7 +40,7 @@ module Raw_file = struct
         Ok ((Multihash.raw_hash_to_multihash ~hash_type:`SHA256 ~raw:hash_bytes), all_chunks)
       | Error v -> Error v
     with
-    | Sys_error msg -> Error (Failed_to_read_file filename)
+    | _ -> Error (Printf.sprintf "failed to read file : %s" filename)
   ;;
 
   let file_split ~(ver:version) ~(filename:string) : (chunks, string) result =
@@ -61,12 +61,12 @@ module Raw_file = struct
       try
         Ok (acc_chunks_helper ~acc:[] ~file)
       with
-      | _ -> Error (Failed_to_read_file filename) in
+      | _ -> Error (Printf.sprintf "failed to read file : %s" filename) in
 
     try
       In_channel.with_file ~binary:true filename ~f:(fun file -> acc_chunks ~file)
     with
-    | Sys_error msg -> Error (Failed_to_read_file filename)
+    | _ -> Error (Printf.sprintf "failed to read file : %s" filename)
   ;; 
 end
 
@@ -79,7 +79,7 @@ let test () : unit =
   | Ok (hash, chunks) ->
     Printf.printf "multihash        : %s\n" (let (`Hex hex_str) = (Hex.of_string hash) in hex_str);
     Printf.printf "number of chunks : %d\n" (List.length chunks)
-  | Error v ->
+  | Error msg ->
     Printf.printf "Got and error    : %s\n" msg
 ;;
 
