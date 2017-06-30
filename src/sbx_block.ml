@@ -149,8 +149,7 @@ module Metadata = struct
     let (id, data) = entry in
     let id_str     = id_to_string id in
     let len        = Uint8.of_int (Bytes.length data) in
-    let len_bytes  = (Bytes.create 1) in
-    Uint8.to_bytes_big_endian len len_bytes 0;
+    let len_bytes  = Conv_utils.uint8_to_bytes len in
     Bytes.concat (Bytes.create 0) [id_str; len_bytes; data]
   ;;
 
