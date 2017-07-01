@@ -55,8 +55,8 @@ let test_copy () : unit =
     let read_block_size : int = 100 in
     let buf                   = String.make read_block_size '\x00' in
     let rec copy_processor_helper () =
-      let (no_more_bytes, _) = Helper.read_chunk_into_buf in_file ~buf in
-      Helper.write_from_buf out_file ~buf;
+      let (no_more_bytes, read_count) = Helper.read_chunk_into_buf in_file ~buf in
+      Helper.write_from_buf out_file ~buf ~len:read_count;
       if no_more_bytes then
         Ok ()
       else
