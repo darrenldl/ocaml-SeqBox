@@ -19,6 +19,8 @@ module Stream : sig
 end
 
 module Helper : sig
+  val make_buffer         : int               -> bytes
+
   val read_chunk_into_buf : ?offset:int       -> ?len:int -> Core.In_channel.t  -> buf:bytes -> bool * int
 
   val read_chunk          : Core.In_channel.t -> len:int  -> bool * bytes

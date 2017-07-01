@@ -53,6 +53,10 @@ module Stream = struct
 end
 
 module Helper = struct
+  let make_buffer (size:int) : bytes =
+    Bytes.make size '\x00'
+  ;;
+
   let read_chunk_into_buf ?(offset:int = 0) ?(len:int option) (in_file:Core.In_channel.t) ~(buf:bytes) : bool * int =
     let len : int =
       match len with
