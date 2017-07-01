@@ -1,8 +1,20 @@
 module Stream : sig
-  type 'a in_out_processor = Core.In_channel.t -> Core.Out_channel.t -> ('a, string) result
+  type 'a in_out_processor = Core.In_channel.t  -> Core.Out_channel.t -> ('a, string) result
+
+  type 'a in_processor     = Core.In_channel.t  -> ('a, string) result
+
+  type 'a out_processor    = Core.Out_channel.t -> ('a, string) result
 
   val process_in_out :
     in_filename:string -> out_filename:string -> processor:('a in_out_processor)
+    -> ('a, string) result
+
+  val process_in  :
+    in_filename:string  -> processor:('a in_processor)
+    -> ('a, string) result
+
+  val process_out :
+    out_filename:string -> processor:('a out_processor)
     -> ('a, string) result
 end
 

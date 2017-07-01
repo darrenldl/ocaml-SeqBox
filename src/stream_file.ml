@@ -1,14 +1,26 @@
 open Nocrypto.Hash
 open Sbx_version
 
-let sprintf_failed_to_rw ~(in_filename:string) ~(out_filename:string) : string =
+let sprintf_failed_to_rw    ~(in_filename:string) ~(out_filename:string) : string =
   Printf.sprintf "failed to read %s and/or failed to write %s" in_filename out_filename
+;;
+
+let sprintf_failed_to_read  ~(in_filename:string)  : string =
+  Printf.sprintf "failed to read %s " in_filename
+;;
+
+let sprintf_failed_to_write ~(out_filename:string) : string =
+  Printf.sprintf "failed to failed to write %s" out_filename
 ;;
 
 module Stream = struct
   open Core
 
   type 'a in_out_processor = Core.In_channel.t -> Core.Out_channel.t -> ('a, string) result
+
+  type 'a in_processor     = Core.In_channel.t  -> ('a, string) result
+
+  type 'a out_processor    = Core.Out_channel.t -> ('a, string) result
 
   let process_in_out ~(in_filename:string) ~(out_filename:string) ~(processor:('a in_out_processor)) : ('a, string) result =
     try
@@ -22,6 +34,24 @@ module Stream = struct
             Core.In_channel.close in_file)
     with
     | _ -> Error (sprintf_failed_to_rw ~in_filename ~out_filename)
+  ;;
+
+  let process_in ~(in_filename:string) ~(processor:('a in_processor))   : ('a, string) result =
+    try
+      let in_file = Core.In_channel.create ~binary:true in_filename in
+      protect ~f:(fun () -> processor in_file)
+        ~finally:(fun () -> Core.In_channel.close in_file)
+    with
+    | _ -> Error (sprintf_failed_to_read ~in_filename)
+  ;;
+
+  let process_out ~(out_filename:string) ~(processor:('a out_processor)) : ('a, string) result =
+    try
+      let out_file = Core.Out_channel.create ~binary:true out_filename in
+      protect ~f:(fun () -> processor out_file)
+        ~finally:(fun () -> Core.Out_channel.close out_file)
+    with
+    | _ -> Error (sprintf_failed_to_write ~out_filename)
   ;;
 end
 
