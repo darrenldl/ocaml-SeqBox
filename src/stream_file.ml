@@ -6,11 +6,11 @@ let sprintf_failed_to_rw    ~(in_filename:string) ~(out_filename:string) : strin
 ;;
 
 let sprintf_failed_to_read  ~(in_filename:string)  : string =
-  Printf.sprintf "failed to read %s " in_filename
+  Printf.sprintf "failed to read %s"  in_filename
 ;;
 
 let sprintf_failed_to_write ~(out_filename:string) : string =
-  Printf.sprintf "failed to failed to write %s" out_filename
+  Printf.sprintf "failed to write %s" out_filename
 ;;
 
 module Stream = struct
