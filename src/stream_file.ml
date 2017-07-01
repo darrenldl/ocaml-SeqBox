@@ -8,7 +8,9 @@ let sprintf_failed_to_rw ~(in_filename:string) ~(out_filename:string) : string =
 module Stream = struct
   open Core
 
-  let process_in_out ~(in_filename:string) ~(out_filename:string) ~(processor:(Core.In_channel.t -> Core.Out_channel.t -> ('a, string) result)) : ('a, string) result =
+  type 'a in_out_processor = Core.In_channel.t -> Core.Out_channel.t -> ('a, string) result
+
+  let process_in_out ~(in_filename:string) ~(out_filename:string) ~(processor:('a in_out_processor)) : ('a, string) result =
     try
       let in_file  = Core.In_channel.create  ~binary:true in_filename  in
       protect ~f:(fun () ->
