@@ -1,6 +1,3 @@
-open Nocrypto.Hash
-open Sbx_version
-
 let sprintf_failed_to_rw    ~(in_filename:string) ~(out_filename:string) : string =
   Printf.sprintf "failed to read %s and/or failed to write %s" in_filename out_filename
 ;;
