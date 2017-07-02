@@ -18,12 +18,30 @@ module Stream : sig
     -> ('a, string) result
 end
 
-module Helper : sig
-  val make_buffer         : int               -> bytes
+(* General helpers *)
+module General_helper : sig
+  val make_buffer : int -> bytes
+end
 
-  val read_chunk_into_buf : ?offset:int       -> ?len:int -> Core.In_channel.t  -> buf:bytes -> bool * int
+(* Helpers for reading into buffer *)
+module Read_into_buf : sig
+  type read_result = { no_more_bytes : bool
+                     ; read_count    : int
+                     }
 
-  val read_chunk          : Core.In_channel.t -> len:int  -> bool * bytes
+  val read : ?offset:int -> ?len:int -> Core.In_channel.t -> buf:bytes -> read_result
+end
 
-  val write_from_buf      : ?offset:int       -> ?len:int -> Core.Out_channel.t -> buf:bytes -> unit
+(* Helpers for reading and returning data as value *)
+module Read_chunk : sig
+  type read_result = { no_more_bytes : bool
+                     ; chunk         : bytes
+                     }
+
+  val read : Core.In_channel.t -> len:int -> read_result
+end
+
+(* Helpers for writing from buffer *)
+module Write : sig
+  val write_from_buf : ?offset:int -> ?len:int -> Core.Out_channel.t -> buf:bytes -> unit
 end

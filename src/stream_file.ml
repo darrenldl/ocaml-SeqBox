@@ -52,27 +52,41 @@ module Stream = struct
   ;;
 end
 
-module Helper = struct
+module General_helper = struct
   let make_buffer (size:int) : bytes =
     Bytes.make size '\x00'
   ;;
+end
 
-  let read_chunk_into_buf ?(offset:int = 0) ?(len:int option) (in_file:Core.In_channel.t) ~(buf:bytes) : bool * int =
+module Read_into_buf = struct
+  type read_result = { no_more_bytes : bool
+                     ; read_count    : int
+                     }
+
+  let read ?(offset:int = 0) ?(len:int option) (in_file:Core.In_channel.t) ~(buf:bytes) : read_result =
     let len : int =
       match len with
       | Some x -> x
       | None   -> (Bytes.length buf) - offset in
     let read_count    : int  = Core.In_channel.input in_file ~buf ~pos:offset ~len in
     let no_more_bytes : bool = read_count < len in
-    (no_more_bytes, read_count)
+    {no_more_bytes; read_count}
   ;;
+end
 
-  let read_chunk (in_file:Core.In_channel.t) ~(len:int) : bool * bytes =
-    let buf = Bytes.make len '\x00' in
-    let (no_more_bytes, _) = read_chunk_into_buf in_file ~buf in
-    (no_more_bytes, buf)
+module Read_chunk = struct
+  type read_result = { no_more_bytes : bool
+                     ; chunk         : bytes
+                     }
+
+  let read (in_file:Core.In_channel.t) ~(len:int) : read_result =
+    let buf = General_helper.make_buffer len in
+    let {no_more_bytes; _} : Read_into_buf.read_result = Read_into_buf.read in_file ~buf in
+    {no_more_bytes; chunk = buf}
   ;;
+end
 
+module Write = struct
   let write_from_buf ?(offset:int = 0) ?(len:int option) (out_file:Core.Out_channel.t) ~(buf:bytes) : unit =
     let len : int =
       match len with
@@ -86,10 +100,12 @@ let test_copy () : unit =
   let open Core in
   let copy_processor (in_file:In_channel.t) (out_file:Out_channel.t) : (unit, string) result =
     let read_block_size : int = 100 in
-    let buf                   = String.make read_block_size '\x00' in
+    let buf                   = General_helper.make_buffer read_block_size in
     let rec copy_processor_helper () =
-      let (no_more_bytes, read_count) = Helper.read_chunk_into_buf in_file ~buf in
-      Helper.write_from_buf out_file ~buf ~len:read_count;
+      let open Read_into_buf in
+      let open Write in
+      let {no_more_bytes; read_count} = read in_file ~buf in
+      write_from_buf out_file ~buf ~len:read_count;
       if no_more_bytes then
         Ok ()
       else
