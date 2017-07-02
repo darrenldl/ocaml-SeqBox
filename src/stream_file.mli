@@ -43,5 +43,5 @@ end
 
 (* Helpers for writing from buffer *)
 module Write : sig
-  val write_from_buf : ?offset:int -> ?len:int -> Core.Out_channel.t -> buf:bytes -> unit
+  val write_from_buf : ?offset:int -> ?len:int -> Core.Out_channel.t -> buf:bytes -> (unit, string) result
 end

@@ -87,12 +87,15 @@ module Read_chunk = struct
 end
 
 module Write = struct
-  let write_from_buf ?(offset:int = 0) ?(len:int option) (out_file:Core.Out_channel.t) ~(buf:bytes) : unit =
+  let write_from_buf ?(offset:int = 0) ?(len:int option) (out_file:Core.Out_channel.t) ~(buf:bytes) : (unit, string) result =
     let len : int =
       match len with
       | Some x -> x
       | None   -> (Bytes.length buf) - offset in
-    Core.Out_channel.output out_file ~buf ~pos:offset ~len
+    if len <= 0 then
+      Error "offset is larger or equal to length of buffer"
+    else
+      Ok (Core.Out_channel.output out_file ~buf ~pos:offset ~len)
   ;;
 end
 
@@ -105,11 +108,13 @@ let test_copy () : unit =
       let open Read_into_buf in
       let open Write in
       let {no_more_bytes; read_count} = read in_file ~buf in
-      write_from_buf out_file ~buf ~len:read_count;
-      if no_more_bytes then
-        Ok ()
-      else
-        copy_processor_helper () in
+      match write_from_buf out_file ~buf ~len:read_count with
+      | Error _ -> assert false
+      | Ok ()   ->
+        if no_more_bytes then
+          Ok ()
+        else
+          copy_processor_helper () in
     copy_processor_helper () in
   match Stream.process_in_out ~in_filename:"dummy_file" ~out_filename:"dummy_file_copy" ~processor:copy_processor with
   | Ok _      -> Printf.printf "Okay\n"
