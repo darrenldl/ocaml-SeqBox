@@ -26,3 +26,11 @@ let get_bytes (chunk:bytes) ~(pos:int) ~(len:int) : bytes =
   else
     Bytes.sub chunk pos len
 ;;
+
+let get_bytes_inc_range (chunk:bytes) ~(start_at:int) ~(end_at:int) : bytes =
+  get_bytes chunk ~pos:start_at ~len:(end_at     - start_at + 1)
+;;
+
+let get_bytes_exc_range (chunk:bytes) ~(start_at:int) ~(end_before:int) : bytes =
+  get_bytes chunk ~pos:start_at ~len:(end_before - start_at)
+;;
