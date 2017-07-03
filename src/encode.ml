@@ -57,7 +57,7 @@ module Processor = struct
     | Some metadata_list ->
       (fun in_file out_file ->
          (* write a dummy metadata block first *)
-         let dummy_block_bytes = General_helper.make_buffer len in
+         let dummy_block_bytes = General_helper.make_buffer (ver_to_block_size ver) in
          write out_file ~chunk:dummy_block_bytes;
          (* write data blocks *)
          let ({blocks_written}, hash) = data_to_block_proc_w_hash in_file out_file ~len ~common in
@@ -86,5 +86,9 @@ let test_encode () =
                       ; SDT (Uint64.of_int 1000001)
                       ] in
   let encoder = Processor.make_in_out_encoder ~common ~metadata in
-  encoder
+  match Stream.process_in_out ~in_filename:"dummy_file" ~out_filename:"dummy_file_encoded" ~processor:encoder with
+  | Ok _      -> Printf.printf "Okay\n"
+  | Error msg -> Printf.printf "Error : %s\n" msg
 ;;
+
+test_encode ()
