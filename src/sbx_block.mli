@@ -2,14 +2,19 @@ open Sbx_version
 open Stdint
 
 module Header : sig
+  exception Invalid_uid_length
+  exception Missing_alt_seq_num
+
   type t
 
   type common_fields
 
-  val make_common_fields   : ?uid:bytes -> version -> (common_fields, string) result
+  val make_common_fields   : ?uid:bytes -> version -> common_fields
 end
 
 module Metadata : sig
+  exception Too_much_data of string
+
   type t =
       FNM of string
     | SNM of string
@@ -23,9 +28,9 @@ end
 module Block : sig
   type t
 
-  val make_metadata_block : common:Header.common_fields -> fields:(Metadata.t list) -> (t, string) result
+  val make_metadata_block : common:Header.common_fields -> fields:(Metadata.t list) -> t
 
-  val make_data_block     : common:Header.common_fields -> data:bytes -> (t, string) result
+  val make_data_block     : common:Header.common_fields -> data:bytes -> t
 end
 
 type header        = Header.t

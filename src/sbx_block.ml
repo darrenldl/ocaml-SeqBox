@@ -8,6 +8,9 @@ let pad_header_or_block_bytes (old_bytes:bytes) (new_len:int) : bytes =
 ;;
 
 module Header = struct
+  exception Invalid_uid_length
+  exception Missing_alt_seq_num
+
   type common_fields =
     { signature  : bytes
     ; version    : version
@@ -24,20 +27,18 @@ module Header = struct
     Random_utils.gen_bytes ~len
   ;;
 
-  let make_common_fields ?(uid:bytes option) (ver:version) : (common_fields, string) result =
-    let uid:(bytes, string) result = match uid with
+  let make_common_fields ?(uid:bytes option) (ver:version) : common_fields =
+    let uid : bytes = match uid with
       | Some x ->
         let len = ver_to_file_uid_len ver in
         if Bytes.length x == len then
-          Ok x
+          x
         else
-          Error "length of provided uid does not match specification"
-      | None   -> Ok (gen_file_uid ~ver) in
-    match uid with
-    | Ok uid    -> Ok { signature = ver_to_signature ver
-                      ; version   = ver
-                      ; file_uid  = uid }
-    | Error msg -> Error msg
+          raise Invalid_uid_length
+      | None   -> gen_file_uid ~ver in
+    { signature = ver_to_signature ver
+    ; version   = ver
+    ; file_uid  = uid }
   ;;
 
   let make_metadata_header ~(common:common_fields) : t =
@@ -57,7 +58,7 @@ module Header = struct
     Conv_utils.uint16_to_bytes res
   ;;
 
-  let make_header_bytes ~(alt_seq_num:uint32 option) ~(header:t) ~(data:bytes) : (bytes, string) result =
+  let make_header_bytes ~(alt_seq_num:uint32 option) ~(header:t) ~(data:bytes) : bytes =
     let seq_num =
       match (alt_seq_num, header.seq_num) with
       | (Some s, Some _) -> Some s    (* prefer provided number over existing one *)
@@ -79,14 +80,15 @@ module Header = struct
                                        ; header.common.file_uid
                                        ; seq_num_bytes
                                        ] in
-      let header_bytes  : bytes      = Bytes.concat "" header_parts in
-      Ok header_bytes
+      Bytes.concat "" header_parts
     | None ->
-      Error "sequence number of block is not set, and an alternative number is not provided"
+      raise Missing_alt_seq_num
   ;;
 end
 
 module Metadata = struct
+  exception Too_much_data of string
+
   type t =
       FNM of string
     | SNM of string
@@ -153,22 +155,22 @@ module Metadata = struct
     Bytes.concat (Bytes.create 0) [id_str; len_bytes; data]
   ;;
 
-  let list_to_bytes ~(ver:version) ~(fields:t list) : (bytes, string) result =
+  let list_to_bytes ~(ver:version) ~(fields:t list) : bytes =
     let max_data_size = ver_to_data_size ver in
     let id_bytes_list = List.map to_id_and_bytes fields in
     let bytes_list    = List.map id_and_bytes_to_bytes id_bytes_list in
     let all_bytes     = Bytes.concat (Bytes.create 0) bytes_list in
     let all_bytes_len = Bytes.length all_bytes in
-    if      all_bytes_len < max_data_size then
-      Ok (pad_header_or_block_bytes all_bytes max_data_size)
-    else if all_bytes_len = max_data_size then
-      Ok all_bytes
+    if all_bytes_len <= max_data_size then
+      pad_header_or_block_bytes all_bytes max_data_size
     else
-      Error (Printf.sprintf "metadata is too long when converted to bytes\n%s" (length_distribution id_bytes_list))
+      raise (Too_much_data (Printf.sprintf "metadata is too long when converted to bytes\n%s" (length_distribution id_bytes_list)))
   ;;
 end
 
 module Block = struct
+  exception Too_much_data
+
   type t =
       Data of { header : Header.t
               ; data   : bytes }
@@ -176,39 +178,32 @@ module Block = struct
               ; fields : Metadata.t list
               ; data   : bytes }
 
-  let make_metadata_block ~(common:Header.common_fields) ~(fields:Metadata.t list) : (t, string) result =
+  let make_metadata_block ~(common:Header.common_fields) ~(fields:Metadata.t list) : t =
     (* encode once to make sure the size is okay *)
     let ver              = common.version in
     let encoded_metadata = Metadata.list_to_bytes ~ver ~fields in
-    match encoded_metadata with
-    | Ok data   -> Ok (Meta { header  = Header.make_metadata_header ~common
-                            ; fields
-                            ; data })
-    | Error msg -> Error msg
+    Meta { header = Header.make_metadata_header ~common
+         ; fields
+         ; data   = encoded_metadata}
   ;;
 
-  let make_data_block ~(common:Header.common_fields) ~(data:bytes) : (t, string) result =
+  let make_data_block ~(common:Header.common_fields) ~(data:bytes) : t =
     let ver           = common.version in
     let max_data_size = ver_to_data_size ver in
     let len           = Bytes.length data in
-    if      len < max_data_size then
-      Ok (Data { header = Header.make_data_header ~common
-               ; data   = pad_header_or_block_bytes data max_data_size })
-    else if len = max_data_size then
-      Ok (Data { header = Header.make_data_header ~common
-               ; data })
+    if len <= max_data_size then
+      Data { header = Header.make_data_header ~common
+           ; data   = pad_header_or_block_bytes data max_data_size }
     else
-      Error "data is too long"
+      raise Too_much_data
   ;;
 
-  let make_block_bytes ?(alt_seq_num:uint32 option) (block:t) : (bytes, string) result =
+  let make_block_bytes ?(alt_seq_num:uint32 option) (block:t) : bytes =
     let (header, data) =
       match block with
       | Data { header; data } | Meta { header; data; _ } -> (header, data) in
     let header_bytes = Header.make_header_bytes ~alt_seq_num ~header ~data in
-    match header_bytes with
-    | Ok bytes  -> Ok (Bytes.concat "" [bytes; data])
-    | Error msg -> Error msg
+    Bytes.concat "" [header_bytes; data]
   ;;
 end
 
@@ -222,45 +217,28 @@ type metadata      = Metadata.t
 
 let test_metadata_block () : unit =
   let open Metadata in
-  let fields : t list = [ FNM "filename"
+  let fields : t list = [ FNM (String.make 10000 'a')
                         ; SNM "filename.sbx"
                         ; FSZ (Uint64.of_int 100)
                         ; FDT (Uint64.of_int 100000)
                         ; SDT (Uint64.of_int 100001)
                         ; HSH "1220edeaaff3f1774ad2888673770c6d64097e391bc362d7d6fb34982ddf0efd18cb"
                         ] in
-  let common = Header.make_common_fields `V1 in
-  match common with
-  | Ok v ->
-    let metadata_block = Block.make_metadata_block ~common:v ~fields in begin
-      match metadata_block with
-      | Ok v      ->
-        begin
-          match Block.make_block_bytes v with
-          | Ok v      -> Printf.printf "Okay :\n%s\n" (Hex.hexdump_s (Hex.of_string v))
-          | Error msg -> Printf.printf "Error : %s\n" msg
-        end
-      | Error msg -> Printf.printf "Error : %s\n" msg
-    end
-  | Error msg -> Printf.printf "Error : %s\n" msg
+  try
+    let common = Header.make_common_fields `V1 in
+    let metadata_block = Block.make_metadata_block ~common ~fields in
+    let bytes = Block.make_block_bytes metadata_block in
+    Printf.printf "Okay :\n%s\n" (Hex.hexdump_s (Hex.of_string bytes))
+  with
+  | Metadata.Too_much_data str -> print_endline str
 ;;
 
 let test_data_block () : unit =
   let data = (Bytes.make 496 '\x00') in
   let common = Header.make_common_fields `V1 in
-  match common with
-  | Ok v ->
-    let data_block = Block.make_data_block ~common:v ~data in begin
-      match data_block with
-      | Ok v      ->
-        begin
-          match (Block.make_block_bytes ~alt_seq_num:(Uint32.of_int 0) v) with
-          | Ok v      -> Printf.printf "Okay :\n%s\n" (Hex.hexdump_s (Hex.of_string v))
-          | Error msg -> Printf.printf "Error : %s\n" msg
-        end
-      | Error msg -> Printf.printf "Error : %s\n" msg
-    end
-  | Error msg -> Printf.printf "Error : %s\n" msg
+  let data_block = Block.make_data_block ~common ~data in
+  let bytes = Block.make_block_bytes ~alt_seq_num:(Uint32.of_int 0) data_block in
+  Printf.printf "Okay :\n%s\n" (Hex.hexdump_s (Hex.of_string bytes))
 ;;
 
 test_metadata_block ();
