@@ -1,6 +1,5 @@
 open Stdint
 open Crcccitt
-open Angstrom
 open Sbx_version
 
 let pad_header_or_block_bytes (old_bytes:bytes) (new_len:int) : bytes =
@@ -10,6 +9,7 @@ let pad_header_or_block_bytes (old_bytes:bytes) (new_len:int) : bytes =
 module Header = struct
   exception Invalid_uid_length
   exception Missing_alt_seq_num
+  exception Invalid_bytes
 
   type common_fields =
     { signature  : bytes
@@ -88,10 +88,66 @@ module Header = struct
     | None ->
       raise Missing_alt_seq_num
   ;;
+
+  type raw_header =
+    { version   : version
+    ; crc_ccitt : uint16
+    ; file_uid  : bytes
+    ; seq_num   : uint32
+    }
+
+  let make_raw_header version crc_ccitt file_uid seq_num =
+    { version
+    ; crc_ccitt
+    ; file_uid
+    ; seq_num
+    }
+  ;;
+
+  module Parser = struct
+    open Angstrom
+
+    let v1_p  : version Angstrom.t =
+      char '\x01' *> return `V1
+    ;;
+
+    let ver_p : version Angstrom.t =
+      v1_p
+      (* v2_p *)
+      (* v3_p *)
+    ;;
+
+    let sig_p : string Angstrom.t =
+      string "SBx"
+    ;;
+
+    let crc_p : Stdint.uint16 Angstrom.t =
+      BE.uint16 >>| Uint16.of_int
+    ;;
+
+    let uid_p : bytes Angstrom.t =
+      take 6
+    ;;
+
+    let seq_p : Stdint.uint32 Angstrom.t =
+      BE.uint32 >>| Uint32.of_int32
+    ;;
+
+    let header_p : raw_header Angstrom.t =
+      sig_p *> lift4 make_raw_header ver_p crc_p uid_p seq_p
+    ;;
+  end
+
+  let of_bytes (data:bytes) : raw_header =
+    match Angstrom.parse_only Parser.header_p (`String data) with
+    | Ok header -> header
+    | Error _   -> raise Invalid_bytes
+  ;;
 end
 
 module Metadata = struct
   exception Too_much_data of string
+  exception Invalid_bytes
 
   type t =
       FNM of string
@@ -103,23 +159,24 @@ module Metadata = struct
     | PID of bytes
 
   type id =
-      FNM
-    | SNM
-    | FSZ
-    | FDT
-    | SDT
-    | HSH
-    | PID
+    [ `FNM
+    | `SNM
+    | `FSZ
+    | `FDT
+    | `SDT
+    | `HSH
+    | `PID
+    ]
 
   let id_to_string (id:id) : string =
     match id with
-    | FNM -> "FNM"
-    | SNM -> "SNM"
-    | FSZ -> "FSZ"
-    | FDT -> "FDT"
-    | SDT -> "SDT"
-    | HSH -> "HSH"
-    | PID -> "PID"
+    | `FNM -> "FNM"
+    | `SNM -> "SNM"
+    | `FSZ -> "FSZ"
+    | `FDT -> "FDT"
+    | `SDT -> "SDT"
+    | `HSH -> "HSH"
+    | `PID -> "PID"
   ;;
 
   let length_distribution (lst:(id * bytes) list) : string =
@@ -142,13 +199,13 @@ module Metadata = struct
   let to_id_and_bytes (entry:t) : id * bytes =
     let res_bytes = to_bytes entry in
     match entry with
-    | FNM _ -> (FNM, res_bytes)
-    | SNM _ -> (SNM, res_bytes)
-    | FSZ _ -> (FSZ, res_bytes)
-    | FDT _ -> (FDT, res_bytes)
-    | SDT _ -> (SDT, res_bytes)
-    | HSH _ -> (HSH, res_bytes)
-    | PID _ -> (PID, res_bytes)
+    | FNM _ -> (`FNM, res_bytes)
+    | SNM _ -> (`SNM, res_bytes)
+    | FSZ _ -> (`FSZ, res_bytes)
+    | FDT _ -> (`FDT, res_bytes)
+    | SDT _ -> (`SDT, res_bytes)
+    | HSH _ -> (`HSH, res_bytes)
+    | PID _ -> (`PID, res_bytes)
   ;;
 
   let id_and_bytes_to_bytes (entry:id * bytes) : bytes =
@@ -170,10 +227,73 @@ module Metadata = struct
     else
       raise (Too_much_data (Printf.sprintf "metadata is too long when converted to bytes\n%s" (length_distribution id_bytes_list)))
   ;;
+
+  module Parser = struct
+    type metadata = t (* to work around the shadowing binding of t in Angstrom *)
+    open Angstrom
+
+    let arb_len_data_p : bytes Angstrom.t =
+      any_uint8 >>= (fun x -> take x)
+    ;;
+
+    let uint64_data_p : Stdint.uint64 Angstrom.t =
+      char '\008' *> Angstrom.BE.uint64 >>| Uint64.of_int64
+    ;;
+
+    let fnm_p : metadata Angstrom.t =
+      string "FNM" *> arb_len_data_p
+      >>| (fun x -> FNM x)
+    ;;
+    let snm_p : metadata Angstrom.t =
+      string "SNM" *> arb_len_data_p
+      >>| (fun x -> SNM x)
+    ;;
+    let fsz_p : metadata Angstrom.t =
+      string "FSZ" *> uint64_data_p
+      >>| (fun x -> FSZ x)
+    ;;
+    let fdt_p : metadata Angstrom.t =
+      string "FDT" *> uint64_data_p
+      >>| (fun x -> FDT x)
+    ;;
+    let sdt_p : metadata Angstrom.t =
+      string "SDT" *> uint64_data_p
+      >>| (fun x -> SDT x)
+    ;;
+    let hsh_p : metadata Angstrom.t =
+      string "HSH" *> string "\x12\x20" *> take 0x20
+      >>| (fun x -> HSH x)
+    ;;
+    (*let pid_p : metadata Angstrom.t =
+      string "PID" *> arb_len_data_p
+      >>| (fun x -> PID x)
+    ;;*)
+
+    let field_p : metadata Angstrom.t =
+      fnm_p <|>
+      snm_p <|>
+      fsz_p <|>
+      fdt_p <|>
+      sdt_p <|>
+      hsh_p
+      (* pid_p *)
+    ;;
+
+    let fields_p : (metadata list) Angstrom.t =
+      many field_p
+    ;;
+  end
+
+  let of_bytes (data:bytes) : t list =
+    match Angstrom.parse_only Parser.fields_p (`String data) with
+    | Ok fields -> fields
+    | Error _   -> raise Invalid_bytes
+  ;;
 end
 
 module Block = struct
   exception Too_much_data
+  exception Invalid_bytes
 
   type t =
       Data of { header : Header.t
@@ -209,15 +329,16 @@ module Block = struct
     let header_bytes = Header.to_bytes ~alt_seq_num ~header ~data in
     Bytes.concat "" [header_bytes; data]
   ;;
+
 end
 
-type header        = Header.t
+(*type header        = Header.t
 
 type header_common = Header.common_fields
 
 type block         = Block.t
 
-type metadata      = Metadata.t
+type metadata      = Metadata.t*)
 
 (*
 let test_metadata_block () : unit =
@@ -232,7 +353,7 @@ let test_metadata_block () : unit =
   try
     let common = Header.make_common_fields `V1 in
     let metadata_block = Block.make_metadata_block ~common ~fields in
-    let bytes = Block.make_block_bytes metadata_block in
+    let bytes = Block.to_bytes metadata_block in
     Printf.printf "Okay :\n%s\n" (Hex.hexdump_s (Hex.of_string bytes))
   with
   | Metadata.Too_much_data str -> print_endline str
@@ -242,10 +363,10 @@ let test_data_block () : unit =
   let data = (Bytes.make 496 '\x00') in
   let common = Header.make_common_fields `V1 in
   let data_block = Block.make_data_block ~common ~data in
-  let bytes = Block.make_block_bytes ~alt_seq_num:(Uint32.of_int 0) data_block in
+  let bytes = Block.to_bytes ~alt_seq_num:(Uint32.of_int 0) data_block in
   Printf.printf "Okay :\n%s\n" (Hex.hexdump_s (Hex.of_string bytes))
 ;;
 
 test_metadata_block ();
 test_data_block ()
-  *)
+   *)

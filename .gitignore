@@ -3,3 +3,6 @@ src/_build/
 _build/
 src/*.byte
 /src/compile_error
+/src/angstrom.mli
+/src/angstrom.mli.reference_only
+/src/angstrom_reference_only.mli
