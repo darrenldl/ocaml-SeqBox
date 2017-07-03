@@ -4,7 +4,7 @@ open Stdint
 type version = [ `V1 ]
 
 module Param_for_v1 = struct
-  let file_uid_len = 10
+  let file_uid_len = 6
   let signature    = Bytes.of_string "SBx"
   let block_size   = 512
   let header_size  = 16
@@ -14,6 +14,10 @@ end
 let ver_to_int          (ver:version) : int =
   match ver with
   | `V1 -> 1
+;;
+
+let ver_to_uint8        (ver:version) : uint8 =
+  Uint8.of_int (ver_to_int ver)
 ;;
 
 let ver_to_uint16       (ver:version) : uint16 =

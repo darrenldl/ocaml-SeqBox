@@ -79,7 +79,7 @@ module Header = struct
       let bytes_to_crc  : bytes      = Bytes.concat "" things_to_crc in
       let crc_result    : bytes      = crc_ccitt_sbx ~ver:header.common.version ~input:bytes_to_crc in
       let header_parts  : bytes list = [ header.common.signature
-                                       ; Conv_utils.uint16_to_bytes (ver_to_uint16 header.common.version)
+                                       ; Conv_utils.uint8_to_bytes (ver_to_uint8 header.common.version)
                                        ; crc_result
                                        ; header.common.file_uid
                                        ; seq_num_bytes

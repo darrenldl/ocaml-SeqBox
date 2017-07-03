@@ -11,6 +11,8 @@ end
 
 val ver_to_int          : version -> int
 
+val ver_to_uint8        : version -> uint8
+
 val ver_to_uint16       : version -> uint16
 
 val ver_to_file_uid_len : version -> int
