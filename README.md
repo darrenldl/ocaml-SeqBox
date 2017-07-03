@@ -74,6 +74,10 @@ N.B. Current versions differs only by blocksize.
 | HSH | crypto hash (SHA256, using [Multihash](http://multiformats.io) protocol) |
 | PID | parent UID (*not used at the moment*)|
 
+## Progress Report
+  - Streamed encoding - done (Encode module)
+  - Streamed decoding - in progress (Decode module)
+
 ## License
 The following files directly from libcrc(with syntax modification) are under the MIT license as used by libcrc
   - crcccitt.c
