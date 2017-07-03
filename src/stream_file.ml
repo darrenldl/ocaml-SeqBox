@@ -13,8 +13,30 @@ module Sprintf_helper = struct
 end
 
 module General_helper = struct
+  exception Invalid_range
+
   let make_buffer (size:int) : bytes =
     Bytes.make size '\x00'
+  ;;
+
+  let get_from_buf ~(buf:bytes) ~(pos:int) ~(len:int) : bytes =
+    let buf_size = Bytes.length buf in
+    if      pos < 0 || pos >= buf_size then
+      raise Invalid_range
+    else if len <= 0 then
+      raise Invalid_range
+    else if pos + len >= buf_size then
+      raise Invalid_range
+    else
+      Bytes.sub buf pos len
+  ;;
+
+  let get_from_buf_inc_range ~(buf:bytes) ~(start_at:int) ~(end_at:int) : bytes =
+    get_from_buf ~buf ~pos:start_at ~len:(end_at     - start_at + 1)
+  ;;
+
+  let get_from_buf_exc_range ~(buf:bytes) ~(start_at:int) ~(end_before:int) : bytes =
+    get_from_buf ~buf ~pos:start_at ~len:(end_before - start_at)
   ;;
 end
 
@@ -52,7 +74,8 @@ module Read_chunk = struct
   let read (in_file:Core.In_channel.t) ~(len:int) : read_result =
     try
       let buf = General_helper.make_buffer len in
-      let {no_more_bytes; _} : Read_into_buf.read_result = Read_into_buf.read in_file ~buf in
+      let {no_more_bytes; read_count} : Read_into_buf.read_result = Read_into_buf.read in_file ~buf in
+      let chunk = General_helper.get_from_buf ~buf ~pos:0 ~len:read_count in
       {no_more_bytes; chunk = buf}
     with
     (* Read_chunk.read should never raise any exceptions related to use of Read_into_buf.read *)

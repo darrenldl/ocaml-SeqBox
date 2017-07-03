@@ -20,7 +20,17 @@ end
 
 (* General helpers *)
 module General_helper : sig
-  val make_buffer : int -> bytes
+  exception Invalid_range
+
+  val make_buffer            : int       -> bytes
+
+  val get_from_buf           : buf:bytes -> pos:int      -> len:int        -> bytes
+
+  (* Inclusive range *)
+  val get_from_buf_inc_range : buf:bytes -> start_at:int -> end_at:int     -> bytes
+
+  (* Exclusive range *)
+  val get_from_buf_exc_range : buf:bytes -> start_at:int -> end_before:int -> bytes
 end
 
 (* Helpers for reading into buffer *)
