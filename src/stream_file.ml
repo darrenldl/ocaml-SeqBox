@@ -22,15 +22,10 @@ module General_helper = struct
   ;;
 
   let get_from_buf ~(buf:bytes) ~(pos:int) ~(len:int) : bytes =
-    let buf_size = Bytes.length buf in
-    if      pos < 0 || pos >= buf_size then
-      raise Invalid_range
-    else if len <= 0 then
-      raise Invalid_range
-    else if pos + len >= buf_size then
-      raise Invalid_range
-    else
-      Bytes.sub buf pos len
+    try
+      Misc_utils.get_bytes buf ~pos ~len
+    with
+    | Misc_utils.Invalid_range -> raise Invalid_range
   ;;
 
   let get_from_buf_inc_range ~(buf:bytes) ~(start_at:int) ~(end_at:int) : bytes =

@@ -1,5 +1,7 @@
 open Stdint
 
+exception Invalid_range
+
 let pad_bytes ?(filler:uint8 = Uint8.of_int 0x00) (old_bytes:bytes) (new_len:int) : bytes =
   let buf         = Bytes.create 1 in
   Uint8.to_bytes_big_endian filler buf 0;
@@ -11,4 +13,16 @@ let pad_bytes ?(filler:uint8 = Uint8.of_int 0x00) (old_bytes:bytes) (new_len:int
     new_bytes
   else
     old_bytes
+;;
+
+let get_bytes (chunk:bytes) ~(pos:int) ~(len:int) : bytes =
+  let chunk_size = Bytes.length chunk in
+  if      pos < 0 || pos >= chunk_size then
+    raise Invalid_range
+  else if len <= 0 then
+    raise Invalid_range
+  else if pos + len >= chunk_size then
+    raise Invalid_range
+  else
+    Bytes.sub chunk pos len
 ;;
