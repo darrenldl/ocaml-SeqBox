@@ -22,6 +22,10 @@ module Header = struct
     ; seq_num    : uint32 option
     }
 
+  let common_fields_to_ver (common:common_fields) : version =
+    common.version
+  ;;
+
   let gen_file_uid ~(ver:version) : bytes =
     let len = ver_to_file_uid_len ver in
     Random_utils.gen_bytes ~len

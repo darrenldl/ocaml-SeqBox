@@ -9,6 +9,8 @@ module Header : sig
 
   type common_fields
 
+  val common_fields_to_ver : common_fields -> version
+
   val make_common_fields   : ?uid:bytes -> version -> common_fields
 end
 
