@@ -1,9 +1,9 @@
 module Stream : sig
-  type 'a in_out_processor = Core.In_channel.t  -> Core.Out_channel.t -> ('a, string) result
+  type 'a in_out_processor = Core.In_channel.t  -> Core.Out_channel.t -> 'a
 
-  type 'a in_processor     = Core.In_channel.t  -> ('a, string) result
+  type 'a in_processor     = Core.In_channel.t  -> 'a
 
-  type 'a out_processor    = Core.Out_channel.t -> ('a, string) result
+  type 'a out_processor    = Core.Out_channel.t -> 'a
 
   val process_in_out :
     in_filename:string -> out_filename:string -> processor:('a in_out_processor)
@@ -25,6 +25,9 @@ end
 
 (* Helpers for reading into buffer *)
 module Read_into_buf : sig
+  exception Invalid_offset
+  exception Invalid_length
+
   type read_result = { no_more_bytes : bool
                      ; read_count    : int
                      }
@@ -43,5 +46,8 @@ end
 
 (* Helpers for writing from buffer *)
 module Write : sig
-  val write_from_buf : ?offset:int -> ?len:int -> Core.Out_channel.t -> buf:bytes -> (unit, string) result
+  exception Invalid_offset
+  exception Invalid_length
+
+  val write_from_buf : ?offset:int -> ?len:int -> Core.Out_channel.t -> buf:bytes -> unit
 end

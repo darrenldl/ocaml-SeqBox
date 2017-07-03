@@ -12,46 +12,6 @@ module Sprintf_helper = struct
   ;;
 end
 
-module Stream = struct
-  type 'a in_out_processor = Core.In_channel.t -> Core.Out_channel.t -> ('a, string) result
-
-  type 'a in_processor     = Core.In_channel.t  -> ('a, string) result
-
-  type 'a out_processor    = Core.Out_channel.t -> ('a, string) result
-
-  let process_in_out ~(in_filename:string) ~(out_filename:string) ~(processor:('a in_out_processor)) : ('a, string) result =
-    try
-      let in_file  = Core.In_channel.create  ~binary:true in_filename  in
-      Core.protect ~f:(fun () ->
-          let out_file = Core.Out_channel.create ~binary:true out_filename in
-          Core.protect ~f:(fun () -> processor in_file out_file)
-            ~finally:(fun () ->
-                Core.Out_channel.close out_file))
-        ~finally:(fun () ->
-            Core.In_channel.close in_file)
-    with
-    | _ -> Error (Sprintf_helper.sprintf_failed_to_rw ~in_filename ~out_filename)
-  ;;
-
-  let process_in ~(in_filename:string) ~(processor:('a in_processor))   : ('a, string) result =
-    try
-      let in_file = Core.In_channel.create ~binary:true in_filename in
-      Core.protect ~f:(fun () -> processor in_file)
-        ~finally:(fun () -> Core.In_channel.close in_file)
-    with
-    | _ -> Error (Sprintf_helper.sprintf_failed_to_read ~in_filename)
-  ;;
-
-  let process_out ~(out_filename:string) ~(processor:('a out_processor)) : ('a, string) result =
-    try
-      let out_file = Core.Out_channel.create ~binary:true out_filename in
-      Core.protect ~f:(fun () -> processor out_file)
-        ~finally:(fun () -> Core.Out_channel.close out_file)
-    with
-    | _ -> Error (Sprintf_helper.sprintf_failed_to_write ~out_filename)
-  ;;
-end
-
 module General_helper = struct
   let make_buffer (size:int) : bytes =
     Bytes.make size '\x00'
@@ -59,18 +19,28 @@ module General_helper = struct
 end
 
 module Read_into_buf = struct
+  exception Invalid_offset
+  exception Invalid_length
+
   type read_result = { no_more_bytes : bool
                      ; read_count    : int
                      }
 
   let read ?(offset:int = 0) ?(len:int option) (in_file:Core.In_channel.t) ~(buf:bytes) : read_result =
-    let len : int =
-      match len with
-      | Some x -> x
-      | None   -> (Bytes.length buf) - offset in
-    let read_count    : int  = Core.In_channel.input in_file ~buf ~pos:offset ~len in
-    let no_more_bytes : bool = read_count < len in
-    {no_more_bytes; read_count}
+    let buf_size = Bytes.length buf in
+    if offset >= buf_size then
+      raise Invalid_offset
+    else
+      let len : int =
+        match len with
+        | Some x -> x
+        | None   -> (Bytes.length buf) - offset in
+      if len <= 0 then
+        raise Invalid_length
+      else
+        let read_count    : int  = Core.In_channel.input in_file ~buf ~pos:offset ~len in
+        let no_more_bytes : bool = read_count < len in
+        {no_more_bytes; read_count}
   ;;
 end
 
@@ -80,22 +50,89 @@ module Read_chunk = struct
                      }
 
   let read (in_file:Core.In_channel.t) ~(len:int) : read_result =
-    let buf = General_helper.make_buffer len in
-    let {no_more_bytes; _} : Read_into_buf.read_result = Read_into_buf.read in_file ~buf in
-    {no_more_bytes; chunk = buf}
+    try
+      let buf = General_helper.make_buffer len in
+      let {no_more_bytes; _} : Read_into_buf.read_result = Read_into_buf.read in_file ~buf in
+      {no_more_bytes; chunk = buf}
+    with
+    | _ -> assert false (* Read_chunk.read should never raise any exceptions *)
   ;;
 end
 
 module Write = struct
-  let write_from_buf ?(offset:int = 0) ?(len:int option) (out_file:Core.Out_channel.t) ~(buf:bytes) : (unit, string) result =
-    let len : int =
-      match len with
-      | Some x -> x
-      | None   -> (Bytes.length buf) - offset in
-    if len <= 0 then
-      Error "offset is larger or equal to length of buffer"
+  exception Invalid_offset
+  exception Invalid_length
+
+  let write_from_buf ?(offset:int = 0) ?(len:int option) (out_file:Core.Out_channel.t) ~(buf:bytes) : unit =
+    let buf_size = Bytes.length buf in
+    if offset >= buf_size then
+      raise Invalid_offset
     else
-      Ok (Core.Out_channel.output out_file ~buf ~pos:offset ~len)
+      let len : int =
+        match len with
+        | Some x -> x
+        | None   -> (Bytes.length buf) - offset in
+      if len <= 0 then
+        raise Invalid_length
+      else
+        Core.Out_channel.output out_file ~buf ~pos:offset ~len
+  ;;
+end
+
+module Stream = struct
+  type 'a in_out_processor = Core.In_channel.t -> Core.Out_channel.t -> 'a
+
+  type 'a in_processor     = Core.In_channel.t  -> 'a
+
+  type 'a out_processor    = Core.Out_channel.t -> 'a
+
+  let process_in_out ~(in_filename:string) ~(out_filename:string) ~(processor:('a in_out_processor)) : ('a, string) result =
+    try
+      let in_file  = Core.In_channel.create  ~binary:true in_filename  in
+      let res =
+        Core.protect ~f:(fun () ->
+            let out_file = Core.Out_channel.create ~binary:true out_filename in
+            Core.protect ~f:(fun () -> processor in_file out_file)
+              ~finally:(fun () ->
+                  Core.Out_channel.close out_file))
+          ~finally:(fun () ->
+              Core.In_channel.close in_file) in
+      Ok res
+    with
+    | Read_into_buf.Invalid_offset -> Error "Invalid offset provided to Read_into_buf.read"
+    | Read_into_buf.Invalid_length -> Error "Invalid length provided to Read_into_buf.read"
+    | Write.Invalid_offset         -> Error "Invalid offset provided to Write.write_from_buf"
+    | Write.Invalid_length         -> Error "Invalid length provided to Write.write_from_buf"
+    | Sys_error _                  -> Error (Sprintf_helper.sprintf_failed_to_rw ~in_filename ~out_filename)
+    | _                            -> Error "Unknown failure"
+  ;;
+
+  let process_in ~(in_filename:string) ~(processor:('a in_processor))   : ('a, string) result =
+    try
+      let in_file = Core.In_channel.create ~binary:true in_filename in
+      let res =
+        Core.protect ~f:(fun () -> processor in_file)
+          ~finally:(fun () -> Core.In_channel.close in_file) in
+      Ok res
+    with
+    | Read_into_buf.Invalid_offset -> Error "Invalid offset provided to Read_into_buf.read"
+    | Read_into_buf.Invalid_length -> Error "Invalid length provided to Read_into_buf.read"
+    | Sys_error _                  -> Error (Sprintf_helper.sprintf_failed_to_read ~in_filename)
+    | _                            -> Error "Unknown failure"
+  ;;
+
+  let process_out ~(out_filename:string) ~(processor:('a out_processor)) : ('a, string) result =
+    try
+      let out_file = Core.Out_channel.create ~binary:true out_filename in
+      let res =
+        Core.protect ~f:(fun () -> processor out_file)
+          ~finally:(fun () -> Core.Out_channel.close out_file) in
+      Ok res
+    with
+    | Write.Invalid_offset         -> Error "Invalid offset provided to Write.write_from_buf"
+    | Write.Invalid_length         -> Error "Invalid length provided to Write.write_from_buf"
+    | Sys_error                  _ -> Error (Sprintf_helper.sprintf_failed_to_write ~out_filename)
+    | _                            -> Error "Unknown failure"
   ;;
 end
 
@@ -108,13 +145,11 @@ let test_copy () : unit =
       let open Read_into_buf in
       let open Write in
       let {no_more_bytes; read_count} = read in_file ~buf in
-      match write_from_buf out_file ~buf ~len:read_count with
-      | Error _ -> assert false
-      | Ok ()   ->
-        if no_more_bytes then
-          Ok ()
-        else
-          copy_processor_helper () in
+      write_from_buf out_file ~buf ~len:read_count;
+      if no_more_bytes then
+        Ok ()
+      else
+        copy_processor_helper () in
     copy_processor_helper () in
   match Stream.process_in_out ~in_filename:"dummy_file" ~out_filename:"dummy_file_copy" ~processor:copy_processor with
   | Ok _      -> Printf.printf "Okay\n"
