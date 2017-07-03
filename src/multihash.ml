@@ -1,4 +1,4 @@
-open Exception
+exception Length_mismatch
 
 type hash = [ `SHA256 ]
 
@@ -10,5 +10,5 @@ let raw_hash_to_multihash ~(hash_type:hash) ~(raw:bytes) : bytes =
       let open Bytes in
       concat (create 0) [(of_string "\x12"); (of_string "\x20"); raw]
     else
-      raise (Length_mismatch "length of raw hash provided does not match the hash length in specification")
+      raise Length_mismatch
 ;;
