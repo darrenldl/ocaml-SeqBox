@@ -56,23 +56,30 @@ module Processor = struct
       )
     | Some metadata_list ->
       (fun in_file out_file ->
-         (* write a dummy metadata block first *)
-         let dummy_block_bytes = General_helper.make_buffer (ver_to_block_size ver) in
-         write out_file ~chunk:dummy_block_bytes;
-         (* write data blocks *)
-         let ({blocks_written}, hash) = data_to_block_proc_w_hash in_file out_file ~len ~common in
-         (* make the metadata block with hash *)
-         let open Metadata in
-         let fields_except_hash =
-           List.filter (function | HSH _ -> false | _ -> true) metadata_list in
-         let fields = (HSH hash) :: fields_except_hash in
-         (* go back and write metadata block *)
-         let metadata_block       = Block.make_metadata_block ~common ~fields in
-         let metadata_block_bytes = Block.make_block_bytes metadata_block in
-         Core.Out_channel.seek out_file 0L;
-         write out_file ~chunk:metadata_block_bytes;
-         (* update stats *)
-         { blocks_written = blocks_written + 1 }
+         try
+           (* write a empty metadata block first to shift space and also to test length of metadata fields *)
+           let open Metadata in
+           let dummy_multihash = String.make 0x20 '\x00' in
+           let fields_except_hash =
+             List.filter (function | HSH _ -> false | _ -> true) metadata_list in
+           let dummy_fields = (HSH dummy_multihash) :: fields_except_hash in
+           let dummy_metadata_block       = Block.make_metadata_block ~common ~fields:dummy_fields in
+           let dummy_metadata_block_bytes = Block.make_block_bytes dummy_metadata_block in
+           write out_file ~chunk:dummy_metadata_block_bytes;
+           (* write data blocks *)
+           let ({blocks_written}, hash) = data_to_block_proc_w_hash in_file out_file ~len ~common in
+           (* make the metadata block with hash *)
+           let multihash = Multihash.raw_hash_to_multihash ~hash_type:`SHA256 ~raw:hash in
+           let fields = (HSH multihash) :: fields_except_hash in
+           let metadata_block       = Block.make_metadata_block ~common ~fields in
+           let metadata_block_bytes = Block.make_block_bytes metadata_block in
+           (* go back and write metadata block *)
+           Core.Out_channel.seek out_file 0L;
+           write out_file ~chunk:metadata_block_bytes;
+           (* update stats *)
+           { blocks_written = blocks_written + 1 }
+         with
+         | Metadata.Too_much_data msg -> raise (Packaged_exn msg)
       )
   ;;
 end
