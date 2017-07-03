@@ -76,7 +76,7 @@ module Read_chunk = struct
       let buf = General_helper.make_buffer len in
       let {no_more_bytes; read_count} : Read_into_buf.read_result = Read_into_buf.read in_file ~buf in
       let chunk = General_helper.get_from_buf ~buf ~pos:0 ~len:read_count in
-      {no_more_bytes; chunk = buf}
+      {no_more_bytes; chunk}
     with
     (* Read_chunk.read should never raise any exceptions related to use of Read_into_buf.read *)
     | Read_into_buf.Invalid_offset
