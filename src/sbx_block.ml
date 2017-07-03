@@ -219,6 +219,7 @@ type block         = Block.t
 
 type metadata      = Metadata.t
 
+(*
 let test_metadata_block () : unit =
   let open Metadata in
   let fields : t list = [ FNM (String.make 10000 'a')
@@ -247,3 +248,4 @@ let test_data_block () : unit =
 
 test_metadata_block ();
 test_data_block ()
+  *)

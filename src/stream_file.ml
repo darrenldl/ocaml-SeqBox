@@ -148,6 +148,7 @@ module Stream = struct
   ;;
 end
 
+(*
 let test_copy () : unit =
   let open Core in
   let copy_processor (in_file:In_channel.t) (out_file:Out_channel.t) : (unit, string) result =
@@ -169,3 +170,4 @@ let test_copy () : unit =
 ;;
 
 test_copy ()
+   *)
