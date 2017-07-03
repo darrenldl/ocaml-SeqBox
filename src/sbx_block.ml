@@ -2,9 +2,16 @@ open Stdint
 open Crcccitt
 open Sbx_version
 
-let pad_header_or_block_bytes (old_bytes:bytes) (new_len:int) : bytes =
-  Misc_utils.pad_bytes ~filler:(Uint8.of_int 0x1a) old_bytes new_len
-;;
+module Helper = struct
+  let pad_header_or_block_bytes (old_bytes:bytes) (new_len:int) : bytes =
+    Misc_utils.pad_bytes ~filler:(Uint8.of_int 0x1a) old_bytes new_len
+  ;;
+
+  let crc_ccitt_sbx ~(ver:version) ~(input:bytes) : bytes =
+    let res = crc_ccitt_generic ~input ~start_val:(ver_to_uint16 ver) in
+    Conv_utils.uint16_to_bytes res
+  ;;
+end
 
 module Header = struct
   exception Invalid_uid_length
@@ -57,11 +64,6 @@ module Header = struct
     }
   ;;
 
-  let crc_ccitt_sbx ~(ver:version) ~(input:bytes) : bytes =
-    let res = crc_ccitt_generic ~input ~start_val:(ver_to_uint16 ver) in
-    Conv_utils.uint16_to_bytes res
-  ;;
-
   let to_bytes ~(alt_seq_num:uint32 option) ~(header:t) ~(data:bytes) : bytes =
     let seq_num =
       match (alt_seq_num, header.seq_num) with
@@ -77,7 +79,7 @@ module Header = struct
                                        ; data
                                        ] in
       let bytes_to_crc  : bytes      = Bytes.concat "" things_to_crc in
-      let crc_result    : bytes      = crc_ccitt_sbx ~ver:header.common.version ~input:bytes_to_crc in
+      let crc_result    : bytes      = Helper.crc_ccitt_sbx ~ver:header.common.version ~input:bytes_to_crc in
       let header_parts  : bytes list = [ header.common.signature
                                        ; Conv_utils.uint8_to_bytes (ver_to_uint8 header.common.version)
                                        ; crc_result
@@ -223,7 +225,7 @@ module Metadata = struct
     let all_bytes     = Bytes.concat (Bytes.create 0) bytes_list in
     let all_bytes_len = Bytes.length all_bytes in
     if all_bytes_len <= max_data_size then
-      pad_header_or_block_bytes all_bytes max_data_size
+      Helper.pad_header_or_block_bytes all_bytes max_data_size
     else
       raise (Too_much_data (Printf.sprintf "metadata is too long when converted to bytes\n%s" (length_distribution id_bytes_list)))
   ;;
@@ -294,6 +296,7 @@ end
 module Block = struct
   exception Too_much_data
   exception Invalid_bytes
+  exception Invalid_size
 
   type t =
       Data of { header : Header.t
@@ -317,7 +320,7 @@ module Block = struct
     let len           = Bytes.length data in
     if len <= max_data_size then
       Data { header = Header.make_data_header ~common
-           ; data   = pad_header_or_block_bytes data max_data_size }
+           ; data   = Helper.pad_header_or_block_bytes data max_data_size }
     else
       raise Too_much_data
   ;;
@@ -330,6 +333,63 @@ module Block = struct
     Bytes.concat "" [header_bytes; data]
   ;;
 
+  module Parser = struct
+    open Angstrom
+
+    let filler_p =
+      many (char '\x1A')
+    ;;
+  end
+
+  type raw_block =
+    { header : Header.raw_header
+    ; data   : bytes
+    }
+
+  module Checker = struct
+    (* all checkers fail by raising Invalid_bytes exception *)
+
+    let check_data_length ({header; data}:raw_block) : unit =
+      let data_size         = Bytes.length data in
+      let correct_data_size = ver_to_data_size header.version in
+      if data_size != correct_data_size then
+        raise Invalid_bytes
+    ;;
+
+    let check_crc_ccitt ({header; data}:raw_block) : unit =
+      let crc_ccitt                   = Conv_utils.uint16_to_bytes header.crc_ccitt in
+      let parts_to_check : bytes list = [ header.file_uid
+                                        ; Conv_utils.uint32_to_bytes header.seq_num
+                                        ; data
+                                        ] in
+      let bytes_to_check              = Bytes.concat "" parts_to_check in
+      let correct_crc_ccitt           = Helper.crc_ccitt_sbx ~ver:header.version ~input:bytes_to_check in
+      if not (Bytes.equal crc_ccitt correct_crc_ccitt) then
+        raise Invalid_bytes
+    ;;
+  end
+
+  let raw_block_to_block (raw_block:raw_block) : t =
+    Checker.check_data_length raw_block;
+    Checker.check_crc_ccitt   raw_block;
+    let {header = raw_header; data = raw_data} = raw_block in
+    let common = Header.make_common_fields ~uid:raw_header.file_uid raw_header.version in
+    if raw_header.seq_num = (Uint32.of_int 0) then
+      let fields = Metadata.of_bytes raw_data in
+      make_metadata_block ~common ~fields
+    else
+      make_data_block     ~common ~data:raw_data
+  ;;
+
+  let of_bytes (raw_data:bytes) : t =
+    try
+      let header_bytes = Misc_utils.get_bytes raw_data ~pos:0 ~len:16 in
+      let header       = Header.of_bytes header_bytes in
+      let data         = Misc_utils.get_bytes_exc_range raw_data ~start_at:16 ~end_before:(Bytes.length raw_data) in
+      let raw_block    = {header; data} in
+      raw_block_to_block raw_block
+    with
+    | Misc_utils.Invalid_range -> raise Invalid_size
 end
 
 (*type header        = Header.t

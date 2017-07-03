@@ -4,6 +4,7 @@ open Stdint
 module Header : sig
   exception Invalid_uid_length
   exception Missing_alt_seq_num
+  exception Invalid_bytes
 
   type t
 
@@ -16,6 +17,7 @@ end
 
 module Metadata : sig
   exception Too_much_data of string
+  exception Invalid_bytes
 
   type t =
       FNM of string
@@ -28,6 +30,8 @@ module Metadata : sig
 end
 
 module Block : sig
+  exception Invalid_bytes
+
   type t
 
   val make_metadata_block : common:Header.common_fields -> fields:(Metadata.t list) -> t
@@ -35,6 +39,8 @@ module Block : sig
   val make_data_block     : common:Header.common_fields -> data:bytes -> t
 
   val to_bytes            : ?alt_seq_num:uint32 -> t -> bytes
+
+  val of_bytes            : bytes -> t
 end
 
 (*type header        = Header.t
