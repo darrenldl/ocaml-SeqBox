@@ -55,15 +55,17 @@ module Read_chunk = struct
       let {no_more_bytes; _} : Read_into_buf.read_result = Read_into_buf.read in_file ~buf in
       {no_more_bytes; chunk = buf}
     with
-    | _ -> assert false (* Read_chunk.read should never raise any exceptions *)
+    (* Read_chunk.read should never raise any exceptions related to use of Read_into_buf.read *)
+    | Read_into_buf.Invalid_offset
+    | Read_into_buf.Invalid_length -> assert false 
   ;;
 end
 
-module Write = struct
+module Write_from_buf = struct
   exception Invalid_offset
   exception Invalid_length
 
-  let write_from_buf ?(offset:int = 0) ?(len:int option) (out_file:Core.Out_channel.t) ~(buf:bytes) : unit =
+  let write ?(offset:int = 0) ?(len:int option) (out_file:Core.Out_channel.t) ~(buf:bytes) : unit =
     let buf_size = Bytes.length buf in
     if offset >= buf_size then
       raise Invalid_offset
@@ -77,6 +79,16 @@ module Write = struct
       else
         Core.Out_channel.output out_file ~buf ~pos:offset ~len
   ;;
+end
+
+module Write_chunk = struct
+  let write (out_file:Core.Out_channel.t) ~(buf:bytes) : unit =
+    try
+      Write_from_buf.write out_file ~buf
+    with
+    (* Write_chunk.write should never raise any exceptions related to use of Write_from_buf.write *)
+    | Write_from_buf.Invalid_offset
+    | Write_from_buf.Invalid_length -> assert false
 end
 
 module Stream = struct
@@ -99,12 +111,12 @@ module Stream = struct
               Core.In_channel.close in_file) in
       Ok res
     with
-    | Read_into_buf.Invalid_offset -> Error "Invalid offset provided to Read_into_buf.read"
-    | Read_into_buf.Invalid_length -> Error "Invalid length provided to Read_into_buf.read"
-    | Write.Invalid_offset         -> Error "Invalid offset provided to Write.write_from_buf"
-    | Write.Invalid_length         -> Error "Invalid length provided to Write.write_from_buf"
-    | Sys_error _                  -> Error (Sprintf_helper.sprintf_failed_to_rw ~in_filename ~out_filename)
-    | _                            -> Error "Unknown failure"
+    | Read_into_buf.Invalid_offset  -> Error "Invalid offset provided to Read_into_buf.read"
+    | Read_into_buf.Invalid_length  -> Error "Invalid length provided to Read_into_buf.read"
+    | Write_from_buf.Invalid_offset -> Error "Invalid offset provided to Write_from_buf.write"
+    | Write_from_buf.Invalid_length -> Error "Invalid length provided to Write_from_buf.write"
+    | Sys_error _                   -> Error (Sprintf_helper.sprintf_failed_to_rw ~in_filename ~out_filename)
+    | _                             -> Error "Unknown failure"
   ;;
 
   let process_in ~(in_filename:string) ~(processor:('a in_processor))   : ('a, string) result =
@@ -129,10 +141,10 @@ module Stream = struct
           ~finally:(fun () -> Core.Out_channel.close out_file) in
       Ok res
     with
-    | Write.Invalid_offset         -> Error "Invalid offset provided to Write.write_from_buf"
-    | Write.Invalid_length         -> Error "Invalid length provided to Write.write_from_buf"
-    | Sys_error                  _ -> Error (Sprintf_helper.sprintf_failed_to_write ~out_filename)
-    | _                            -> Error "Unknown failure"
+    | Write_from_buf.Invalid_offset -> Error "Invalid offset provided to Write_from_buf.write"
+    | Write_from_buf.Invalid_length -> Error "Invalid length provided to Write_from_buf.write"
+    | Sys_error _                   -> Error (Sprintf_helper.sprintf_failed_to_write ~out_filename)
+    | _                             -> Error "Unknown failure"
   ;;
 end
 
@@ -143,9 +155,9 @@ let test_copy () : unit =
     let buf                   = General_helper.make_buffer read_block_size in
     let rec copy_processor_helper () =
       let open Read_into_buf in
-      let open Write in
+      let open Write_from_buf in
       let {no_more_bytes; read_count} = read in_file ~buf in
-      write_from_buf out_file ~buf ~len:read_count;
+      write out_file ~buf ~len:read_count;
       if no_more_bytes then
         Ok ()
       else

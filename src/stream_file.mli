@@ -45,9 +45,13 @@ module Read_chunk : sig
 end
 
 (* Helpers for writing from buffer *)
-module Write : sig
+module Write_from_buf : sig
   exception Invalid_offset
   exception Invalid_length
 
-  val write_from_buf : ?offset:int -> ?len:int -> Core.Out_channel.t -> buf:bytes -> unit
+  val write : ?offset:int -> ?len:int -> Core.Out_channel.t -> buf:bytes -> unit
+end
+
+module Write_chunk : sig
+  val write : Core.Out_channel.t -> buf:bytes -> unit
 end
