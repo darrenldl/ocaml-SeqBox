@@ -31,6 +31,8 @@ module Block : sig
   val make_metadata_block : common:Header.common_fields -> fields:(Metadata.t list) -> t
 
   val make_data_block     : common:Header.common_fields -> data:bytes -> t
+
+  val make_block_bytes    : ?alt_seq_num:uint32 -> t -> bytes
 end
 
 type header        = Header.t
