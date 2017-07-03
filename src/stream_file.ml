@@ -1,3 +1,5 @@
+exception Packaged_exn of string
+
 module Sprintf_helper = struct
   let sprintf_failed_to_rw    ~(in_filename:string) ~(out_filename:string) : string =
     Printf.sprintf "failed to read %s and/or failed to write %s" in_filename out_filename
@@ -134,6 +136,7 @@ module Stream = struct
               Core.In_channel.close in_file) in
       Ok res
     with
+    | Packaged_exn msg              -> Error msg
     | Read_into_buf.Invalid_offset  -> Error "Invalid offset provided to Read_into_buf.read"
     | Read_into_buf.Invalid_length  -> Error "Invalid length provided to Read_into_buf.read"
     | Write_from_buf.Invalid_offset -> Error "Invalid offset provided to Write_from_buf.write"
@@ -150,6 +153,7 @@ module Stream = struct
           ~finally:(fun () -> Core.In_channel.close in_file) in
       Ok res
     with
+    | Packaged_exn msg              -> Error msg
     | Read_into_buf.Invalid_offset -> Error "Invalid offset provided to Read_into_buf.read"
     | Read_into_buf.Invalid_length -> Error "Invalid length provided to Read_into_buf.read"
     | Sys_error _                  -> Error (Sprintf_helper.sprintf_failed_to_read ~in_filename)
@@ -164,6 +168,7 @@ module Stream = struct
           ~finally:(fun () -> Core.Out_channel.close out_file) in
       Ok res
     with
+    | Packaged_exn msg              -> Error msg
     | Write_from_buf.Invalid_offset -> Error "Invalid offset provided to Write_from_buf.write"
     | Write_from_buf.Invalid_length -> Error "Invalid length provided to Write_from_buf.write"
     | Sys_error _                   -> Error (Sprintf_helper.sprintf_failed_to_write ~out_filename)

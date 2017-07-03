@@ -1,3 +1,5 @@
+exception Packaged_exn of string
+
 module Stream : sig
   type 'a in_out_processor = Core.In_channel.t  -> Core.Out_channel.t -> 'a
 
