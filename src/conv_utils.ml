@@ -1,4 +1,5 @@
 open Stdint
+open Nocrypto.Hash
 
 let uint64_to_bytes (v:uint64) : bytes =
   let buf = Bytes.create 8 in
@@ -33,3 +34,6 @@ let bytes_to_hex_string (data:bytes) : string =
   str
 ;;
 
+let sha256_hash_state_to_bytes (hash_state:SHA256.t) : bytes =
+  Cstruct.to_string (SHA256.get hash_state)
+;;
