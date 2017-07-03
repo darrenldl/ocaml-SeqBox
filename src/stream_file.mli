@@ -53,5 +53,5 @@ module Write_from_buf : sig
 end
 
 module Write_chunk : sig
-  val write : Core.Out_channel.t -> buf:bytes -> unit
+  val write : Core.Out_channel.t -> chunk:bytes -> unit
 end
