@@ -62,7 +62,7 @@ module Header = struct
     Conv_utils.uint16_to_bytes res
   ;;
 
-  let make_header_bytes ~(alt_seq_num:uint32 option) ~(header:t) ~(data:bytes) : bytes =
+  let to_bytes ~(alt_seq_num:uint32 option) ~(header:t) ~(data:bytes) : bytes =
     let seq_num =
       match (alt_seq_num, header.seq_num) with
       | (Some s, Some _) -> Some s    (* prefer provided number over existing one *)
@@ -202,11 +202,11 @@ module Block = struct
       raise Too_much_data
   ;;
 
-  let make_block_bytes ?(alt_seq_num:uint32 option) (block:t) : bytes =
+  let to_bytes ?(alt_seq_num:uint32 option) (block:t) : bytes =
     let (header, data) =
       match block with
       | Data { header; data } | Meta { header; data; _ } -> (header, data) in
-    let header_bytes = Header.make_header_bytes ~alt_seq_num ~header ~data in
+    let header_bytes = Header.to_bytes ~alt_seq_num ~header ~data in
     Bytes.concat "" [header_bytes; data]
   ;;
 end

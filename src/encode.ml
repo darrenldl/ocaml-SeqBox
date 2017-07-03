@@ -15,7 +15,7 @@ module Processor = struct
     let {no_more_bytes; chunk} = read in_file ~len in
     let block                  = Block.make_data_block ~common ~data:chunk in
     let alt_seq_num            = Uint32.of_int (cur_block + 1) in (* always off by 1 *)
-    let block_bytes            = Block.make_block_bytes ~alt_seq_num block in
+    let block_bytes            = Block.to_bytes ~alt_seq_num block in
     write out_file ~chunk:block_bytes;
     if no_more_bytes then
       { blocks_written = cur_block
@@ -30,7 +30,7 @@ module Processor = struct
     let {no_more_bytes; chunk} = read in_file ~len in
     let block                  = Block.make_data_block ~common ~data:chunk in
     let alt_seq_num            = Uint32.of_int (cur_block + 1) in (* always off by 1 *)
-    let block_bytes            = Block.make_block_bytes ~alt_seq_num block in
+    let block_bytes            = Block.to_bytes ~alt_seq_num block in
     (* update hash *)
     SHA256.feed hash_state (Cstruct.of_bytes chunk);
     (* write to file *)
@@ -64,7 +64,7 @@ module Processor = struct
              List.filter (function | HSH _ -> false | _ -> true) metadata_list in
            let dummy_fields = (HSH dummy_multihash) :: fields_except_hash in
            let dummy_metadata_block       = Block.make_metadata_block ~common ~fields:dummy_fields in
-           let dummy_metadata_block_bytes = Block.make_block_bytes dummy_metadata_block in
+           let dummy_metadata_block_bytes = Block.to_bytes dummy_metadata_block in
            write out_file ~chunk:dummy_metadata_block_bytes;
            (* write data blocks *)
            let ({blocks_written}, hash) = data_to_block_proc_w_hash in_file out_file ~len ~common in
@@ -72,7 +72,7 @@ module Processor = struct
            let multihash = Multihash.raw_hash_to_multihash ~hash_type:`SHA256 ~raw:hash in
            let fields = (HSH multihash) :: fields_except_hash in
            let metadata_block       = Block.make_metadata_block ~common ~fields in
-           let metadata_block_bytes = Block.make_block_bytes metadata_block in
+           let metadata_block_bytes = Block.to_bytes metadata_block in
            (* go back and write metadata block *)
            Core.Out_channel.seek out_file 0L;
            write out_file ~chunk:metadata_block_bytes;
