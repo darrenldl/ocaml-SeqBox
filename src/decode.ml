@@ -41,10 +41,25 @@ type stats = { blocks_decoded : int
              }
 
 module Processor = struct
-  let find_metadata_block_proc (in_file:Core.In_channel.t) : Block.t option =
+  let find_first_block_proc ~(want_meta:bool) (in_file:Core.In_channel.t) : Block.t option =
     let open Read_chunk in
-    let len = 512 in  (* largest common divisor for version 1, 3 block size *)
-    let rec find_metadata_block_proc_internal () : Block.t option =
+    let len = 512 in (* largest common divisor for version 1, 3 block size *)
+    let bytes_to_block (raw_header:Header.raw_header) (chunk:bytes) : Block.t option =
+      let want_block =
+        if want_meta then
+          raw_header.seq_num =  (Uint32.of_int 0)
+        else
+          raw_header.seq_num != (Uint32.of_int 0) in
+      if want_block then
+        try
+          Some (Block.of_bytes ~raw_header chunk)
+        with
+        | Header.Invalid_bytes   -> None
+        | Metadata.Invalid_bytes -> None
+        | Block.Invalid_bytes    -> None
+      else
+        None in
+    let rec find_first_block_proc_internal () : Block.t option =
       let {no_more_bytes; chunk} = read in_file ~len in
       if no_more_bytes || Bytes.length chunk < 16 then
         None  (* at the end of file and/or got nothing *)
@@ -56,26 +71,14 @@ module Processor = struct
           with
           | Header.Invalid_bytes -> None in
         match test_header with
-        | None        ->
-          find_metadata_block_proc_internal () (* go to next block *)
+        | None            -> find_first_block_proc_internal () (* go to next block *)
         | Some raw_header ->
           let test_block : Block.t option =
-            if raw_header.seq_num = (Uint32.of_int 0) then
-              (* may have got a metadata block *)
-              try
-                Some (Block.of_bytes ~raw_header chunk)
-              with
-              | Header.Invalid_bytes   -> None
-              | Metadata.Invalid_bytes -> None
-              | Block.Invalid_bytes    -> None
-            else
-              None in
+            bytes_to_block raw_header chunk in
           match test_block with
-          | None -> 
-            find_metadata_block_proc_internal () (* go to next block *)
-          | Some block ->
-            Some block  (* found a valid block *) in
-    let res = find_metadata_block_proc_internal () in
+          | None       -> find_first_block_proc_internal () (* go to next block *)
+          | Some block -> Some block  (* found a valid block *) in
+    let res = find_first_block_proc_internal () in
     Core.In_channel.seek in_file 0L;  (* reset seek position *)
     res
   ;;
@@ -88,7 +91,7 @@ module Processor = struct
     let ver = Block.block_to_ver ref_block in
     let len = ver_to_block_size ver in
     let rec find_valid_data_block_proc_internal () =
-      let {no_more_bytes; chunk} = read in_file ~len in
+      let {chunk; _} = read in_file ~len in
       let block =
         try
           Some (Block.of_bytes chunk)
@@ -116,4 +119,5 @@ module Processor = struct
   ;;
 
   (*let decoder (in_file:Core.In_channel.t) (out_file:Core.Out_channel.t) : stats =*)
+    
 end
