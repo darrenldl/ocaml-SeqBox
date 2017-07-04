@@ -2,7 +2,13 @@ open Stdint
 open Crcccitt
 open Sbx_version
 
-module Helper = struct
+module Helper : sig
+  val pad_header_or_block_bytes : bytes       -> int         -> bytes
+
+  val crc_ccitt_sbx             : ver:version -> input:bytes -> bytes
+
+end = struct
+
   let pad_header_or_block_bytes (old_bytes:bytes) (new_len:int) : bytes =
     Misc_utils.pad_bytes ~filler:(Uint8.of_int 0x1a) old_bytes new_len
   ;;
@@ -13,7 +19,40 @@ module Helper = struct
   ;;
 end
 
-module Header = struct
+module Header : sig
+  exception Invalid_uid_length
+  exception Missing_alt_seq_num
+  exception Invalid_bytes
+
+  type common_fields =
+    { signature  : bytes
+    ; version    : version
+    ; file_uid   : bytes
+    }
+
+  type t
+
+  type raw_header =
+    { version   : version
+    ; crc_ccitt : uint16
+    ; file_uid  : bytes
+    ; seq_num   : uint32
+    }
+
+  val common_fields_to_ver : common_fields             -> version
+
+  val make_common_fields   : ?uid:bytes                -> version    -> common_fields
+
+  val make_metadata_header : common:common_fields      -> t
+
+  val make_data_header     : common:common_fields      -> t
+
+  val of_bytes             : bytes                     -> raw_header
+
+  val to_bytes             : alt_seq_num:uint32 option -> header:t   -> data:bytes    -> bytes
+
+end = struct
+
   exception Invalid_uid_length
   exception Missing_alt_seq_num
   exception Invalid_bytes
@@ -29,13 +68,13 @@ module Header = struct
     ; seq_num    : uint32 option
     }
 
-  let common_fields_to_ver (common:common_fields) : version =
-    common.version
-  ;;
-
   let gen_file_uid ~(ver:version) : bytes =
     let len = ver_to_file_uid_len ver in
     Random_utils.gen_bytes ~len
+  ;;
+
+  let common_fields_to_ver (common:common_fields) : version =
+    common.version
   ;;
 
   let make_common_fields ?(uid:bytes option) (ver:version) : common_fields =
@@ -147,7 +186,25 @@ module Header = struct
   ;;
 end
 
-module Metadata = struct
+module Metadata : sig
+  exception Too_much_data of string
+  exception Invalid_bytes
+
+  type t =
+      FNM of string
+    | SNM of string
+    | FSZ of uint64
+    | FDT of uint64
+    | SDT of uint64
+    | HSH of bytes
+    | PID of bytes
+
+  val to_bytes : ver:version -> fields:t list -> bytes
+
+  val of_bytes : bytes       -> t list
+
+end = struct
+
   exception Too_much_data of string
   exception Invalid_bytes
 
@@ -218,7 +275,7 @@ module Metadata = struct
     Bytes.concat (Bytes.create 0) [id_str; len_bytes; data]
   ;;
 
-  let list_to_bytes ~(ver:version) ~(fields:t list) : bytes =
+  let to_bytes ~(ver:version) ~(fields:t list) : bytes =
     let max_data_size = ver_to_data_size ver in
     let id_bytes_list = List.map to_id_and_bytes fields in
     let bytes_list    = List.map id_and_bytes_to_bytes id_bytes_list in
@@ -299,7 +356,23 @@ module Metadata = struct
   ;;
 end
 
-module Block = struct
+module Block : sig
+  exception Too_much_data
+  exception Invalid_bytes
+  exception Invalid_size
+
+  type t
+
+  val make_metadata_block : common:Header.common_fields   -> fields:Metadata.t list -> t
+
+  val make_data_block     : common:Header.common_fields   -> data:bytes             -> t
+
+  val to_bytes            : ?alt_seq_num:uint32           -> t                      -> bytes
+
+  val of_bytes            : ?raw_header:Header.raw_header -> bytes                  -> t
+
+end = struct
+
   exception Too_much_data
   exception Invalid_bytes
   exception Invalid_size
@@ -314,7 +387,7 @@ module Block = struct
   let make_metadata_block ~(common:Header.common_fields) ~(fields:Metadata.t list) : t =
     (* encode once to make sure the size is okay *)
     let ver              = common.version in
-    let encoded_metadata = Metadata.list_to_bytes ~ver ~fields in
+    let encoded_metadata = Metadata.to_bytes ~ver ~fields in
     Meta { header = Header.make_metadata_header ~common
          ; fields
          ; data   = encoded_metadata}
