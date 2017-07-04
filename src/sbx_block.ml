@@ -388,7 +388,7 @@ module Block = struct
     try
       let (header, data_offset) =
         match raw_header with
-        | Some h -> (h, 16)
+        | Some h -> (h, 16)   (* skip over header bytes if a header is given *)
         | None   -> let header_bytes = Misc_utils.get_bytes raw_data ~pos:0 ~len:16 in
           (Header.of_bytes header_bytes, 0) in
       let data         = Misc_utils.get_bytes_exc_range raw_data ~start_at:data_offset ~end_before:(Bytes.length raw_data) in
