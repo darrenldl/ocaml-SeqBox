@@ -65,7 +65,9 @@ module Processor = struct
               try
                 Some (Block.of_bytes ~raw_header chunk)
               with
-              | Block.Invalid_bytes -> None
+              | Header.Invalid_bytes   -> None
+              | Metadata.Invalid_bytes -> None
+              | Block.Invalid_bytes    -> None
             else
               None in
           match test_block with
@@ -81,9 +83,26 @@ module Processor = struct
   (* ref_block will be used as reference for version and uid
    *  block must match those two parameters to be accepted
    *)
-  (*let find_valid_data_block_proc ~(ref_block:Block.t) (in_file:Core.In_channel.t) : Block.t option =
+  let find_valid_data_block_proc ~(ref_block:Block.t) (in_file:Core.In_channel.t) : Block.t option =
+    let open Read_chunk in
+    let ver = Block.block_to_ver ref_block in
+    let len = ver_to_block_size ver in
+    let rec find_valid_data_block_proc_internal () =
+      let {no_more_bytes; chunk} = read in_file ~len in
+      let block =
+        try
+          Some (Block.of_bytes chunk)
+        with
+        | Header.Invalid_bytes   -> None
+        | Metadata.Invalid_bytes -> None
+        | Block.Invalid_bytes    -> None in
+      match block with
+      | Some block -> Some block
+      | None       -> find_valid_data_block_proc_internal () (* move onto finding next block *) in
+    find_valid_data_block_proc_internal ()
+  ;;
 
-  let output_decoded_data_proc ~(block:Block.t) (out_file:Core.Out_channel.t) : unit =
+  (*let output_decoded_data_proc ~(block:Block.t) (out_file:Core.Out_channel.t) : unit =
 
   let decoder (in_file:Core.In_channel.t) (out_file:Core.Out_channel.t) : stats =*)
 end
