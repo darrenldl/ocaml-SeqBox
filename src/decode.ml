@@ -97,12 +97,23 @@ module Processor = struct
         | Metadata.Invalid_bytes -> None
         | Block.Invalid_bytes    -> None in
       match block with
-      | Some block -> Some block
+      | Some block ->
+        if Block.is_meta block then
+          (* don't return metadata block *)
+          find_valid_data_block_proc_internal () (* move onto finding next block *)
+        else
+          Some block
       | None       -> find_valid_data_block_proc_internal () (* move onto finding next block *) in
     find_valid_data_block_proc_internal ()
   ;;
 
-  (*let output_decoded_data_proc ~(block:Block.t) (out_file:Core.Out_channel.t) : unit =
+  let output_decoded_data_proc_if_any ~(block:Block.t option) (out_file:Core.Out_channel.t) : unit =
+    let open Write_chunk in
+    match block with
+    | Some block ->
+      write out_file ~chunk:(Block.to_data block)
+    | None -> ()
+  ;;
 
-  let decoder (in_file:Core.In_channel.t) (out_file:Core.Out_channel.t) : stats =*)
+  (*let decoder (in_file:Core.In_channel.t) (out_file:Core.Out_channel.t) : stats =*)
 end
