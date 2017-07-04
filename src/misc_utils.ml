@@ -19,7 +19,7 @@ let get_bytes (chunk:bytes) ~(pos:int) ~(len:int) : bytes =
   let chunk_size = Bytes.length chunk in
   if      pos < 0 || pos >= chunk_size then
     raise Invalid_range
-  else if len <= 0 then
+  else if len < 0 then
     raise Invalid_range
   else if pos + len >= chunk_size then
     raise Invalid_range
