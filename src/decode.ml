@@ -50,16 +50,18 @@ module Processor = struct
           raw_header.seq_num =  (Uint32.of_int 0)
         else
           raw_header.seq_num != (Uint32.of_int 0) in
-      if want_block then
+      if want_block then (
+        print_endline "want A";
         try
           Some (Block.of_bytes ~raw_header chunk)
         with
-        | Header.Invalid_bytes   -> None
-        | Metadata.Invalid_bytes -> None
-        | Block.Invalid_bytes    -> None
-        | Block.Invalid_size     -> None
-      else
-        None in
+        | Header.Invalid_bytes   -> print_endline "invalid header"; None
+        | Metadata.Invalid_bytes -> print_endline "invalid meta"; None
+        | Block.Invalid_bytes    -> print_endline "invalid block"; None
+        | Block.Invalid_size     -> print_endline "invalid block size"; None )
+      else (
+        print_endline "want B";
+        None )in
     let rec find_first_block_proc_internal no_more_bytes : Block.t option =
       if no_more_bytes then
         None
@@ -73,15 +75,16 @@ module Processor = struct
              try
                Some (Header.of_bytes test_header_bytes)
              with
-             | Header.Invalid_bytes -> None in
+             | Header.Invalid_bytes -> print_endline "flag D"; None in
+           print_endline "flag E";
            match test_header with
            | None            -> find_first_block_proc_internal no_more_bytes (* go to next block *)
            | Some raw_header ->
              let test_block : Block.t option =
                bytes_to_block raw_header chunk in
              match test_block with
-             | None       -> find_first_block_proc_internal no_more_bytes (* go to next block *)
-             | Some block -> Some block  (* found a valid block *) in
+             | None       -> print_endline "no valid block"; find_first_block_proc_internal no_more_bytes (* go to next block *)
+             | Some block -> print_endline "got valid block"; Some block  (* found a valid block *) in
     let res = find_first_block_proc_internal false in
     Core.In_channel.seek in_file 0L;  (* reset seek position *)
     res
@@ -96,32 +99,38 @@ module Processor = struct
     let len          = ver_to_block_size ref_ver in
     let ref_file_uid = Block.block_to_file_uid ref_block in
     let rec find_valid_data_block_proc_internal (no_more_bytes:bool) =
+      print_endline "finding valid data block";
       if no_more_bytes then
         None
       else
         let {no_more_bytes; chunk} = read in_file ~len in
+        Printf.printf "chunk : %s" (Conv_utils.bytes_to_hex_string chunk);
+        print_endline "";
         let block =
           try
             Some (Block.of_bytes chunk)
           with
-          | Header.Invalid_bytes   -> None
-          | Metadata.Invalid_bytes -> None
-          | Block.Invalid_bytes    -> None
-          | Block.Invalid_size     -> None in
+          | Header.Invalid_bytes   -> print_endline "invalid header bytes"; None
+          | Metadata.Invalid_bytes -> print_endline "invalid metadata bytes"; None
+          | Block.Invalid_bytes    -> print_endline "invalid block bytes"; None
+          | Block.Invalid_size     -> print_endline "invalid block size"; None in
         match block with
         | Some block ->
           begin
-            if Block.is_meta block then
+          print_endline "got a valid block";
+            if Block.is_meta block then (
+              print_endline "got a valid metadata block";
               (* don't return metadata block *)
-              find_valid_data_block_proc_internal no_more_bytes (* move onto finding next block *)
-            else
+              find_valid_data_block_proc_internal no_more_bytes (* move onto finding next block *) )
+            else (
+              print_endline "got a valid data block";
               let file_uid = Block.block_to_file_uid block in
               let ver      = Block.block_to_ver      block in
               (* make sure uid and version matches *)
               if file_uid = ref_file_uid && ver = ref_ver then
                 Some block
               else
-                find_valid_data_block_proc_internal no_more_bytes (* move onto finding next block *)
+                find_valid_data_block_proc_internal no_more_bytes (* move onto finding next block *) )
           end
         | None       -> find_valid_data_block_proc_internal no_more_bytes (* move onto finding next block *) in
     find_valid_data_block_proc_internal false
@@ -129,11 +138,14 @@ module Processor = struct
 
   let output_decoded_data_proc ~(block:Block.t) (out_file:Core.Out_channel.t) : unit =
     let open Write_chunk in
+    Printf.printf "data : %s" (Conv_utils.bytes_to_hex_string (Block.block_to_data block));
+    print_endline "";
     write out_file ~chunk:(Block.block_to_data block)
   ;;
 
   let decode_and_output_proc ~(ref_block:Block.t) (in_file:Core.In_channel.t) (out_file:Core.Out_channel.t) : stats =
     let rec decode_and_output_proc_internal ({blocks_decoded; _}:stats) : stats =
+      Printf.printf "seek pos : %Ld\n" (Core.In_channel.pos in_file);
       print_endline "flag C";
       match find_valid_data_block_proc ~ref_block in_file with
       | None       -> {blocks_decoded}

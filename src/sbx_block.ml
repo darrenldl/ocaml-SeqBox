@@ -467,8 +467,10 @@ end = struct
                                         ; data
                                         ] in
       let bytes_to_check              = Bytes.concat "" parts_to_check in
+      Printf.printf "bytes to check : %s" (Conv_utils.bytes_to_hex_string bytes_to_check);
+      print_endline "";
       let correct_crc_ccitt           = Helper.crc_ccitt_sbx ~ver:header.version ~input:bytes_to_check in
-      if not (Bytes.equal crc_ccitt correct_crc_ccitt) then
+      if not (crc_ccitt = correct_crc_ccitt) then
         raise Invalid_bytes
     ;;
   end
