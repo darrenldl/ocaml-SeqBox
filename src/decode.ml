@@ -74,8 +74,16 @@ module Processor = struct
           | Some block ->
             Some block  (* found a valid block *) in
     let res = find_metadata_block_proc_internal () in
-    Core.In_channel.seek in_file 0L;
+    Core.In_channel.seek in_file 0L;  (* reset seek position *)
     res
   ;;
 
+  (* ref_block will be used as reference for version and uid
+   *  block must match those two parameters to be accepted
+   *)
+  (*let find_valid_data_block_proc ~(ref_block:Block.t) (in_file:Core.In_channel.t) : Block.t option =
+
+  let output_decoded_data_proc ~(block:Block.t) (out_file:Core.Out_channel.t) : unit =
+
+  let decoder (in_file:Core.In_channel.t) (out_file:Core.Out_channel.t) : stats =*)
 end
