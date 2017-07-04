@@ -1,10 +1,8 @@
 open Stdint
 
-type error = [
-    `Failed_to_get_stat of string
-]
+exception File_access_error
 
-let getmtime ~(filename:string) : (float, error) result =
+let getmtime ~(filename:string) : float =
   (* Unix.stat should also be usable on windows
    * Reference :
    *  https://caml.inria.fr/pub/docs/manual-ocaml/libunix.html (Accessed on 2017-06-29)
@@ -12,13 +10,19 @@ let getmtime ~(filename:string) : (float, error) result =
    *)
   try
     let { Unix.st_mtime = mtime; _ } = Unix.stat filename in
-    Ok mtime
+    mtime
   with
-  | _ -> Error (`Failed_to_get_stat filename)
+  | _ -> raise File_access_error
 ;;
 
-let getmtime_uint64 ~(filename:string) : (uint64, string) result =
-  match getmtime ~filename with
-  | Ok    mtime -> Ok    (Uint64.of_float mtime)
-  | Error msg   -> Error msg
+let getmtime_uint64 ~(filename:string) : uint64 =
+  Uint64.of_float (getmtime ~filename)
+;;
+
+let getsize_uint64 ~(filename:string) : uint64 =
+  try
+    let { Unix.Large_file.st_size = size; _ } = Unix.Large_file.stat filename in
+    Uint64.of_int64 size
+  with
+  | _ -> raise File_access_error
 ;;

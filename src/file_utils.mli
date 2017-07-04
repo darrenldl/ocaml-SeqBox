@@ -1,5 +1,9 @@
 open Stdint
 
-val getmtime        : filename:string -> (float,  string) result
+exception File_access_error
 
-val getmtime_uint64 : filename:string -> (uint64, string) result
+val getmtime        : filename:string -> float
+
+val getmtime_uint64 : filename:string -> uint64
+
+val getsize_uint64  : filename:string -> uint64
