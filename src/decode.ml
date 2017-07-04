@@ -37,37 +37,45 @@ open Sbx_version
 open Sbx_block
 open Stream_file
 
+type stats = { blocks_decoded : int
+             }
+
 module Processor = struct
-  let rec find_metadata_block_proc (in_file:Core.In_channel.t) : Block.t option =
+  let find_metadata_block_proc (in_file:Core.In_channel.t) : Block.t option =
     let open Read_chunk in
     let len = 512 in  (* largest common divisor for version 1, 3 block size *)
-    let {no_more_bytes; chunk} = read in_file ~len in
-    if Bytes.length chunk < 16 then
-      None  (* at the end of file and got nothing *)
-    else
-      let test_header_bytes = Misc_utils.get_bytes chunk ~pos:0 ~len:16 in
-      let test_header : Header.raw_header option =
-        try
-          Some (Header.of_bytes test_header_bytes)
-        with
-        | Header.Invalid_bytes -> None in
-      match test_header with
-      | None        ->
-        find_metadata_block_proc in_file (* go to next block *)
-      | Some raw_header ->
-        let test_block : Block.t option =
-          if raw_header.seq_num = (Uint32.of_int 0) then
-            (* may have got a metadata block *)
-            try
-              Some (Block.of_bytes ~raw_header chunk)
-            with
-            | Block.Invalid_bytes -> None
-          else
-            None in
-        match test_block with
-        | None -> 
-          find_metadata_block_proc in_file (* go to next block *)
-        | Some block ->
-          Some block  (* found a valid block *)
+    let rec find_metadata_block_proc_internal () : Block.t option =
+      let {no_more_bytes; chunk} = read in_file ~len in
+      if no_more_bytes || Bytes.length chunk < 16 then
+        None  (* at the end of file and/or got nothing *)
+      else
+        let test_header_bytes = Misc_utils.get_bytes chunk ~pos:0 ~len:16 in
+        let test_header : Header.raw_header option =
+          try
+            Some (Header.of_bytes test_header_bytes)
+          with
+          | Header.Invalid_bytes -> None in
+        match test_header with
+        | None        ->
+          find_metadata_block_proc_internal () (* go to next block *)
+        | Some raw_header ->
+          let test_block : Block.t option =
+            if raw_header.seq_num = (Uint32.of_int 0) then
+              (* may have got a metadata block *)
+              try
+                Some (Block.of_bytes ~raw_header chunk)
+              with
+              | Block.Invalid_bytes -> None
+            else
+              None in
+          match test_block with
+          | None -> 
+            find_metadata_block_proc_internal () (* go to next block *)
+          | Some block ->
+            Some block  (* found a valid block *) in
+    let res = find_metadata_block_proc_internal () in
+    Core.In_channel.seek in_file 0L;
+    res
   ;;
+
 end
