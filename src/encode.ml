@@ -102,20 +102,26 @@ module Process = struct
     | _ -> raise File_metadata_get_failed
   ;;
 
-  let encode_file ~(want_meta:bool) ~(in_filename:string) ~(out_filename:string) : (stats, string) result =
-    let common   = Header.make_common_fields `V1 in
-    let metadata =
-      match want_meta with
-      | true  -> Some (get_file_metadata ~in_filename ~out_filename)
-      | false -> None in
-    let encoder  = Processor.make_in_out_encoder ~common ~metadata in
-    Stream.process_in_out ~in_filename ~out_filename ~processor:encoder
+  let encode_file ~(uid:bytes option) ~(want_meta:bool) ~(in_filename:string) ~(out_filename:string) : (stats, string) result =
+    try
+      let common   =
+        match uid with
+        | Some uid -> Header.make_common_fields ~uid `V1
+        | None     -> Header.make_common_fields      `V1 in
+      let metadata =
+        match want_meta with
+        | true  -> Some (get_file_metadata ~in_filename ~out_filename)
+        | false -> None in
+      let encoder  = Processor.make_in_out_encoder ~common ~metadata in
+      Stream.process_in_out ~in_filename ~out_filename ~processor:encoder
+    with
+    | Sbx_block.Header.Invalid_uid_length -> Error "Invalid uid length"
   ;;
 end
 
 let test_encode () =
   let open Metadata in
-  match Process.encode_file ~want_meta:true ~in_filename:"dummy_file" ~out_filename:"dummy_file_encoded" with
+  match Process.encode_file ~uid:None ~want_meta:true ~in_filename:"dummy_file" ~out_filename:"dummy_file_encoded" with
   | Ok _      -> Printf.printf "Okay\n"
   | Error msg -> Printf.printf "Error : %s\n" msg
 ;;
