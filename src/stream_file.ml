@@ -148,7 +148,7 @@ module Stream = struct
           ~finally:(fun () -> Core.In_channel.close in_file) in
       Ok res
     with
-    | Packaged_exn msg              -> Error msg
+    | Packaged_exn msg             -> Error msg
     | Read_into_buf.Invalid_offset -> Error "Invalid offset provided to Read_into_buf.read"
     | Read_into_buf.Invalid_length -> Error "Invalid length provided to Read_into_buf.read"
     | Sys_error _                  -> Error (Sprintf_helper.sprintf_failed_to_read ~in_filename)
