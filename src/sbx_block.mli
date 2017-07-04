@@ -10,7 +10,12 @@ module Header : sig
 
   type common_fields
 
-  type raw_header
+  type raw_header =
+    { version   : version
+    ; crc_ccitt : uint16
+    ; file_uid  : bytes
+    ; seq_num   : uint32
+    }
 
   val common_fields_to_ver : common_fields -> version
 
@@ -44,7 +49,7 @@ module Block : sig
 
   val to_bytes            : ?alt_seq_num:uint32 -> t -> bytes
 
-  val of_bytes            : ?raw_header:Header.raw_header -> bytes -> t
+  val of_bytes            : ?raw_header:Header.raw_header -> ?skipped_already:bool -> bytes -> t
 end
 
 (*type header        = Header.t

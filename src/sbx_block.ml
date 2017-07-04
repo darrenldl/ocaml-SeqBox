@@ -369,7 +369,7 @@ module Block : sig
 
   val to_bytes            : ?alt_seq_num:uint32           -> t                      -> bytes
 
-  val of_bytes            : ?raw_header:Header.raw_header -> bytes                  -> t
+  val of_bytes            : ?raw_header:Header.raw_header -> ?skipped_already:bool  -> bytes -> t
 
 end = struct
 
@@ -457,11 +457,16 @@ end = struct
       make_data_block     ~common ~data:raw_data
   ;;
 
-  let of_bytes ?(raw_header:Header.raw_header option) (raw_data:bytes) : t =
+  let of_bytes ?(raw_header:Header.raw_header option) ?(skipped_already:bool = false) (raw_data:bytes) : t =
     try
       let (header, data_offset) =
         match raw_header with
-        | Some h -> (h, 16)   (* skip over header bytes if a header is given *)
+        | Some h ->
+          (* skip over header bytes if a header is given and if not skipped already *)
+          if skipped_already then
+            (h, 0)
+          else
+            (h, 16)
         | None   -> let header_bytes = Misc_utils.get_bytes raw_data ~pos:0 ~len:16 in
           (Header.of_bytes header_bytes, 0) in
       let data         = Misc_utils.get_bytes_exc_range raw_data ~start_at:data_offset ~end_before:(Bytes.length raw_data) in
