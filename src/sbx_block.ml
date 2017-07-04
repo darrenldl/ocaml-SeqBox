@@ -532,7 +532,7 @@ end = struct
 
   let is_meta (block:t) : bool =
     match block_to_seq_num block with
-    | Some seq_num -> (Uint32.compare seq_num (Uint32.of_int 0)) = 0
+    | Some seq_num -> seq_num = (Uint32.of_int 0)
     | None         -> false
   ;;
 
