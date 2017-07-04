@@ -4,10 +4,12 @@ open Sbx_block
 open Stream_file
 open Nocrypto.Hash
 
-module Processor = struct
-  type stats = { blocks_written : int
-               }
+exception File_metadata_get_failed
 
+type stats = { blocks_written : int
+             }
+
+module Processor = struct
   (* Converts data to data blocks *)
   let rec data_to_block_proc ?(cur_block:int = 0) (in_file:Core.In_channel.t) (out_file:Core.Out_channel.t) ~(len:int) ~(common:Header.common_fields) : stats =
     let open Read_chunk in
@@ -84,16 +86,36 @@ module Processor = struct
   ;;
 end
 
+module Process = struct
+  let get_file_metadata ~(in_filename:string) ~(out_filename:string) : Metadata.t list =
+    try
+      let open Metadata in
+      let open File_utils in
+      let open Time_utils in
+      [ FNM in_filename
+      ; SNM out_filename
+      ; FSZ (getsize_uint64  ~filename:in_filename)
+      ; FDT (getmtime_uint64 ~filename:in_filename)
+      ; SDT (gettime_uint64 ())
+      ]
+    with
+    | _ -> raise File_metadata_get_failed
+  ;;
+
+  let encode_file ~(want_meta:bool) ~(in_filename:string) ~(out_filename:string) : (stats, string) result =
+    let common   = Header.make_common_fields `V1 in
+    let metadata =
+      match want_meta with
+      | true  -> Some (get_file_metadata ~in_filename ~out_filename)
+      | false -> None in
+    let encoder  = Processor.make_in_out_encoder ~common ~metadata in
+    Stream.process_in_out ~in_filename ~out_filename ~processor:encoder
+  ;;
+end
+
 let test_encode () =
   let open Metadata in
-  let common   = Header.make_common_fields `V1 in
-  let metadata = Some [ FNM "filename"
-                      ; SNM "filename.sbx"
-                      ; FDT (Uint64.of_int 1000000)
-                      ; SDT (Uint64.of_int 1000001)
-                      ] in
-  let encoder = Processor.make_in_out_encoder ~common ~metadata in
-  match Stream.process_in_out ~in_filename:"dummy_file" ~out_filename:"dummy_file_encoded" ~processor:encoder with
+  match Process.encode_file ~want_meta:true ~in_filename:"dummy_file" ~out_filename:"dummy_file_encoded" with
   | Ok _      -> Printf.printf "Okay\n"
   | Error msg -> Printf.printf "Error : %s\n" msg
 ;;
