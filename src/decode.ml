@@ -110,14 +110,29 @@ module Processor = struct
     find_valid_data_block_proc_internal ()
   ;;
 
-  let output_decoded_data_proc_if_any ~(block:Block.t option) (out_file:Core.Out_channel.t) : unit =
+  let output_decoded_data_proc ~(block:Block.t) (out_file:Core.Out_channel.t) : unit =
     let open Write_chunk in
-    match block with
-    | Some block ->
-      write out_file ~chunk:(Block.block_to_data block)
-    | None -> ()
+    write out_file ~chunk:(Block.block_to_data block)
   ;;
 
-  (*let decoder (in_file:Core.In_channel.t) (out_file:Core.Out_channel.t) : stats =*)
-    
+  let decode_and_output_proc ~(ref_block:Block.t) (in_file:Core.In_channel.t) (out_file:Core.Out_channel.t) : stats =
+    let rec decode_and_output_proc_internal ({blocks_decoded; _}:stats) : stats =
+      match find_valid_data_block_proc ~ref_block in_file with
+      | None       -> {blocks_decoded}
+      | Some block ->
+        output_decoded_data_proc ~block out_file;
+        decode_and_output_proc_internal {blocks_decoded = blocks_decoded + 1} in
+    decode_and_output_proc_internal {blocks_decoded = 0}
+  ;;
+
+  let decoder (in_file:Core.In_channel.t) (out_file:Core.Out_channel.t) : stats =
+    let ref_block : Block.t option =
+      (* try to find a metadata block first *)
+      match find_first_block_proc ~want_meta:true in_file with
+      | Some block -> Some block
+      | None       -> find_first_block_proc ~want_meta:false in_file (* get the first usable data block *) in
+    match ref_block with
+    | None           -> raise (Packaged_exn "no usable blocks in file")
+    | Some ref_block -> decode_and_output_proc ~ref_block in_file out_file
+  ;;
 end
