@@ -51,6 +51,12 @@ module Header : sig
 
   val to_bytes             : alt_seq_num:uint32 option -> header:t   -> data:bytes    -> bytes
 
+  val header_to_ver        : t -> version
+
+  val header_to_file_uid   : t -> bytes
+
+  val header_to_seq_num    : t -> uint32 option
+
 end = struct
 
   exception Invalid_uid_length
@@ -183,6 +189,18 @@ end = struct
     match Angstrom.parse_only Parser.header_p (`String data) with
     | Ok header -> header
     | Error _   -> raise Invalid_bytes
+  ;;
+
+  let header_to_ver      (header:t) : version =
+    header.common.version
+  ;;
+
+  let header_to_file_uid (header:t) : bytes =
+    header.common.file_uid
+  ;;
+
+  let header_to_seq_num  (header:t) : uint32 option =
+    header.seq_num
   ;;
 end
 
@@ -371,6 +389,12 @@ module Block : sig
 
   val of_bytes            : ?raw_header:Header.raw_header -> ?skipped_already:bool  -> bytes -> t
 
+  val block_to_ver        : t -> version
+
+  val block_to_file_uid   : t -> bytes
+
+  val block_to_seq_num    : t -> uint32 option
+
 end = struct
 
   exception Too_much_data
@@ -474,6 +498,25 @@ end = struct
       raw_block_to_block raw_block
     with
     | Misc_utils.Invalid_range -> raise Invalid_size
+  ;;
+
+  let block_to_header (block:t) : Header.t =
+    match block with
+    | Data {header; _} -> header
+    | Meta {header; _} -> header
+  ;;
+
+  let block_to_ver      (block:t) : version =
+    Header.header_to_ver (block_to_header block)
+  ;;
+
+  let block_to_file_uid (block:t) : bytes =
+    Header.header_to_file_uid (block_to_header block)
+  ;;
+
+  let block_to_seq_num  (block:t) : uint32 option =
+    Header.header_to_seq_num (block_to_header block)
+  ;;
 end
 
 (*type header        = Header.t

@@ -50,6 +50,12 @@ module Block : sig
   val to_bytes            : ?alt_seq_num:uint32 -> t -> bytes
 
   val of_bytes            : ?raw_header:Header.raw_header -> ?skipped_already:bool -> bytes -> t
+
+  val block_to_ver        : t -> version
+
+  val block_to_file_uid   : t -> bytes
+
+  val block_to_seq_num    : t -> uint32 option
 end
 
 (*type header        = Header.t
