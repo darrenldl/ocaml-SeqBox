@@ -88,8 +88,9 @@ module Processor = struct
    *)
   let find_valid_data_block_proc ~(ref_block:Block.t) (in_file:Core.In_channel.t) : Block.t option =
     let open Read_chunk in
-    let ver = Block.block_to_ver ref_block in
-    let len = ver_to_block_size ver in
+    let ref_ver      = Block.block_to_ver ref_block in
+    let len          = ver_to_block_size ref_ver in
+    let ref_file_uid = Block.block_to_file_uid ref_block in
     let rec find_valid_data_block_proc_internal () =
       let {chunk; _} = read in_file ~len in
       let block =
@@ -101,11 +102,19 @@ module Processor = struct
         | Block.Invalid_bytes    -> None in
       match block with
       | Some block ->
-        if Block.is_meta block then
-          (* don't return metadata block *)
-          find_valid_data_block_proc_internal () (* move onto finding next block *)
-        else
-          Some block
+        begin
+          if Block.is_meta block then
+            (* don't return metadata block *)
+            find_valid_data_block_proc_internal () (* move onto finding next block *)
+          else
+            let file_uid = Block.block_to_file_uid block in
+            let ver      = Block.block_to_ver      block in
+            (* make sure uid and version matches *)
+            if file_uid = ref_file_uid && ver = ref_ver then
+              Some block
+            else
+              find_valid_data_block_proc_internal () (* move onto finding next block *)
+        end
       | None       -> find_valid_data_block_proc_internal () (* move onto finding next block *) in
     find_valid_data_block_proc_internal ()
   ;;
@@ -134,5 +143,11 @@ module Processor = struct
     match ref_block with
     | None           -> raise (Packaged_exn "no usable blocks in file")
     | Some ref_block -> decode_and_output_proc ~ref_block in_file out_file
+  ;;
+end
+
+module Process = struct
+  let decode_file ~(in_filename:string) ~(out_filename:string) : (stats, string) result =
+    Stream.process_in_out ~in_filename ~out_filename ~processor:Processor.decoder
   ;;
 end
