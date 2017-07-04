@@ -74,6 +74,29 @@ N.B. Current versions differs only by blocksize.
 | HSH | crypto hash (SHA256, using [Multihash](http://multiformats.io) protocol) |
 | PID | parent UID (*not used at the moment*)|
 
+## Index of source code
+```
+In_file module (in_file.ml, in_file.mli)
+  - Hashing and loading entire file data in memory
+  - No longer used in favour of Stream_file module
+Sbx_block module (sbx_block.ml, sbx_block.mli)
+  - Single SBX block construction/access, encoding to bytes and decoding from bytes
+  - Submodules
+    - Header
+    - Metadata
+    - Block
+Stream_file (stream_file.ml, stream_file.mli)
+  - Provides framework for streamed processing of files
+  - Abstracts away low-level file interaction, allows other modules to only construct "processor" to be run by the framework
+    - Processor is a function that only deals with input and/or output channel
+Encode module (encode.ml, encode.mli)
+  - Encode file (and directly output into another file)
+  - Relies on processor framework in Stream_file
+Decode module (decode.ml, decode.mli)
+  - Decode file (and directly output into another file)
+  - Relies on processor framework in Stream_file
+```
+
 ## Progress Report
   - Single SBX block encoding - done (Sbx_block module)
   - Single SBX block decoding - done (Sbx_block module)
