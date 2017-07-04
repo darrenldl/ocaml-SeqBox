@@ -56,6 +56,8 @@ module Block : sig
   val block_to_file_uid   : t -> bytes
 
   val block_to_seq_num    : t -> uint32 option
+
+  val block_to_data       : t -> bytes
 end
 
 (*type header        = Header.t

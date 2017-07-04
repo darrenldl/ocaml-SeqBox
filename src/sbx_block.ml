@@ -395,6 +395,8 @@ module Block : sig
 
   val block_to_seq_num    : t -> uint32 option
 
+  val block_to_data       : t -> bytes
+
 end = struct
 
   exception Too_much_data
@@ -516,6 +518,12 @@ end = struct
 
   let block_to_seq_num  (block:t) : uint32 option =
     Header.header_to_seq_num (block_to_header block)
+  ;;
+
+  let block_to_data     (block:t) : bytes =
+    match block with
+    | Data {data; _} -> data
+    | Meta {data; _} -> data
   ;;
 end
 
