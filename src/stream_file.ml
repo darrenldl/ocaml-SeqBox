@@ -54,7 +54,7 @@ module Read_into_buf = struct
         match len with
         | Some x -> x
         | None   -> (Bytes.length buf) - offset in
-      if len <= 0 then
+      if len < 0 then
         raise Invalid_length
       else
         let read_count    : int  = Core.In_channel.input in_file ~buf ~pos:offset ~len in
@@ -94,7 +94,7 @@ module Write_from_buf = struct
         match len with
         | Some x -> x
         | None   -> (Bytes.length buf) - offset in
-      if len <= 0 then
+      if len < 0 then
         raise Invalid_length
       else
         Core.Out_channel.output out_file ~buf ~pos:offset ~len
@@ -137,7 +137,7 @@ module Stream = struct
     | Write_from_buf.Invalid_offset -> Error "Invalid offset provided to Write_from_buf.write"
     | Write_from_buf.Invalid_length -> Error "Invalid length provided to Write_from_buf.write"
     | Sys_error _                   -> Error (Sprintf_helper.sprintf_failed_to_rw ~in_filename ~out_filename)
-    | _                             -> Error "Unknown failure"
+    (*| _                             -> Error "Unknown failure"*)
   ;;
 
   let process_in ~(in_filename:string) ~(processor:('a in_processor))   : ('a, string) result =
