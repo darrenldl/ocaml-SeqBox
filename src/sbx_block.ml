@@ -397,6 +397,10 @@ module Block : sig
 
   val block_to_data       : t -> bytes
 
+  val is_meta             : t -> bool
+
+  val is_data             : t -> bool
+
 end = struct
 
   exception Too_much_data
@@ -524,6 +528,16 @@ end = struct
     match block with
     | Data {data; _} -> data
     | Meta {data; _} -> data
+  ;;
+
+  let is_meta (block:t) : bool =
+    match block_to_seq_num block with
+    | Some seq_num -> (Uint32.compare seq_num (Uint32.of_int 0)) = 0
+    | None         -> false
+  ;;
+
+  let is_data (block:t) : bool =
+    not (is_meta block)
   ;;
 end
 
