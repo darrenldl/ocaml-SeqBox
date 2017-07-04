@@ -75,8 +75,15 @@ N.B. Current versions differs only by blocksize.
 | PID | parent UID (*not used at the moment*)|
 
 ## Progress Report
-  - Streamed encoding - done (Encode module)
-  - Streamed decoding - in progress (Decode module)
+  - Single SBX block encoding - done (Sbx_block module)
+  - Single SBX block decoding - done (Sbx_block module)
+  - Streamed processing framework - done (Streamed_file module)
+  - Streamed file encoding - done (Encode module)
+  - Streamed file decoding - in progress (Decode module)
+  - Commandline interface for encoding and decoding - not started
+  - Scan mode - not started
+  - Recovery mode - not started
+  - Commandline options for scanning and recovery - not started
 
 ## License
 The following files directly from libcrc(with syntax modification) are under the MIT license as used by libcrc
