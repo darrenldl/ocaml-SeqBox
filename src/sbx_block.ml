@@ -338,7 +338,7 @@ end = struct
       >>| (fun x -> SDT x)
     ;;
     let hsh_p : metadata Angstrom.t =
-      string "HSH" *> string "\x12\x20" *> take 0x20
+      string "HSH" *> string "\x22" *> string "\x12\x20" *> take 0x20
       >>| (fun x -> HSH x)
     ;;
     (*let pid_p : metadata Angstrom.t =
@@ -357,9 +357,7 @@ end = struct
     ;;
 
     let filler_p =
-      (many (char '\x1A')) *> at_end_of_input
-      >>= (function | true  -> return ()
-                    | false -> fail "")
+      (many (char '\x1A')) *> end_of_input
     ;;
 
     let fields_p : (metadata list) Angstrom.t =
