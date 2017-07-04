@@ -137,7 +137,7 @@ module Stream = struct
     | Write_from_buf.Invalid_offset -> Error "Invalid offset provided to Write_from_buf.write"
     | Write_from_buf.Invalid_length -> Error "Invalid length provided to Write_from_buf.write"
     | Sys_error _                   -> Error (Sprintf_helper.sprintf_failed_to_rw ~in_filename ~out_filename)
-    (*| _                             -> Error "Unknown failure"*)
+    | _                             -> Error "Unknown failure"
   ;;
 
   let process_in ~(in_filename:string) ~(processor:('a in_processor))   : ('a, string) result =
