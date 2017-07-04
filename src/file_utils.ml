@@ -21,7 +21,7 @@ let getmtime_uint64 ~(filename:string) : uint64 =
 
 let getsize_uint64 ~(filename:string) : uint64 =
   try
-    let { Unix.Large_file.st_size = size; _ } = Unix.Large_file.stat filename in
+    let { Unix.LargeFile.st_size = size; _ } = Unix.LargeFile.stat filename in
     Uint64.of_int64 size
   with
   | _ -> raise File_access_error
