@@ -112,7 +112,7 @@ module Write_chunk = struct
 end
 
 module Stream = struct
-  type 'a in_out_processor = Core.In_channel.t -> Core.Out_channel.t -> 'a
+  type 'a in_out_processor = Core.In_channel.t  -> Core.Out_channel.t -> 'a
 
   type 'a in_processor     = Core.In_channel.t  -> 'a
 
