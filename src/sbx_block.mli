@@ -10,9 +10,13 @@ module Header : sig
 
   type common_fields
 
+  type raw_header
+
   val common_fields_to_ver : common_fields -> version
 
   val make_common_fields   : ?uid:bytes -> version -> common_fields
+
+  val of_bytes             : bytes -> raw_header
 end
 
 module Metadata : sig
@@ -40,7 +44,7 @@ module Block : sig
 
   val to_bytes            : ?alt_seq_num:uint32 -> t -> bytes
 
-  val of_bytes            : bytes -> t
+  val of_bytes            : ?raw_header:Header.raw_header -> bytes -> t
 end
 
 (*type header        = Header.t

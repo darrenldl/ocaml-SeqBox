@@ -281,8 +281,14 @@ module Metadata = struct
       (* pid_p *)
     ;;
 
+    let filler_p =
+      (many (char '\x1A')) *> at_end_of_input
+      >>= (function | true  -> return ()
+                    | false -> fail "")
+    ;;
+
     let fields_p : (metadata list) Angstrom.t =
-      many field_p
+      (many field_p) <* filler_p
     ;;
   end
 
@@ -333,13 +339,10 @@ module Block = struct
     Bytes.concat "" [header_bytes; data]
   ;;
 
-  module Parser = struct
+  (*module Parser = struct
     open Angstrom
 
-    let filler_p =
-      many (char '\x1A')
-    ;;
-  end
+  end*)
 
   type raw_block =
     { header : Header.raw_header
@@ -381,11 +384,14 @@ module Block = struct
       make_data_block     ~common ~data:raw_data
   ;;
 
-  let of_bytes (raw_data:bytes) : t =
+  let of_bytes ?(raw_header:Header.raw_header option) (raw_data:bytes) : t =
     try
-      let header_bytes = Misc_utils.get_bytes raw_data ~pos:0 ~len:16 in
-      let header       = Header.of_bytes header_bytes in
-      let data         = Misc_utils.get_bytes_exc_range raw_data ~start_at:16 ~end_before:(Bytes.length raw_data) in
+      let (header, data_offset) =
+        match raw_header with
+        | Some h -> (h, 16)
+        | None   -> let header_bytes = Misc_utils.get_bytes raw_data ~pos:0 ~len:16 in
+          (Header.of_bytes header_bytes, 0) in
+      let data         = Misc_utils.get_bytes_exc_range raw_data ~start_at:data_offset ~end_before:(Bytes.length raw_data) in
       let raw_block    = {header; data} in
       raw_block_to_block raw_block
     with
