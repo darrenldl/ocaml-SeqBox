@@ -111,7 +111,7 @@ module Processor = struct
     let open Write_chunk in
     match block with
     | Some block ->
-      write out_file ~chunk:(Block.to_data block)
+      write out_file ~chunk:(Block.block_to_data block)
     | None -> ()
   ;;
 
