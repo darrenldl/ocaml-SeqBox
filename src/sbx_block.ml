@@ -217,6 +217,8 @@ module Metadata : sig
     | HSH of bytes
     | PID of bytes
 
+  val dedup    : t list      -> t list
+
   val to_bytes : ver:version -> fields:t list -> bytes
 
   val of_bytes : bytes       -> t list
@@ -264,6 +266,28 @@ end = struct
         length_distribution_helper vs (str :: acc) in
     let distribution_str = length_distribution_helper lst [] in
     String.concat "\n" ["the length distribution of the metadata:"; distribution_str]
+  ;;
+
+  let same_id (a:t) (b:t) : bool =
+    match (a, b) with
+    | (FNM _, FNM _) -> true
+    | (SNM _, SNM _) -> true
+    | (FSZ _, FSZ _) -> true
+    | (FDT _, FDT _) -> true
+    | (SDT _, SDT _) -> true
+    | (HSH _, HSH _) -> true
+    | (PID _, PID _) -> true
+    | (_    , _    ) -> false
+  ;;
+
+  let dedup (fields:t list) : t list =
+    let rec dedup_internal (acc:t list) (fields:t list) : t list =
+      match fields with
+      | []      -> acc
+      | v :: vs ->
+        let new_acc = if List.exists (same_id v) acc then acc else v :: acc in
+        dedup_internal new_acc vs in
+    dedup_internal [] fields
   ;;
 
   let to_bytes (entry:t) : bytes =
@@ -368,7 +392,7 @@ end = struct
 
   let of_bytes (data:bytes) : t list =
     match Angstrom.parse_only Parser.fields_p (`String data) with
-    | Ok fields -> fields
+    | Ok fields -> dedup fields
     | Error _   -> raise Invalid_bytes
   ;;
 end
