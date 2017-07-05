@@ -347,13 +347,14 @@ end = struct
     ;;*)
 
     let field_p : metadata Angstrom.t =
-      fnm_p <|>
-      snm_p <|>
-      fsz_p <|>
-      fdt_p <|>
-      sdt_p <|>
-      hsh_p
-      (* pid_p *)
+      choice [ fnm_p
+             ; snm_p
+             ; fsz_p
+             ; fdt_p
+             ; sdt_p
+             ; hsh_p
+               (* ; pid_p *)
+             ]
     ;;
 
     let filler_p =
