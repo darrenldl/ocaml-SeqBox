@@ -61,9 +61,12 @@ module Block : sig
 
   val block_to_data       : t -> bytes
 
+  val block_to_meta       : t -> Metadata.t list
+
   val is_meta             : t -> bool
 
   val is_data             : t -> bool
+
 end
 
 (*type header        = Header.t

@@ -395,6 +395,8 @@ module Block : sig
 
   val block_to_data       : t -> bytes
 
+  val block_to_meta       : t -> Metadata.t list
+
   val is_meta             : t -> bool
 
   val is_data             : t -> bool
@@ -525,6 +527,11 @@ end = struct
     | Data {data; _} -> data
     | Meta {data; _} -> data
   ;;
+
+  let block_to_meta     (block:t) : Metadata.t list =
+    match block with
+    | Data _           -> []
+    | Meta {fields; _} -> fields
 
   let is_meta (block:t) : bool =
     match block_to_seq_num block with
