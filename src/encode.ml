@@ -6,25 +6,25 @@ open Nocrypto.Hash
 
 exception File_metadata_get_failed
 
-type stats = { blocks_written : int
+type stats = { blocks_written : int64
              }
 
 module Processor = struct
   (* Converts data to data blocks *)
-  let rec data_to_block_proc ?(cur_block:int = 0) (in_file:Core.In_channel.t) (out_file:Core.Out_channel.t) ~(len:int) ~(common:Header.common_fields) : stats =
+  let rec data_to_block_proc ?(cur_block:int64 = 0L) (in_file:Core.In_channel.t) (out_file:Core.Out_channel.t) ~(len:int) ~(common:Header.common_fields) : stats =
     let open Read_chunk in
     let open Write_chunk in
     match read in_file ~len with
     | None           -> { blocks_written = cur_block }
     | Some { chunk } ->
       let block       = Block.make_data_block ~common ~data:chunk in
-      let alt_seq_num = Uint32.of_int (cur_block + 1) in (* always off by 1 *)
+      let alt_seq_num = Uint32.of_int64 (Int64.add cur_block 1L) in (* always off by +1 *)
       let block_bytes = Block.to_bytes ~alt_seq_num block in
       write out_file ~chunk:block_bytes;
-      data_to_block_proc ~cur_block:(cur_block + 1) in_file out_file ~len ~common
+      data_to_block_proc ~cur_block:(Int64.add cur_block 1L) in_file out_file ~len ~common
   ;;
 
-  let rec data_to_block_proc_w_hash ?(cur_block:int = 0) ?(hash_state:SHA256.t = SHA256.init()) (in_file:Core.In_channel.t) (out_file:Core.Out_channel.t) ~(len:int) ~(common:Header.common_fields) : stats * bytes =
+  let rec data_to_block_proc_w_hash ?(cur_block:int64 = 0L) ?(hash_state:SHA256.t = SHA256.init()) (in_file:Core.In_channel.t) (out_file:Core.Out_channel.t) ~(len:int) ~(common:Header.common_fields) : stats * bytes =
     let open Read_chunk in
     let open Write_chunk in
     match read in_file ~len with
@@ -32,13 +32,13 @@ module Processor = struct
                          Conv_utils.sha256_hash_state_to_bytes hash_state)
     | Some { chunk } ->
       let block       = Block.make_data_block ~common ~data:chunk in
-      let alt_seq_num = Uint32.of_int (cur_block + 1) in (* always off by 1 *)
+      let alt_seq_num = Uint32.of_int64 (Int64.add cur_block 1L) in (* always off by +1 *)
       let block_bytes = Block.to_bytes ~alt_seq_num block in
       (* update hash *)
       SHA256.feed hash_state (Cstruct.of_bytes chunk);
       (* write to file *)
       write out_file ~chunk:block_bytes;
-      data_to_block_proc_w_hash ~cur_block:(cur_block + 1) ~hash_state in_file out_file ~len ~common
+      data_to_block_proc_w_hash ~cur_block:(Int64.add cur_block 1L) ~hash_state in_file out_file ~len ~common
   ;;
 
   let make_in_out_encoder ~(common:Header.common_fields) ~(metadata:(Metadata.t list) option) : stats Stream.in_out_processor =
@@ -56,11 +56,9 @@ module Processor = struct
          try
            (* write a empty metadata block first to shift space and also to test length of metadata fields *)
            let open Metadata in
-           let dummy_multihash = String.make 0x20 '\x00' in
            let fields_except_hash =
              List.filter (function | HSH _ -> false | _ -> true) metadata_list in
-           let dummy_fields               = (HSH dummy_multihash) :: fields_except_hash in
-           let dummy_metadata_block       = Block.make_metadata_block ~common ~fields:dummy_fields in
+           let dummy_metadata_block       = Block.make_metadata_block ~common ~fields:fields_except_hash in
            let dummy_metadata_block_bytes = Block.to_bytes dummy_metadata_block in
            write out_file ~chunk:dummy_metadata_block_bytes;
            (* write data blocks *)
@@ -74,7 +72,7 @@ module Processor = struct
            Core.Out_channel.seek out_file 0L;
            write out_file ~chunk:metadata_block_bytes;
            (* update stats *)
-           { blocks_written = blocks_written + 1 }
+           { blocks_written = Int64.add blocks_written 1L }
          with
          | Metadata.Too_much_data msg -> raise (Packaged_exn msg)
       )

@@ -4,7 +4,7 @@ open Stream_file
 
 exception File_metadata_get_failed
 
-type stats = { blocks_written : int
+type stats = { blocks_written : int64
              }
 
 module Processor : sig
