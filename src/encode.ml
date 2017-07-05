@@ -14,35 +14,30 @@ module Processor = struct
   let rec data_to_block_proc ?(cur_block:int = 0) (in_file:Core.In_channel.t) (out_file:Core.Out_channel.t) ~(len:int) ~(common:Header.common_fields) : stats =
     let open Read_chunk in
     let open Write_chunk in
-    let {no_more_bytes; chunk} = read in_file ~len in
-    let block                  = Block.make_data_block ~common ~data:chunk in
-    let alt_seq_num            = Uint32.of_int (cur_block + 1) in (* always off by 1 *)
-    let block_bytes            = Block.to_bytes ~alt_seq_num block in
-    write out_file ~chunk:block_bytes;
-    if no_more_bytes then
-      { blocks_written = cur_block
-      }
-    else
+    match read in_file ~len with
+    | None           -> { blocks_written = cur_block }
+    | Some { chunk } ->
+      let block       = Block.make_data_block ~common ~data:chunk in
+      let alt_seq_num = Uint32.of_int (cur_block + 1) in (* always off by 1 *)
+      let block_bytes = Block.to_bytes ~alt_seq_num block in
+      write out_file ~chunk:block_bytes;
       data_to_block_proc ~cur_block:(cur_block + 1) in_file out_file ~len ~common
   ;;
 
   let rec data_to_block_proc_w_hash ?(cur_block:int = 0) ?(hash_state:SHA256.t = SHA256.init()) (in_file:Core.In_channel.t) (out_file:Core.Out_channel.t) ~(len:int) ~(common:Header.common_fields) : stats * bytes =
     let open Read_chunk in
     let open Write_chunk in
-    let {no_more_bytes; chunk} = read in_file ~len in
-    let block                  = Block.make_data_block ~common ~data:chunk in
-    let alt_seq_num            = Uint32.of_int (cur_block + 1) in (* always off by 1 *)
-    let block_bytes            = Block.to_bytes ~alt_seq_num block in
-    (* update hash *)
-    SHA256.feed hash_state (Cstruct.of_bytes chunk);
-    (* write to file *)
-    write out_file ~chunk:block_bytes;
-    if no_more_bytes then
-      ({ blocks_written = cur_block
-       },
-       Conv_utils.sha256_hash_state_to_bytes hash_state
-      )
-    else
+    match read in_file ~len with
+    | None           -> ({ blocks_written = cur_block },
+                         Conv_utils.sha256_hash_state_to_bytes hash_state)
+    | Some { chunk } ->
+      let block       = Block.make_data_block ~common ~data:chunk in
+      let alt_seq_num = Uint32.of_int (cur_block + 1) in (* always off by 1 *)
+      let block_bytes = Block.to_bytes ~alt_seq_num block in
+      (* update hash *)
+      SHA256.feed hash_state (Cstruct.of_bytes chunk);
+      (* write to file *)
+      write out_file ~chunk:block_bytes;
       data_to_block_proc_w_hash ~cur_block:(cur_block + 1) ~hash_state in_file out_file ~len ~common
   ;;
 

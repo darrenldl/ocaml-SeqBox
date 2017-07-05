@@ -57,8 +57,10 @@ module Read_into_buf = struct
         raise Invalid_length
       else
         let read_count    : int  = Core.In_channel.input in_file ~buf ~pos:offset ~len in
-        let no_more_bytes : bool = read_count < len in
-        {no_more_bytes; read_count}
+        if read_count = 0 then
+          None
+        else
+          Some { read_count }
   ;;
 end
 
@@ -69,9 +71,10 @@ module Read_chunk = struct
   let read (in_file:Core.In_channel.t) ~(len:int) : read_result =
     try
       let buf = General_helper.make_buffer len in
-      let {no_more_bytes; read_count} : Read_into_buf.read_result = Read_into_buf.read in_file ~buf in
-      let chunk = General_helper.get_from_buf ~buf ~pos:0 ~len:read_count in
-      {no_more_bytes; chunk}
+      match Read_into_buf.read in_file ~buf with
+      | None                -> None
+      | Some { read_count } -> let chunk = General_helper.get_from_buf ~buf ~pos:0 ~len:read_count in
+        Some { chunk }
     with
     (* Read_chunk.read should never raise any exceptions related to use of Read_into_buf.read *)
     | Read_into_buf.Invalid_offset
