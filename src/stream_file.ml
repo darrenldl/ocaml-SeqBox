@@ -56,9 +56,11 @@ module Read_into_buf = struct
       if len < 0 then
         raise Invalid_length
       else
-        let read_count    : int  = Core.In_channel.input in_file ~buf ~pos:offset ~len in
-        if read_count = 0 then
+        let read_count : int = Core.In_channel.input in_file ~buf ~pos:offset ~len in
+        if      read_count = 0 then
           None
+        else if read_count < 0 then
+          assert false
         else
           Some { read_count }
   ;;
