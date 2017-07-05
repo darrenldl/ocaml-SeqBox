@@ -180,12 +180,12 @@ module Processor = struct
     else
       (* determine position to write to using reference block and block's sequence number *)
       let ref_ver           = Block.block_to_ver ref_block in
-      let len       : int64 = Int64.of_int    (ver_to_block_size ref_ver) in
+      let data_len  : int64 = Int64.of_int    (ver_to_data_size ref_ver) in
       match Block.block_to_seq_num block with
       | None         -> assert false
       | Some seq_num ->
         let seq_num   : int64 = Uint32.to_int64 seq_num in
-        let write_pos : int64 = (seq_num <-> 1L) <*> len in  (* seq_num is guaranteed to be > 0 due to above check of is_meta *)
+        let write_pos : int64 = (seq_num <-> 1L) <*> data_len in  (* seq_num is guaranteed to be > 0 due to above check of is_meta *)
         (* seek to the proper position then write *)
         Core.Out_channel.seek out_file write_pos;
         write out_file ~chunk:(Block.block_to_data block)
