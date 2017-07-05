@@ -6,3 +6,7 @@ src/*.byte
 /src/angstrom.mli
 /src/angstrom.mli.reference_only
 /src/angstrom_reference_only.mli
+/src/dummy_file
+/src/dummy_file2
+/src/dummy_file_copy
+/src/dummy_file_encoded
