@@ -134,13 +134,14 @@ module Stream = struct
               Core.In_channel.close in_file) in
       Ok res
     with
-    | Packaged_exn msg              -> Error msg
-    | Read_into_buf.Invalid_offset  -> Error "Invalid offset provided to Read_into_buf.read"
-    | Read_into_buf.Invalid_length  -> Error "Invalid length provided to Read_into_buf.read"
-    | Write_from_buf.Invalid_offset -> Error "Invalid offset provided to Write_from_buf.write"
-    | Write_from_buf.Invalid_length -> Error "Invalid length provided to Write_from_buf.write"
-    | Sys_error _                   -> Error (Sprintf_helper.sprintf_failed_to_rw ~in_filename ~out_filename)
-    | _                             -> Error "Unknown failure"
+    | Packaged_exn msg                -> Error msg
+    | Assert_failure (loc, line, col) -> Error (Printf.sprintf "Assert failure at %s %d %d" loc line col)
+    | Read_into_buf.Invalid_offset    -> Error "Invalid offset provided to Read_into_buf.read"
+    | Read_into_buf.Invalid_length    -> Error "Invalid length provided to Read_into_buf.read"
+    | Write_from_buf.Invalid_offset   -> Error "Invalid offset provided to Write_from_buf.write"
+    | Write_from_buf.Invalid_length   -> Error "Invalid length provided to Write_from_buf.write"
+    | Sys_error _                     -> Error (Sprintf_helper.sprintf_failed_to_rw ~in_filename ~out_filename)
+    | _                               -> Error "Unknown failure"
   ;;
 
   let process_in ~(in_filename:string) ~(processor:('a in_processor))   : ('a, string) result =
@@ -151,11 +152,12 @@ module Stream = struct
           ~finally:(fun () -> Core.In_channel.close in_file) in
       Ok res
     with
-    | Packaged_exn msg             -> Error msg
-    | Read_into_buf.Invalid_offset -> Error "Invalid offset provided to Read_into_buf.read"
-    | Read_into_buf.Invalid_length -> Error "Invalid length provided to Read_into_buf.read"
-    | Sys_error _                  -> Error (Sprintf_helper.sprintf_failed_to_read ~in_filename)
-    | _                            -> Error "Unknown failure"
+    | Packaged_exn msg                -> Error msg
+    | Assert_failure (loc, line, col) -> Error (Printf.sprintf "Assert failure at %s %d %d" loc line col)
+    | Read_into_buf.Invalid_offset    -> Error "Invalid offset provided to Read_into_buf.read"
+    | Read_into_buf.Invalid_length    -> Error "Invalid length provided to Read_into_buf.read"
+    | Sys_error _                     -> Error (Sprintf_helper.sprintf_failed_to_read ~in_filename)
+    | _                               -> Error "Unknown failure"
   ;;
 
   let process_out ~(out_filename:string) ~(processor:('a out_processor)) : ('a, string) result =
@@ -166,11 +168,12 @@ module Stream = struct
           ~finally:(fun () -> Core.Out_channel.close out_file) in
       Ok res
     with
-    | Packaged_exn msg              -> Error msg
-    | Write_from_buf.Invalid_offset -> Error "Invalid offset provided to Write_from_buf.write"
-    | Write_from_buf.Invalid_length -> Error "Invalid length provided to Write_from_buf.write"
-    | Sys_error _                   -> Error (Sprintf_helper.sprintf_failed_to_write ~out_filename)
-    | _                             -> Error "Unknown failure"
+    | Packaged_exn msg                -> Error msg
+    | Assert_failure (loc, line, col) -> Error (Printf.sprintf "Assert failure at %s %d %d" loc line col)
+    | Write_from_buf.Invalid_offset   -> Error "Invalid offset provided to Write_from_buf.write"
+    | Write_from_buf.Invalid_length   -> Error "Invalid length provided to Write_from_buf.write"
+    | Sys_error _                     -> Error (Sprintf_helper.sprintf_failed_to_write ~out_filename)
+    | _                               -> Error "Unknown failure"
   ;;
 end
 
