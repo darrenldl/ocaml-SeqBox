@@ -11,8 +11,16 @@ CRC-CCITT implementation is translated from libcrc (https://github.com/lammertb/
 
 See License section for details on licensing
 
+## Special features of ocaml-SeqBox
+Allows duplicate data blocks to exist within one sbx container(the duplicated block can be metadata block or data block)
+  - First valid metadata block will be used(if exists)
+  - For all other data blocks, the last seen valid data block will be used for a given sequence number
+  - This means you can concatenate multiple copies of sbx container together directly to increase chance of recovery in case of corruption
+
 ## Technical Specification
 The following specification is copied directly from the official specification with slight modification(version 2, 3 are stated excplicitly as not implemented).
+
+Also see section "Features currently NOT planned to be implemented" for features ocaml-SeqBox is probably not going to have
 
 Byte order: Big Endian
 ### Common blocks header:
@@ -52,7 +60,7 @@ N.B. Current versions differs only by blocksize.
 |---- | --------- | ------- |
 |  1  | 512       | default |
 |  2  | 128       | NOT IMPLEMENTED |
-|  3  | 4096      | NOT IMPLEMENTED |
+|  3  | 4096      | NOT IMPLEMENTED (yet) |
 
 ### Metadata encoding:
 
@@ -73,6 +81,15 @@ N.B. Current versions differs only by blocksize.
 | SDT | sbx date & time (8 bytes) |
 | HSH | crypto hash (SHA256, using [Multihash](http://multiformats.io) protocol) |
 | PID | parent UID (*not used at the moment*)|
+
+#### Features currently NOT planned to be implemented
+  - Data hiding (XOR encoding/decoding in official seqbox)
+    - Provides neither sufficiently strong encryption nor sufficient stealth for any serious attempt to hide/secure data
+    - You should use the appropriate tools for encryption
+  - Version 2 of SBX block
+    - Current set of metadata cannot fit into a 128 bytes block size
+    - No way to extend storage of metadata block in current specs
+    - 128 bytes block is likely only going to be useful for archaic systems
 
 ## Index of source code
 
