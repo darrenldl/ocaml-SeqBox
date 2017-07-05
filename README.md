@@ -164,20 +164,20 @@ Data block is valid if and only if
     - if reference block is a metadata block, and contains the hash field, then the output file will be hashed to check against the recorded hash
     - otherwise nothing is done
 
-To successfully encode a file
+#### To successfully encode a file
   - File size must be within threshold
     - For version 1, that means  496 * 2^32 - 1 ~=  1.9375 TiB, where 496 is data size, obtained via 512(block size) - 16(header size)
     - For version 2, that means 4080 * 2^32 - 1 ~= 15.9375 TiB, where 4080 is data size, obtained via 4096(block size) - 16(header size)
 
-To successfully decode a sbx container
+#### To successfully decode a sbx container
   - At least one valid data block for each position must exist
   - If data padding was done for the last block, then at least one valid metadata block must exist for truncation of the output file to happen
 
-Handling of duplicate metadata/data blocks
+#### Handling of duplicate metadata/data blocks
   - First valid metadata block will be used(if exists)
   - For all other data blocks, the last seen valid data block will be used for a given sequence number
 
-Handling of duplicate metadata in metadata block given the block is valid
+#### Handling of duplicate metadata in metadata block given the block is valid
   - For a given ID, only the first occurance of the metadata will be used
     e.g. if there are two FNM metadata fields in the metadata block, only the first (in terms of byte order) will be used
 
