@@ -55,10 +55,10 @@ module Processor = struct
           (* the error has something to do with ~skipped_already maybe *)
           Some (Block.of_bytes ~raw_header chunk)
         with
-        | Header.Invalid_bytes   -> print_endline "find_first_block_proc : invalid header bytes"; None
-        | Metadata.Invalid_bytes -> print_endline "find_first_block_proc : invalid meta bytes"; None
-        | Block.Invalid_bytes    -> print_endline "find_first_block_proc : invalid block bytes"; None
-        | Block.Invalid_size     -> print_endline "find_first_block_proc : invalid block size"; None )
+        | Header.Invalid_bytes
+        | Metadata.Invalid_bytes
+        | Block.Invalid_bytes
+        | Block.Invalid_size     -> None )
       else (
         None )in
     let rec find_first_block_proc_internal () : Block.t option =
@@ -103,10 +103,10 @@ module Processor = struct
             try
               Some (Block.of_bytes chunk)
             with
-            | Header.Invalid_bytes   -> print_endline "find_valid_data_block_proc : invalid header bytes"; None
-            | Metadata.Invalid_bytes -> print_endline "find_valid_data_block_proc : invalid metadata bytes"; None
-            | Block.Invalid_bytes    -> print_endline "find_valid_data_block_proc : invalid block bytes"; None
-            | Block.Invalid_size     -> print_endline "find_valid_data_block_proc : invalid block size"; None in
+            | Header.Invalid_bytes
+            | Metadata.Invalid_bytes
+            | Block.Invalid_bytes
+            | Block.Invalid_size     -> None in
           match block with
           | None       -> find_valid_data_block_proc_internal () (* move onto finding next block *)
           | Some block ->
@@ -128,8 +128,6 @@ module Processor = struct
 
   let output_decoded_data_proc ~(block:Block.t) (out_file:Core.Out_channel.t) : unit =
     let open Write_chunk in
-    Printf.printf "output data : %s" (Conv_utils.bytes_to_hex_string (Block.block_to_data block));
-    print_newline ();
     write out_file ~chunk:(Block.block_to_data block)
   ;;
 
@@ -149,7 +147,6 @@ module Processor = struct
       match find_first_block_proc ~want_meta:true in_file with
       | Some block -> Some block
       | None       -> find_first_block_proc ~want_meta:false in_file (* get the first usable data block *) in
-    print_endline "Reference block found";
     match ref_block with
     | None           -> raise (Packaged_exn "no usable blocks in file")
     | Some ref_block -> decode_and_output_proc ~ref_block in_file out_file
