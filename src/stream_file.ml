@@ -41,7 +41,8 @@ module Read_into_buf = struct
   exception Invalid_offset
   exception Invalid_length
 
-  type read_result = { read_count : int } option
+  type read_stats  = { read_count : int }
+  type read_result = read_stats option
 
   let read ?(offset:int = 0) ?(len:int option) (in_file:Core.In_channel.t) ~(buf:bytes) : read_result =
     let buf_size = Bytes.length buf in
@@ -62,7 +63,8 @@ module Read_into_buf = struct
 end
 
 module Read_chunk = struct
-  type read_result = { chunk : bytes } option
+  type read_content = { chunk : bytes }
+  type read_result  = read_content option
 
   let read (in_file:Core.In_channel.t) ~(len:int) : read_result =
     try
