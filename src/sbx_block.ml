@@ -41,15 +41,15 @@ module Header : sig
 
   val common_fields_to_ver : common_fields             -> version
 
-  val make_common_fields   : ?uid:bytes                -> version    -> common_fields
+  val make_common_fields   : ?uid:bytes                -> version       -> common_fields
 
-  val make_metadata_header : common:common_fields      -> t
+  val make_metadata_header : common_fields             -> t
 
-  val make_data_header     : common:common_fields      -> t
+  val make_data_header     : ?seq_num:uint32           -> common_fields      -> t
 
   val of_bytes             : bytes                     -> raw_header
 
-  val to_bytes             : alt_seq_num:uint32 option -> header:t   -> data:bytes    -> bytes
+  val to_bytes             : alt_seq_num:uint32 option -> header:t      -> data:bytes    -> bytes
 
   val header_to_ver        : t -> version
 
@@ -97,15 +97,15 @@ end = struct
     ; file_uid  = uid }
   ;;
 
-  let make_metadata_header ~(common:common_fields) : t =
+  let make_metadata_header (common:common_fields) : t =
     { common
     ; seq_num = Some (Uint32.of_int 0)
     }
   ;;
 
-  let make_data_header ~(common:common_fields) : t =
+  let make_data_header ?(seq_num:uint32 option) (common:common_fields) : t =
     { common
-    ; seq_num = None
+    ; seq_num
     }
   ;;
 
@@ -404,9 +404,9 @@ module Block : sig
 
   type t
 
-  val make_metadata_block : common:Header.common_fields   -> fields:Metadata.t list -> t
+  val make_metadata_block : Header.common_fields   -> fields:Metadata.t list -> t
 
-  val make_data_block     : common:Header.common_fields   -> data:bytes             -> t
+  val make_data_block     : ?seq_num:uint32        -> Header.common_fields   -> data:bytes             -> t
 
   val to_bytes            : ?alt_seq_num:uint32           -> t                      -> bytes
 
@@ -439,21 +439,21 @@ end = struct
               ; fields : Metadata.t list
               ; data   : bytes }
 
-  let make_metadata_block ~(common:Header.common_fields) ~(fields:Metadata.t list) : t =
+  let make_metadata_block (common:Header.common_fields) ~(fields:Metadata.t list) : t =
     (* encode once to make sure the size is okay *)
     let ver              = common.version in
     let encoded_metadata = Metadata.to_bytes ~ver ~fields in
-    Meta { header = Header.make_metadata_header ~common
+    Meta { header = Header.make_metadata_header common
          ; fields
          ; data   = encoded_metadata}
   ;;
 
-  let make_data_block ~(common:Header.common_fields) ~(data:bytes) : t =
+  let make_data_block ?(seq_num:uint32 option) (common:Header.common_fields) ~(data:bytes) : t =
     let ver           = common.version in
     let max_data_size = ver_to_data_size ver in
     let len           = Bytes.length data in
     if len <= max_data_size then
-      Data { header = Header.make_data_header ~common
+      Data { header = Header.make_data_header ?seq_num common
            ; data   = Helper.pad_header_or_block_bytes data max_data_size }
     else
       raise Too_much_data
@@ -505,9 +505,9 @@ end = struct
     let common = Header.make_common_fields ~uid:raw_header.file_uid raw_header.version in
     if raw_header.seq_num = (Uint32.of_int 0) then
       let fields = Metadata.of_bytes raw_data in
-      make_metadata_block ~common ~fields
+      make_metadata_block common ~fields
     else
-      make_data_block     ~common ~data:raw_data
+      make_data_block     ~seq_num:raw_header.seq_num common ~data:raw_data
   ;;
 
   let of_bytes ?(raw_header:Header.raw_header option) ?(skipped_already:bool = false) (raw_data:bytes) : t =
