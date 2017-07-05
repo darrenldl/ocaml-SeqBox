@@ -248,7 +248,7 @@ end
 
 let test_decode () =
   let open Metadata in
-  match Process.decode_file ~in_filename:"dummy_file_ncoded" ~out_filename:"dummy_file2" with
+  match Process.decode_file ~in_filename:"dummy_file_encoded" ~out_filename:"dummy_file2" with
   | Ok _      -> Printf.printf "Okay\n"
   | Error msg -> Printf.printf "Error : %s\n" msg
 ;;
