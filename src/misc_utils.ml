@@ -21,7 +21,7 @@ let get_bytes (chunk:bytes) ~(pos:int) ~(len:int) : bytes =
     raise Invalid_range
   else if len < 0 then
     raise Invalid_range
-  else if pos + len - 1 >= chunk_size then
+  else if pos + (len - 1) >= chunk_size then
     raise Invalid_range
   else
     Bytes.sub chunk pos len
