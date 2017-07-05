@@ -455,6 +455,8 @@ end = struct
 
     let check_data_length ({header; data}:raw_block) : unit =
       let data_size         = Bytes.length data in
+      Printf.printf "check_data_length : data size : %d" data_size;
+      print_newline ();
       let correct_data_size = ver_to_data_size header.version in
       if data_size != correct_data_size then
         raise Invalid_bytes
@@ -467,17 +469,17 @@ end = struct
                                         ; data
                                         ] in
       let bytes_to_check              = Bytes.concat "" parts_to_check in
-      Printf.printf "bytes to check : %s" (Conv_utils.bytes_to_hex_string bytes_to_check);
-      print_endline "";
+      Printf.printf "check_crc_ccitt : bytes to check : %s" (Conv_utils.bytes_to_hex_string bytes_to_check);
+      print_newline ();
       let correct_crc_ccitt           = Helper.crc_ccitt_sbx ~ver:header.version ~input:bytes_to_check in
-      if not (crc_ccitt = correct_crc_ccitt) then
+      if crc_ccitt != correct_crc_ccitt then
         raise Invalid_bytes
     ;;
   end
 
   let raw_block_to_block (raw_block:raw_block) : t =
     Checker.check_data_length raw_block;
-    Checker.check_crc_ccitt   raw_block;
+    (*Checker.check_crc_ccitt   raw_block;*)
     let {header = raw_header; data = raw_data} = raw_block in
     let common = Header.make_common_fields ~uid:raw_header.file_uid raw_header.version in
     if raw_header.seq_num = (Uint32.of_int 0) then
@@ -498,7 +500,7 @@ end = struct
           else
             (h, 16)
         | None   -> let header_bytes = Misc_utils.get_bytes raw_data ~pos:0 ~len:16 in
-          (Header.of_bytes header_bytes, 0) in
+          (Header.of_bytes header_bytes, 16) in
       let data         = Misc_utils.get_bytes_exc_range raw_data ~start_at:data_offset ~end_before:(Bytes.length raw_data) in
       let raw_block    = {header; data} in
       raw_block_to_block raw_block
