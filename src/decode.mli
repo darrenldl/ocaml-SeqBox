@@ -2,7 +2,11 @@ open Sbx_version
 open Sbx_block
 open Stream_file
 
-type stats = { blocks_decoded : int
+type stats = { block_size       : int
+             ; blocks_processed : int64
+             ; blocks_decoded   : int64
+             ; blocks_failed    : int64
+             ; failed_block_pos : int64 list
              }
 
 module Processor : sig

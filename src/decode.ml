@@ -31,14 +31,61 @@
  *        report if matches with the recorded hash if any
  *        leave it there even if it doesn't match
  *
+ * statistics tracking
+ *  block size used
+ *  record no. blocks successfully decoded
+ *  record no. blocks failed to decode
+ *  record failing block positions
  *)
 open Stdint
 open Sbx_version
 open Sbx_block
 open Stream_file
 
-type stats = { blocks_decoded : int
+let (<+>) = Int64.add;;
+
+let (<->) = Int64.sub;;
+
+let (<*>) = Int64.mul;;
+
+type stats = { block_size       : int
+             ; blocks_processed : int64
+             ; blocks_decoded   : int64
+             ; blocks_failed    : int64
+             ; failed_block_pos : int64 list
              }
+
+let make_blank_stats ~(ver:version) : stats =
+  { block_size       = ver_to_block_size ver
+  ; blocks_processed = 0L
+  ; blocks_decoded   = 0L
+  ; blocks_failed    = 0L
+  ; failed_block_pos = []
+  }
+
+let add_okay_block ({ block_size; blocks_processed; blocks_decoded; blocks_failed; failed_block_pos }:stats) : stats =
+  { block_size
+  ; blocks_processed = blocks_processed <+> 1L
+  ; blocks_decoded   = blocks_decoded   <+> 1L
+  ; blocks_failed
+  ; failed_block_pos
+  }
+
+let add_failed_block ({ block_size; blocks_processed; blocks_decoded; blocks_failed; failed_block_pos }:stats) : stats =
+  { block_size
+  ; blocks_processed = blocks_processed <+> 1L
+  ; blocks_decoded
+  ; blocks_failed    = blocks_failed    <+> 1L
+  ; failed_block_pos = if blocks_failed < 500L then (blocks_processed <+> 1L) :: failed_block_pos else failed_block_pos
+  }
+
+let add_processed_block ({ block_size; blocks_processed; blocks_decoded; blocks_failed; failed_block_pos }:stats) : stats =
+  { block_size
+  ; blocks_processed = blocks_processed <+> 1L
+  ; blocks_decoded
+  ; blocks_failed
+  ; failed_block_pos
+  }
 
 module Processor = struct
   let find_first_block_proc ~(want_meta:bool) (in_file:Core.In_channel.t) : Block.t option =
@@ -50,7 +97,7 @@ module Processor = struct
           raw_header.seq_num =  (Uint32.of_int 0)
         else
           raw_header.seq_num != (Uint32.of_int 0) in
-      if want_block then (
+      if want_block then
         try
           (* the error has something to do with ~skipped_already maybe *)
           Some (Block.of_bytes ~raw_header chunk)
@@ -58,9 +105,9 @@ module Processor = struct
         | Header.Invalid_bytes
         | Metadata.Invalid_bytes
         | Block.Invalid_bytes
-        | Block.Invalid_size     -> None )
-      else (
-        None )in
+        | Block.Invalid_size     -> None
+      else
+        None in
     let rec find_first_block_proc_internal () : Block.t option =
       match read in_file ~len with
       | None           -> None
@@ -90,14 +137,14 @@ module Processor = struct
   (* ref_block will be used as reference for version and uid
    *  block must match those two parameters to be accepted
    *)
-  let find_valid_data_block_proc ~(ref_block:Block.t) (in_file:Core.In_channel.t) : Block.t option =
+  let find_valid_data_block_proc ~(ref_block:Block.t) (in_file:Core.In_channel.t) ~(stats:stats) : stats * (Block.t option) =
     let open Read_chunk in
     let ref_ver      = Block.block_to_ver ref_block in
     let len          = ver_to_block_size ref_ver in
     let ref_file_uid = Block.block_to_file_uid ref_block in
-    let rec find_valid_data_block_proc_internal () : Block.t option =
+    let rec find_valid_data_block_proc_internal (stats:stats) : stats * Block.t option =
         match read in_file ~len with
-        | None           -> None
+        | None           -> (stats, None)
         | Some { chunk } ->
           let block =
             try
@@ -108,37 +155,50 @@ module Processor = struct
             | Block.Invalid_bytes
             | Block.Invalid_size     -> None in
           match block with
-          | None       -> find_valid_data_block_proc_internal () (* move onto finding next block *)
+          | None       -> find_valid_data_block_proc_internal (add_failed_block stats) (* move onto finding next block *)
           | Some block ->
             begin
               if Block.is_meta block then (
                 (* don't return metadata block *)
-                find_valid_data_block_proc_internal () (* move onto finding next block *) )
-              else (
+                find_valid_data_block_proc_internal (add_processed_block stats) (* move onto finding next block *) )
+              else
                 let file_uid = Block.block_to_file_uid block in
                 let ver      = Block.block_to_ver      block in
-                (* make sure uid and version matches *)
+                (* make sure uid and version match *)
                 if file_uid = ref_file_uid && ver = ref_ver then
-                  Some block
+                  (add_okay_block stats, Some block)
                 else
-                  find_valid_data_block_proc_internal () (* move onto finding next block *) )
+                  find_valid_data_block_proc_internal (add_failed_block stats) (* move onto finding next block *)
             end in
-    find_valid_data_block_proc_internal ()
+    find_valid_data_block_proc_internal stats
   ;;
 
-  let output_decoded_data_proc ~(block:Block.t) (out_file:Core.Out_channel.t) : unit =
+  let output_decoded_data_proc ~(ref_block:Block.t) ~(block:Block.t) (out_file:Core.Out_channel.t) : unit =
     let open Write_chunk in
-    write out_file ~chunk:(Block.block_to_data block)
+    if Block.is_meta block then
+      ()  (* ignore attempts to write metadata block *)
+    else
+      (* determine position to write to using reference block and block's sequence number *)
+      let ref_ver           = Block.block_to_ver ref_block in
+      let len       : int64 = Int64.of_int    (ver_to_block_size ref_ver) in
+      match Block.block_to_seq_num block with
+      | None         -> assert false
+      | Some seq_num ->
+        let seq_num   : int64 = Uint32.to_int64 seq_num in
+        let write_pos : int64 = (seq_num <-> 1L) <*> len in  (* seq_num is guaranteed to be > 0 due to above check of is_meta *)
+        (* seek to the proper position then write *)
+        Core.Out_channel.seek out_file write_pos;
+        write out_file ~chunk:(Block.block_to_data block)
   ;;
 
   let decode_and_output_proc ~(ref_block:Block.t) (in_file:Core.In_channel.t) (out_file:Core.Out_channel.t) : stats =
-    let rec decode_and_output_proc_internal ({blocks_decoded; _}:stats) : stats =
-      match find_valid_data_block_proc ~ref_block in_file with
-      | None       -> {blocks_decoded}
-      | Some block ->
-        output_decoded_data_proc ~block out_file;
-        decode_and_output_proc_internal {blocks_decoded = blocks_decoded + 1} in
-    decode_and_output_proc_internal {blocks_decoded = 0}
+    let rec decode_and_output_proc_internal (stats:stats) : stats =
+      match find_valid_data_block_proc ~ref_block in_file ~stats with
+      | (stats, None)       -> stats
+      | (stats, Some block) ->
+        output_decoded_data_proc ~ref_block ~block out_file;
+        decode_and_output_proc_internal stats in
+    decode_and_output_proc_internal (make_blank_stats ~ver:(Block.block_to_ver ref_block))
   ;;
 
   let decoder (in_file:Core.In_channel.t) (out_file:Core.Out_channel.t) : stats * (int64 option) =
@@ -153,7 +213,7 @@ module Processor = struct
     | Some ref_block ->
       (* got a reference block, decode all data blocks *)
       let stats = decode_and_output_proc ~ref_block in_file out_file in
-      (* if reference block is a metadata block, then use the recorded file size indicate truncatation *)
+      (* if reference block is a metadata block, then use the recorded file size to indicate truncatation *)
       let truncate : int64 option =
         if Block.is_meta ref_block then
           let metadata_list   = Block.block_to_meta ref_block in
@@ -188,7 +248,7 @@ end
 
 let test_decode () =
   let open Metadata in
-  match Process.decode_file ~in_filename:"dummy_file_encoded" ~out_filename:"dummy_file2" with
+  match Process.decode_file ~in_filename:"dummy_file_ncoded" ~out_filename:"dummy_file2" with
   | Ok _      -> Printf.printf "Okay\n"
   | Error msg -> Printf.printf "Error : %s\n" msg
 ;;
