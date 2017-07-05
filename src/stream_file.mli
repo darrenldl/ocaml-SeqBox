@@ -40,18 +40,14 @@ module Read_into_buf : sig
   exception Invalid_offset
   exception Invalid_length
 
-  type read_result = { no_more_bytes : bool
-                     ; read_count    : int
-                     }
+  type read_result = { read_count : int } option
 
   val read : ?offset:int -> ?len:int -> Core.In_channel.t -> buf:bytes -> read_result
 end
 
 (* Helpers for reading and returning data as value *)
 module Read_chunk : sig
-  type read_result = { no_more_bytes : bool
-                     ; chunk         : bytes
-                     }
+  type read_result = { chunk : bytes } option
 
   val read : Core.In_channel.t -> len:int -> read_result
 end
