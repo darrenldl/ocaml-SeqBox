@@ -141,7 +141,8 @@ module Processor = struct
     decode_and_output_proc_internal {blocks_decoded = 0}
   ;;
 
-  let decoder (in_file:Core.In_channel.t) (out_file:Core.Out_channel.t) : stats =
+  let decoder (in_file:Core.In_channel.t) (out_file:Core.Out_channel.t) : stats * (int64 option) =
+    (* find a block to use as reference *)
     let ref_block : Block.t option =
       (* try to find a metadata block first *)
       match find_first_block_proc ~want_meta:true in_file with
@@ -149,13 +150,39 @@ module Processor = struct
       | None       -> find_first_block_proc ~want_meta:false in_file (* get the first usable data block *) in
     match ref_block with
     | None           -> raise (Packaged_exn "no usable blocks in file")
-    | Some ref_block -> decode_and_output_proc ~ref_block in_file out_file
+    | Some ref_block ->
+      (* got a reference block, decode all data blocks *)
+      let stats = decode_and_output_proc ~ref_block in_file out_file in
+      (* if reference block is a metadata block, then use the recorded file size indicate truncatation *)
+      let truncate : int64 option =
+        if Block.is_meta ref_block then
+          let metadata_list   = Block.block_to_meta ref_block in
+          try
+            let open Metadata in
+            match List.find (function | FSZ _ -> true | _ -> false) metadata_list with
+            | FSZ file_size -> Some (Uint64.to_int64 file_size)
+            | _             -> None
+          with
+          | Not_found -> None
+        else
+          None in
+      (stats, truncate)
   ;;
 end
 
 module Process = struct
   let decode_file ~(in_filename:string) ~(out_filename:string) : (stats, string) result =
-    Stream.process_in_out ~in_filename ~out_filename ~processor:Processor.decoder
+    match Stream.process_in_out ~in_filename ~out_filename ~processor:Processor.decoder with
+    | Ok (stats, Some trunc_size) ->
+      begin
+        try
+          Unix.LargeFile.truncate out_filename trunc_size;
+          Ok stats
+        with
+        | _ -> Error "failed to truncate output file"
+      end
+    | Ok (stats, None)            -> Ok stats
+    | Error msg                   -> Error msg
   ;;
 end
 

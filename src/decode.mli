@@ -7,7 +7,7 @@ type stats = { blocks_decoded : int
 
 module Processor : sig
   (* Resulting decoder may do Printf.printf to report progress, errors etc *)
-  val decoder : Core.In_channel.t -> Core.Out_channel.t -> stats
+  val decoder : Core.In_channel.t -> Core.Out_channel.t -> stats * (int64 option)
 end
 
 module Process : sig
