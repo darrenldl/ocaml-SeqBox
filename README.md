@@ -8,14 +8,14 @@ Official SeqBox Repo - https://github.com/MarcoPon/SeqBox
 
 ## Notes
 CRC-CCITT implementation is translated from libcrc (https://github.com/lammertb/libcrc) using a copy retrieved on 2017-06-27
+  - See License section for details on licensing
 
-See License section for details on licensing
+Exact behaviours in non-standard cases are not specified in official SeqBox technical specification
+  - See Specification of ocaml-SeqBox section for details on how ocaml-SeqBox behaves(if you care about undefined behaviour those sort of things)
 
-## Special features of ocaml-SeqBox
-Allows duplicate data blocks to exist within one sbx container(the duplicated block can be metadata block or data block)
-  - First valid metadata block will be used(if exists)
-  - For all other data blocks, the last seen valid data block will be used for a given sequence number
-  - This means you can concatenate multiple copies of sbx container together directly to increase chance of recovery in case of corruption
+## Possibly useful features of ocaml-SeqBox(but possibly not yet in official SeqBox)
+  - Allows duplicate metadata/data blocks to exist within one sbx container
+    - This means you can concatenate multiple copies of sbx container together directly to increase chance of recovery in case of corruption
 
 ## Technical Specification
 The following specification is copied directly from the official specification with slight modification(version 2, 3 are stated excplicitly as not implemented).
@@ -128,6 +128,41 @@ N.B. Current versions differs only by blocksize.
   - Recovery mode - not started
   - Commandline options for scanning and recovery - not started
 
+## Specification of ocaml-SeqBox
+Metadata block is valid if and only if
+  - Header can be parsed
+  - All metadata fields(duplicated or not) can be parsed successfully
+  - All remaining space is filled with 0x1A pattern
+  - CRC-CCITT is correct
+
+Data block is valid if and only if
+  - Header can be parsed
+  - version and uid matches reference block(during decoding)
+  - CRC-CCITT
+
+
+Decoding workflow
+  1. A reference block is retrieved first(which is used for guidance on alignment, version, and uid)
+    - the scanning uses alignment of 512 bytes as it is the largest common divisor of 512(block size for version 1) and 4096(block size for version 3)
+    - if there is any valid metadata block in sbx container, then the first one will be used as reference block
+    - else the first valid data block will be used as reference block
+  2. Scan for valid blocks from start of sbx container to decode and output
+    - if a block is invalid, nothing is done
+    - if a block is valid, and is a metadata block, nothing is done
+    - if a block is valid, and is a data block, then it will be written to the writepos at output file, where writepos = (sequence number - 1) * block size of reference block in bytes
+  3. If possible, truncate output file to remove data padding done for the last block during encoding
+    - if reference block is a metadata block, and contains file size field, then the output file will be truncated to that file size
+Ordering of metadata/data blocks in sbx container
+  - A data block is identified by sequence number != 0, it may reside in any aligned in the file(see decoding workflow)
+
+Handling of duplicate metadata/data blocks
+  - First valid metadata block will be used(if exists)
+  - For all other data blocks, the last seen valid data block will be used for a given sequence number
+
+Handling of duplicate metadata in metadata block given the block is valid
+  - For a given ID, only the first occurance of the metadata will be used
+    e.g. if there are two FNM metadata fields in the metadata block, only the first (in terms of byte order) will be used
+
 ## License
 The following files directly from libcrc(with syntax modification) are under the MIT license as used by libcrc
   - crcccitt.c
@@ -138,3 +173,4 @@ The following files translated/ported from libcrc are under the MIT license as u
   - crcccitt.mli
 
 All remaining files are distributed under the 3-Clause BSD license as stated in the LICENSE file
+
