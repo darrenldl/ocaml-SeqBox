@@ -36,6 +36,8 @@ module Metadata : sig
     | SDT of uint64
     | HSH of bytes
     | PID of bytes
+
+  val dedup : t list -> t list
 end
 
 module Block : sig
