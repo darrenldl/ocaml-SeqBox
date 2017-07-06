@@ -92,11 +92,7 @@ N.B. Current versions differs only by blocksize.
     - 128 bytes block is likely only going to be useful for archaic systems
 
 ## Index of source code
-
-**In_file module (in_file.ml, in_file.mli)**
-  - Hashing and loading entire file data in memory
-  - No longer used in favour of Stream_file module
-  
+ 
 **Sbx_block module (sbx_block.ml, sbx_block.mli)**
   - Single SBX block construction/access, encoding to bytes and decoding from bytes
   - Submodules
