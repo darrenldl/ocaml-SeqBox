@@ -163,6 +163,7 @@ Data block is valid if and only if
     - otherwise nothing is done
   4. If possible, report/record if the SHA256 hash of decoded file matches the recorded hash during encoding
     - if reference block is a metadata block, and contains the hash field, then the output file will be hashed to check against the recorded hash
+      - output file will not be deleted even if hash does not match
     - otherwise nothing is done
 
 #### To successfully encode a file
