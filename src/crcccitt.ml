@@ -54,7 +54,7 @@ let crc_start_xmodem     : uint16 = Uint16.of_int 0x0000;;
  *
  * ALWAYS use a pair of paranthesis when multiple expressions are present
  *)
-let (<!) (a:uint16) (b:uint16) =
+let (<) (a:uint16) (b:uint16) =
   let open Uint16 in
   let res = compare a b in
   if   res < 0 then
@@ -62,7 +62,7 @@ let (<!) (a:uint16) (b:uint16) =
   else
     false;;
 
-let (>!) (a:uint16) (b:uint16) =
+let (>) (a:uint16) (b:uint16) =
   let open Uint16 in
   let res = compare a b in
   if   res > 0 then
@@ -99,7 +99,7 @@ let make_crcccitt_tab () : uint16 array =
    * thus requiring i to be uint16,
    * which is impossible to do in for loop
    *)
-  while (!i <! of_int 256) do
+  while (!i < of_int 256) do
 
     crc := of_int 0;
     c   := !i << 8;
@@ -107,7 +107,7 @@ let make_crcccitt_tab () : uint16 array =
     (* j in original version is not used *)
     for _ = 0 to 7 do
 
-      if ((!crc ^ !c) & (of_int 0x8000)) >! (of_int 0) then
+      if ((!crc ^ !c) & (of_int 0x8000)) > (of_int 0) then
         crc := begin (!crc << 1) ^ crc_poly_ccitt end
       else
         crc := begin  !crc << 1                   end;
@@ -138,24 +138,27 @@ let update_crc_ccitt ~(crc:uint16) ~(single_byte:uint8) : uint16 =
 ;;
 
 let crc_ccitt_generic ~(input:bytes) ~(start_val:uint16) : uint16 =
-  (* let val0x00FF        = Uint16.of_int 0x00FF  in *)
-  let i_upper_bound = Bytes.length input in
+  let (crc : uint16 ref) = ref (Uint16.of_int 0) in
 
-  let rec crc_ccitt_generic_internal (crc:uint16) (i:int) : uint16 =
-    if i < i_upper_bound then
-      let crc = (crc << 8)
-                ^
-                crc_tabccitt.(
-                  Uint16.to_int (
-                    (crc >> 8)
-                    ^ 
-                    Uint16.of_int (Char.code (Bytes.get input i))
-                  )
-                ) in
-      crc_ccitt_generic_internal crc (i + 1)
-    else
-      crc in
-  crc_ccitt_generic_internal start_val 0
+  crc := start_val;
+
+  for i = 0 to (Bytes.length input) - 1 do
+    crc := (!crc << 8)
+           ^
+           crc_tabccitt.(
+             Uint16.to_int (
+               (
+                 (!crc >> 8)
+                 ^ 
+                 let byte = (Int8.of_bytes_big_endian input i) in
+                 Uint16.of_int8 byte
+               )
+               &
+               (Uint16.of_int 0x00FF)
+             )
+           )
+  done;
+  !crc
 ;;
 
 let crc_ccitt_ffff ~(input:bytes) : uint16 =
