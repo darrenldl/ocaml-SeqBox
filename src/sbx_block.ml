@@ -122,29 +122,26 @@ end = struct
   let to_bytes ~(alt_seq_num:uint32 option) ~(header:t) ~(data:bytes) : bytes =
     let seq_num =
       match (alt_seq_num, header.seq_num) with
-      | (Some s, Some _) -> Some s    (* prefer provided number over existing one *)
+      | (Some _, Some s) -> Some s    (* prefer existing one over provided one *)
       | (None,   Some s) -> Some s
       | (Some s, None)   -> Some s
       | (None,   None)   -> None   in
     match seq_num with
     | Some seq_num ->
-      if (Uint32.to_int seq_num) = 0 then
-        raise Invalid_seq_num
-      else
-        let seq_num_bytes : bytes      = Conv_utils.uint32_to_bytes seq_num in
-        let things_to_crc : bytes list = [ header.common.file_uid
-                                         ; seq_num_bytes
-                                         ; data
-                                         ] in
-        let bytes_to_crc  : bytes      = Bytes.concat "" things_to_crc in
-        let crc_result    : bytes      = Helper.crc_ccitt_sbx ~ver:header.common.version ~input:bytes_to_crc in
-        let header_parts  : bytes list = [ header.common.signature
-                                         ; Conv_utils.uint8_to_bytes (ver_to_uint8 header.common.version)
-                                         ; crc_result
-                                         ; header.common.file_uid
-                                         ; seq_num_bytes
-                                         ] in
-        Bytes.concat "" header_parts
+      let seq_num_bytes : bytes      = Conv_utils.uint32_to_bytes seq_num in
+      let things_to_crc : bytes list = [ header.common.file_uid
+                                       ; seq_num_bytes
+                                       ; data
+                                       ] in
+      let bytes_to_crc  : bytes      = Bytes.concat "" things_to_crc in
+      let crc_result    : bytes      = Helper.crc_ccitt_sbx ~ver:header.common.version ~input:bytes_to_crc in
+      let header_parts  : bytes list = [ header.common.signature
+                                       ; Conv_utils.uint8_to_bytes (ver_to_uint8 header.common.version)
+                                       ; crc_result
+                                       ; header.common.file_uid
+                                       ; seq_num_bytes
+                                       ] in
+      Bytes.concat "" header_parts
     | None ->
       raise Missing_alt_seq_num
   ;;
@@ -481,11 +478,8 @@ end = struct
     let (header, data) =
       match block with
       | Data { header; data } | Meta { header; data; _ } -> (header, data) in
-    try
-      let header_bytes = Header.to_bytes ~alt_seq_num ~header ~data in
-      Bytes.concat "" [header_bytes; data]
-    with
-    | Header.Invalid_seq_num -> raise Invalid_seq_num
+    let header_bytes = Header.to_bytes ~alt_seq_num ~header ~data in
+    Bytes.concat "" [header_bytes; data]
   ;;
 
   (*module Parser = struct
