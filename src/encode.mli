@@ -1,6 +1,6 @@
-open Sbx_version
 open Sbx_block
 open Stream_file
+open Sbx_specs
 
 exception File_metadata_get_failed
 
