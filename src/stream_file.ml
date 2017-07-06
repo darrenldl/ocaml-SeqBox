@@ -44,6 +44,27 @@ module Read_into_buf = struct
   type read_stats  = { read_count : int }
   type read_result = read_stats option
 
+  let read_with_jitter ~(buf:bytes) (in_file:Core.In_channel.t) ~(len:int) : int =
+    (* jitter = read where read count is smaller than requested but
+     * there is still more data available in the channel
+     *)
+    let jitter_threshold = 3 in
+    let rec read_with_jitter_internal ~(read_so_far:int) ~(tries_left:int) : int =
+      let read_count  : int = Core.In_channel.input in_file ~buf ~pos:read_so_far ~len:(len - read_so_far) in
+      let read_so_far : int = read_so_far + read_count in
+      let tries_left  : int = tries_left - 1 in
+      if      read_count < 0 then
+        assert false
+      else if read_count < len then
+        if tries_left > 0 then
+          read_with_jitter_internal ~read_so_far ~tries_left
+        else
+          read_so_far
+      else
+        read_so_far in
+    read_with_jitter_internal ~read_so_far:0 ~tries_left:jitter_threshold
+  ;;
+
   let read ?(offset:int = 0) ?(len:int option) (in_file:Core.In_channel.t) ~(buf:bytes) : read_result =
     let buf_size = Bytes.length buf in
     if offset >= buf_size then
@@ -52,15 +73,15 @@ module Read_into_buf = struct
       let len : int =
         match len with
         | Some x -> x
-        | None   -> (Bytes.length buf) - offset in
+        | None   -> buf_size - offset in
       if len < 0 then
         raise Invalid_length
       else
-        let read_count : int = Core.In_channel.input in_file ~buf ~pos:offset ~len in
-        if      read_count = 0 then
-          None
-        else if read_count < 0 then
+        let read_count : int = read_with_jitter ~buf in_file ~len in
+        if      read_count < 0 then
           assert false
+        else if read_count = 0 then
+          None
         else
           Some { read_count }
   ;;
@@ -96,7 +117,7 @@ module Write_from_buf = struct
       let len : int =
         match len with
         | Some x -> x
-        | None   -> (Bytes.length buf) - offset in
+        | None   -> buf_size - offset in
       if len < 0 then
         raise Invalid_length
       else
