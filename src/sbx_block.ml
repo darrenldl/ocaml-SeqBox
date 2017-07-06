@@ -23,6 +23,7 @@ module Header : sig
   exception Invalid_uid_length
   exception Missing_alt_seq_num
   exception Invalid_bytes
+  exception Invalid_seq_num
 
   type common_fields =
     { signature  : bytes
@@ -62,6 +63,7 @@ end = struct
   exception Invalid_uid_length
   exception Missing_alt_seq_num
   exception Invalid_bytes
+  exception Invalid_seq_num
 
   type common_fields =
     { signature  : bytes
@@ -104,6 +106,14 @@ end = struct
   ;;
 
   let make_data_header ?(seq_num:uint32 option) (common:common_fields) : t =
+    let seq_num =
+      match seq_num with
+      | None   -> None
+      | Some n ->
+        if (Uint32.to_int n) = 0 then
+          raise Invalid_seq_num
+        else
+          Some n in
     { common
     ; seq_num
     }
@@ -118,20 +128,23 @@ end = struct
       | (None,   None)   -> None   in
     match seq_num with
     | Some seq_num ->
-      let seq_num_bytes : bytes      = Conv_utils.uint32_to_bytes seq_num in
-      let things_to_crc : bytes list = [ header.common.file_uid
-                                       ; seq_num_bytes
-                                       ; data
-                                       ] in
-      let bytes_to_crc  : bytes      = Bytes.concat "" things_to_crc in
-      let crc_result    : bytes      = Helper.crc_ccitt_sbx ~ver:header.common.version ~input:bytes_to_crc in
-      let header_parts  : bytes list = [ header.common.signature
-                                       ; Conv_utils.uint8_to_bytes (ver_to_uint8 header.common.version)
-                                       ; crc_result
-                                       ; header.common.file_uid
-                                       ; seq_num_bytes
-                                       ] in
-      Bytes.concat "" header_parts
+      if (Uint32.to_int seq_num) = 0 then
+        raise Invalid_seq_num
+      else
+        let seq_num_bytes : bytes      = Conv_utils.uint32_to_bytes seq_num in
+        let things_to_crc : bytes list = [ header.common.file_uid
+                                         ; seq_num_bytes
+                                         ; data
+                                         ] in
+        let bytes_to_crc  : bytes      = Bytes.concat "" things_to_crc in
+        let crc_result    : bytes      = Helper.crc_ccitt_sbx ~ver:header.common.version ~input:bytes_to_crc in
+        let header_parts  : bytes list = [ header.common.signature
+                                         ; Conv_utils.uint8_to_bytes (ver_to_uint8 header.common.version)
+                                         ; crc_result
+                                         ; header.common.file_uid
+                                         ; seq_num_bytes
+                                         ] in
+        Bytes.concat "" header_parts
     | None ->
       raise Missing_alt_seq_num
   ;;
@@ -401,6 +414,7 @@ module Block : sig
   exception Too_much_data
   exception Invalid_bytes
   exception Invalid_size
+  exception Invalid_seq_num
 
   type t
 
@@ -431,6 +445,7 @@ end = struct
   exception Too_much_data
   exception Invalid_bytes
   exception Invalid_size
+  exception Invalid_seq_num
 
   type t =
       Data of { header : Header.t
@@ -453,8 +468,11 @@ end = struct
     let max_data_size = ver_to_data_size ver in
     let len           = Bytes.length data in
     if len <= max_data_size then
-      Data { header = Header.make_data_header ?seq_num common
-           ; data   = Helper.pad_header_or_block_bytes data max_data_size }
+      try
+        Data { header = Header.make_data_header ?seq_num common
+             ; data   = Helper.pad_header_or_block_bytes data max_data_size }
+      with
+      | Header.Invalid_seq_num -> raise Invalid_seq_num
     else
       raise Too_much_data
   ;;
@@ -463,8 +481,11 @@ end = struct
     let (header, data) =
       match block with
       | Data { header; data } | Meta { header; data; _ } -> (header, data) in
-    let header_bytes = Header.to_bytes ~alt_seq_num ~header ~data in
-    Bytes.concat "" [header_bytes; data]
+    try
+      let header_bytes = Header.to_bytes ~alt_seq_num ~header ~data in
+      Bytes.concat "" [header_bytes; data]
+    with
+    | Header.Invalid_seq_num -> raise Invalid_seq_num
   ;;
 
   (*module Parser = struct

@@ -44,6 +44,7 @@ module Block : sig
   exception Too_much_data
   exception Invalid_bytes
   exception Invalid_size
+  exception Invalid_seq_num
 
   type t
 
