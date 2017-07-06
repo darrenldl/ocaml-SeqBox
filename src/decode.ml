@@ -107,7 +107,7 @@ let print_stats (stats:stats) : unit =
   Printf.printf "Number of metadata blocks successfully decoded : %Ld\n" stats.meta_blocks_decoded;
   Printf.printf "Number of data     blocks successfully decoded : %Ld\n" stats.data_blocks_decoded;
   Printf.printf "Number of          blocks failed to decode     : %Ld\n" stats.blocks_failed;
-  Printf.printf "Last up to 500 failing positions (block and bytes index start at 0)\n";
+  Printf.printf "First up to 500 failing positions (block and bytes index start at 0)\n";
   print_failed_pos stats.block_size stats.failed_block_pos_list
 ;;
 
