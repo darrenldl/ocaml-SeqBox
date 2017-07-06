@@ -17,9 +17,9 @@ module Processor = struct
     match read in_file ~len with
     | None           -> { blocks_written = cur_block }
     | Some { chunk } ->
-      let block       = Block.make_data_block ~common ~data:chunk in
-      let alt_seq_num = Uint32.of_int64 (Int64.add cur_block 1L) in (* always off by +1 *)
-      let block_bytes = Block.to_bytes ~alt_seq_num block in
+      let seq_num     = Uint32.of_int64 (Int64.add cur_block 1L) in (* always off by +1 *)
+      let block       = Block.make_data_block ~seq_num common ~data:chunk in
+      let block_bytes = Block.to_bytes block in
       write out_file ~chunk:block_bytes;
       data_to_block_proc ~cur_block:(Int64.add cur_block 1L) in_file out_file ~len ~common
   ;;
@@ -31,9 +31,9 @@ module Processor = struct
     | None           -> ({ blocks_written = cur_block },
                          Conv_utils.sha256_hash_state_to_bytes hash_state)
     | Some { chunk } ->
-      let block       = Block.make_data_block ~common ~data:chunk in
-      let alt_seq_num = Uint32.of_int64 (Int64.add cur_block 1L) in (* always off by +1 *)
-      let block_bytes = Block.to_bytes ~alt_seq_num block in
+      let seq_num     = Uint32.of_int64 (Int64.add cur_block 1L) in (* always off by +1 *)
+      let block       = Block.make_data_block ~seq_num common ~data:chunk in
+      let block_bytes = Block.to_bytes block in
       (* update hash *)
       SHA256.feed hash_state (Cstruct.of_bytes chunk);
       (* write to file *)
@@ -58,7 +58,12 @@ module Processor = struct
            let open Metadata in
            let fields_except_hash =
              List.filter (function | HSH _ -> false | _ -> true) metadata_list in
-           let dummy_metadata_block       = Block.make_metadata_block ~common ~fields:fields_except_hash in
+           (* a dummy multihash is added to make sure there is actually enough space
+            * in the metadata block before the encoding starts
+            *)
+           let dummy_multihash            = (Multihash.make_dummy_multihash ~hash_type:`SHA256) in
+           let dummy_fields               = (HSH dummy_multihash) :: fields_except_hash in
+           let dummy_metadata_block       = Block.make_metadata_block common ~fields:dummy_fields in
            let dummy_metadata_block_bytes = Block.to_bytes dummy_metadata_block in
            write out_file ~chunk:dummy_metadata_block_bytes;
            (* write data blocks *)
@@ -66,7 +71,7 @@ module Processor = struct
            (* make the metadata block with hash *)
            let multihash                  = Multihash.raw_hash_to_multihash ~hash_type:`SHA256 ~raw:hash in
            let fields                     = (HSH multihash) :: fields_except_hash in
-           let metadata_block             = Block.make_metadata_block ~common ~fields in
+           let metadata_block             = Block.make_metadata_block common ~fields in
            let metadata_block_bytes       = Block.to_bytes metadata_block in
            (* go back and write metadata block *)
            Core.Out_channel.seek out_file 0L;
