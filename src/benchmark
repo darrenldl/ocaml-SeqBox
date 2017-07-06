@@ -1,0 +1,12 @@
+Block size used in encoding       : 512
+Data  size used in encoding       : 496
+Number of          blocks written : 2116
+Number of metadata blocks written : 1
+Number of data     blocks written : 2115
+Amount of data encoded (in bytes) : 1048576
+Elapsed time : 0:00.20, Peak Memory : 13628, Waits : 1
+
+single block encoding 21150 times
+Elapsed time : 0:01.92, Peak Memory : 8536, Waits : 1
+
+

@@ -15,3 +15,4 @@ src/*.byte
 /src/encode.native
 /src/decode.native
 /src/dummy_file_backup
+/src/single_block_encode.native
