@@ -13,7 +13,9 @@ CRC-CCITT implementation is translated from libcrc (https://github.com/lammertb/
 Exact behaviours in non-standard cases are not specified in official SeqBox technical specification
   - See Specification of ocaml-SeqBox section for details on how ocaml-SeqBox behaves(if you care about undefined behaviour those sort of things)
 
-## Possibly useful features of ocaml-SeqBox(but possibly not yet in official SeqBox)
+## Possibly useful features of ocaml-SeqBox(possibly not yet in official SeqBox)
+  - Allows random ordering in sbx container
+    - This also means block corruption will not stop the decoding process
   - Allows duplicate metadata/data blocks to exist within one sbx container
     - This means you can concatenate multiple copies of sbx container together directly to increase chance of recovery in case of corruption
 
@@ -140,6 +142,7 @@ Metadata block is valid if and only if
   - Header can be parsed
   - All metadata fields(duplicated or not) can be parsed successfully
   - All remaining space is filled with 0x1A pattern
+  - version(specifically alignment/block size) matches reference block(see below)
   - CRC-CCITT is correct
 
 Data block is valid if and only if
@@ -151,7 +154,7 @@ Data block is valid if and only if
     - the entire sbx container is scanned using alignment of 512 bytes, 512 is used as it is the largest common divisor of 512(block size for version 1) and 4096(block size for version 3)
     - if there is any valid metadata block in sbx container, then the first one will be used as reference block
     - else the first valid data block will be used as reference block
-  2. Scan for valid blocks from start of sbx container to decode and output
+  2. Scan for valid blocks from start of sbx container to decode and output using reference block's block size as alignment
     - if a block is invalid, nothing is done
     - if a block is valid, and is a metadata block, nothing is done
     - if a block is valid, and is a data block, then it will be written to the writepos at output file, where writepos = (sequence number - 1) * block size of reference block in bytes
