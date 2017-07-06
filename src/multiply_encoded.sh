@@ -1,6 +1,6 @@
 #!/bin/bash
 
-multiplier=4
+multiplier=10
 
 cp dummy_file_encoded dummy_file_encoded.backup
 
