@@ -1,6 +1,6 @@
 open Stdint
 open Crcccitt
-open Sbx_version
+open Sbx_specs
 
 module Helper : sig
   val pad_header_or_block_bytes : bytes       -> int         -> bytes
@@ -76,8 +76,8 @@ end = struct
     ; seq_num    : uint32 option
     }
 
-  let gen_file_uid ~(ver:version) : bytes =
-    let len = ver_to_file_uid_len ver in
+  let gen_file_uid () : bytes =
+    let len = sbx_file_uid_len in
     Random_utils.gen_bytes ~len
   ;;
 
@@ -88,13 +88,13 @@ end = struct
   let make_common_fields ?(uid:bytes option) (ver:version) : common_fields =
     let uid : bytes = match uid with
       | Some x ->
-        let len = ver_to_file_uid_len ver in
+        let len = sbx_file_uid_len in
         if Bytes.length x == len then
           x
         else
           raise Invalid_uid_length
-      | None   -> gen_file_uid ~ver in
-    { signature = ver_to_signature ver
+      | None   -> gen_file_uid () in
+    { signature = sbx_signature
     ; version   = ver
     ; file_uid  = uid }
   ;;

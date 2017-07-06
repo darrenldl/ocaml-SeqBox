@@ -1,5 +1,5 @@
-open Sbx_version
 open Stdint
+open Sbx_specs
 
 module Header : sig
   exception Invalid_uid_length
@@ -19,9 +19,9 @@ module Header : sig
 
   val common_fields_to_ver : common_fields -> version
 
-  val make_common_fields   : ?uid:bytes -> version -> common_fields
+  val make_common_fields   : ?uid:bytes    -> version -> common_fields
 
-  val of_bytes             : bytes -> raw_header
+  val of_bytes             : bytes         -> raw_header
 end
 
 module Metadata : sig
