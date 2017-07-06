@@ -513,14 +513,12 @@ end = struct
   let of_bytes ?(raw_header:Header.raw_header option) ?(skipped_already:bool = false) (raw_data:bytes) : t =
     try
       let (header, data_offset) =
-        match raw_header with
-        | Some h ->
-          (* skip over header bytes if a header is given and if not skipped already *)
-          if skipped_already then
-            (h, 0)
-          else
-            (h, 16)
-        | None   -> let header_bytes = Misc_utils.get_bytes raw_data ~pos:0 ~len:16 in
+        match (raw_header, skipped_already) with
+        (* skip over header bytes if a header is given and if not skipped already *)
+        | (Some h, true)  -> (h, 0)
+        | (Some h, false) -> (h, 16)
+        | (None,   _)     ->
+          let header_bytes = Misc_utils.get_bytes raw_data ~pos:0 ~len:16 in
           (Header.of_bytes header_bytes, 16) in
       let data         = Misc_utils.get_bytes_exc_range raw_data ~start_at:data_offset ~end_before:(Bytes.length raw_data) in
       let raw_block    = {header; data} in
