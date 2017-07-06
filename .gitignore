@@ -10,3 +10,4 @@ src/*.byte
 /src/dummy_file2
 /src/dummy_file_copy
 /src/dummy_file_encoded
+/src/dummy_file_encoded.backup
