@@ -4,8 +4,15 @@ open Stream_file
 
 exception File_metadata_get_failed
 
-type stats = { blocks_written : int64
+type stats = { block_size          : int
+             ; data_size           : int
+             ; blocks_written      : int64
+             ; meta_blocks_written : int64
+             ; data_blocks_written : int64
+             ; total_data_encoded  : int64
              }
+
+val print_stats : stats -> unit
 
 module Processor : sig
   (* Resulting encoder may do Printf.printf to report progress etc *)
