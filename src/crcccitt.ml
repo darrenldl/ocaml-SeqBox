@@ -138,7 +138,8 @@ let update_crc_ccitt ~(crc:uint16) ~(single_byte:uint8) : uint16 =
 ;;
 
 let crc_ccitt_generic ~(input:bytes) ~(start_val:uint16) : uint16 =
-  let (crc : uint16 ref) = ref (Uint16.of_int 0) in
+  let crc : uint16 ref = ref (Uint16.of_int 0) in
+  let val0x00FF        = Uint16.of_int 0x00FF  in
 
   crc := start_val;
 
@@ -150,11 +151,11 @@ let crc_ccitt_generic ~(input:bytes) ~(start_val:uint16) : uint16 =
                (
                  (!crc >> 8)
                  ^ 
-                 let byte = (Int8.of_bytes_big_endian input i) in
-                 Uint16.of_int8 byte
+                 let byte = (Uint8.of_bytes_big_endian input i) in
+                 Uint16.of_uint8 byte
                )
                &
-               (Uint16.of_int 0x00FF)
+               val0x00FF
              )
            )
   done;
