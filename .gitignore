@@ -14,3 +14,4 @@ src/*.byte
 /src/dummy_file.tar.gz
 /src/encode.native
 /src/decode.native
+/src/dummy_file_backup

@@ -118,7 +118,9 @@ N.B. Current versions differs only by blocksize.
   - Single SBX block decoding - done (Sbx_block module)
   - Streamed processing framework - done (Streamed_file module)
   - Streamed file encoding - done (Encode module)
-  - Streamed file decoding - in progress (Decode module)
+  - Streamed file decoding - done (Decode module)
+  - Profiling and optimization of encoding - in progress
+  - Profiling and optimization of decoding - in progress
   - Commandline interface for encoding and decoding - not started
   - Scan mode - not started
   - Recovery mode - not started
