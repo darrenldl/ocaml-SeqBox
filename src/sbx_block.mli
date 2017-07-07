@@ -71,11 +71,3 @@ module Block : sig
   val is_data             : t -> bool
 
 end
-
-(*type header        = Header.t
-
-type header_common = Header.common_fields
-
-type block         = Block.t
-
-type metadata      = Metadata.t*)
