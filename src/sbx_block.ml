@@ -72,9 +72,29 @@ end = struct
     }
 
   type t =
-    { common     : common_fields
-    ; seq_num    : uint32 option
-    }
+      Meta of { common     : common_fields
+              }
+    | Data of { common  : common_fields
+              ; seq_num : uint32 option
+              }
+              
+  let header_to_common (header:t) : common_fields =
+    match header with
+    | Meta { common; _ } -> common
+    | Data { common; _ } -> common
+  ;;
+
+  let header_to_signature (header:t) : bytes   = (header_to_common header).signature;;
+
+  let header_to_ver       (header:t) : version = (header_to_common header).version;;
+
+  let header_to_file_uid  (header:t) : bytes   = (header_to_common header).file_uid;;
+
+  let header_to_seq_num (header:t) : uint32 option =
+    match header with
+    | Meta _              -> Some (Uint32.of_int 0)
+    | Data { seq_num; _ } -> seq_num
+  ;;
 
   let gen_file_uid () : bytes =
     let len = sbx_file_uid_len in
@@ -100,9 +120,7 @@ end = struct
   ;;
 
   let make_metadata_header (common:common_fields) : t =
-    { common
-    ; seq_num = Some (Uint32.of_int 0)
-    }
+    Meta { common }
   ;;
 
   let make_data_header ?(seq_num:uint32 option) (common:common_fields) : t =
@@ -114,14 +132,12 @@ end = struct
           raise Invalid_seq_num
         else
           Some n in
-    { common
-    ; seq_num
-    }
+    Data { common; seq_num }
   ;;
 
   let to_bytes ~(alt_seq_num:uint32 option) ~(header:t) ~(data:bytes) : bytes =
     let seq_num =
-      match (alt_seq_num, header.seq_num) with
+      match (alt_seq_num, (header_to_seq_num header)) with
       | (Some _, Some s) -> Some s    (* prefer existing one over provided one *)
       | (None,   Some s) -> Some s
       | (Some s, None)   -> Some s
@@ -129,16 +145,16 @@ end = struct
     match seq_num with
     | Some seq_num ->
       let seq_num_bytes : bytes      = Conv_utils.uint32_to_bytes seq_num in
-      let things_to_crc : bytes list = [ header.common.file_uid
+      let things_to_crc : bytes list = [ header_to_file_uid header
                                        ; seq_num_bytes
                                        ; data
                                        ] in
       let bytes_to_crc  : bytes      = Bytes.concat "" things_to_crc in
-      let crc_result    : bytes      = Helper.crc_ccitt_sbx ~ver:header.common.version ~input:bytes_to_crc in
-      let header_parts  : bytes list = [ header.common.signature
-                                       ; Conv_utils.uint8_to_bytes (ver_to_uint8 header.common.version)
+      let crc_result    : bytes      = Helper.crc_ccitt_sbx ~ver:(header_to_ver header) ~input:bytes_to_crc in
+      let header_parts  : bytes list = [ header_to_signature header
+                                       ; ver_to_bytes (header_to_ver header)
                                        ; crc_result
-                                       ; header.common.file_uid
+                                       ; header_to_file_uid header
                                        ; seq_num_bytes
                                        ] in
       Bytes.concat "" header_parts
@@ -199,18 +215,6 @@ end = struct
     match Angstrom.parse_only Parser.header_p (`String data) with
     | Ok header -> header
     | Error _   -> raise Invalid_bytes
-  ;;
-
-  let header_to_ver      (header:t) : version =
-    header.common.version
-  ;;
-
-  let header_to_file_uid (header:t) : bytes =
-    header.common.file_uid
-  ;;
-
-  let header_to_seq_num  (header:t) : uint32 option =
-    header.seq_num
   ;;
 end
 

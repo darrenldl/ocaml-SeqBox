@@ -35,9 +35,7 @@ let ver_to_uint16       (ver:version) : uint16 =
 ;;
 
 let ver_to_bytes        (ver:version) : bytes =
-  let buf = Bytes.make 2 '\x00' in
-  Uint16.to_bytes_big_endian (ver_to_uint16 ver) buf 0;
-  buf
+  Conv_utils.uint8_to_bytes (ver_to_uint8 ver)
 ;;
 
 let ver_to_block_size   (ver:version) : int =
