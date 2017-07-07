@@ -388,7 +388,7 @@ end = struct
       >>| (fun x -> SDT x)
     ;;
     let hsh_p : metadata Angstrom.t =
-      string "HSH" *> string "\x22" *> string "\x12\x20" *> take 0x20
+      string "HSH" *> Multihash.Parser.sha256_p
       >>| (fun x -> HSH x)
     ;;
     (*let pid_p : metadata Angstrom.t =
