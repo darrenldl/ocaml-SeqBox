@@ -139,29 +139,29 @@ let update_crc_ccitt ~(crc:uint16) ~(single_byte:uint8) : uint16 =
 
 let crc_ccitt_generic ~(input:bytes) ~(start_val:uint16) : uint16 =
   (* let crc : uint16 ref = ref (Uint16.of_int 0) in *)
-  let crc : int32 ref = ref 0l in
+  let crc : int64 ref = ref 0L in
 
-  let val0x00FF        = Int32.of_int 0x00FF  in
+  let val0x00FF        = Int64.of_int 0x00FF  in
 
-  crc := (Uint16.to_int32 start_val);
+  crc := (Uint16.to_int64 start_val);
 
-  let (^)  = Int32.logxor in
-  let (&)  = Int32.logand in
-  let (<<) = Int32.shift_left in
-  let (>>) = Int32.shift_right_logical in
+  let (^)  = Int64.logxor in
+  let (&)  = Int64.logand in
+  let (<<) = Int64.shift_left in
+  let (>>) = Int64.shift_right_logical in
 
   for i = 0 to (Bytes.length input) - 1 do
     crc := (!crc << 8)
            ^
-           (Uint16.to_int32
+           (Uint16.to_int64
               crc_tabccitt.(
-                Int32.to_int (
+                Int64.to_int (
                   (
                     (!crc >> 8)
                     ^ 
                     (* let byte = (Uint8.of_bytes_big_endian input i) in
                        Uint16.of_uint8 byte *)
-                    Int32.of_int (Char.code (Bytes.get input i))
+                    Int64.of_int (Char.code (Bytes.get input i))
                   )
                   &
                   val0x00FF
@@ -169,7 +169,7 @@ let crc_ccitt_generic ~(input:bytes) ~(start_val:uint16) : uint16 =
               )
            )
   done;
-  (Uint16.of_int32 !crc)
+  (Uint16.of_int64 !crc)
 ;;
 
 let crc_ccitt_ffff ~(input:bytes) : uint16 =
