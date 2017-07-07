@@ -13,7 +13,7 @@ CRC-CCITT implementation is translated from libcrc (https://github.com/lammertb/
 Exact behaviours in non-standard cases are not specified in official SeqBox technical specification
   - See Specification of ocaml-SeqBox section for details on how ocaml-SeqBox behaves(if you care about undefined behaviour those sort of things)
 
-## Possibly useful features of ocaml-SeqBox(possibly not yet in official SeqBox)
+## Possibly useful additional features of ocaml-SeqBox(possibly not yet in official SeqBox)
   - Allows random ordering in sbx container
     - This also means block corruption will not stop the decoding process
   - Allows duplicate metadata/data blocks to exist within one sbx container
@@ -121,9 +121,14 @@ N.B. Current versions differs only by blocksize.
   - Streamed processing framework - done (Streamed_file module)
   - Streamed file encoding - done (Encode module)
   - Streamed file decoding - done (Decode module)
-  - Profiling and optimization of encoding - in progress
-  - Profiling and optimization of decoding - in progress
+  - Profiling and optimization of encoding - done
+    - Result : CRC-CCITT implementation causes major slowdown
+  - Profiling and optimization of decoding - done
+    - Result : CRC-CCITT implementation causes major slowdown
+  - Replace CRC-CCITT implementation with a more efficient one(or create FFI to libcrc) - in progress
   - Commandline interface for encoding and decoding - not started
+  - Further profiling and optimization of encoding - not started
+  - Further profiling and optimization of decoding - not started
   - Scan mode - not started
   - Recovery mode - not started
   - Commandline options for scanning and recovery - not started
