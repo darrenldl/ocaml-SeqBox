@@ -128,33 +128,33 @@ module Processor = struct
     let len          = ver_to_block_size ref_ver in
     let ref_file_uid = Block.block_to_file_uid ref_block in
     let rec find_valid_data_block_proc_internal (stats:stats) : stats * Block.t option =
-        match read in_file ~len with
-        | None           -> (stats, None)
-        | Some { chunk } ->
-          let block =
-            try
-              Some (Block.of_bytes chunk)
-            with
-            | Header.Invalid_bytes
-            | Metadata.Invalid_bytes
-            | Block.Invalid_bytes
-            | Block.Invalid_size     -> None in
-          match block with
-          | None       -> find_valid_data_block_proc_internal (add_failed_block stats) (* move onto finding next block *)
-          | Some block ->
-            begin
-              if Block.is_meta block then (
-                (* don't return metadata block *)
-                find_valid_data_block_proc_internal (add_okay_meta_block stats) (* move onto finding next block *) )
+      match read in_file ~len with
+      | None           -> (stats, None)
+      | Some { chunk } ->
+        let block =
+          try
+            Some (Block.of_bytes chunk)
+          with
+          | Header.Invalid_bytes
+          | Metadata.Invalid_bytes
+          | Block.Invalid_bytes
+          | Block.Invalid_size     -> None in
+        match block with
+        | None       -> find_valid_data_block_proc_internal (add_failed_block stats) (* move onto finding next block *)
+        | Some block ->
+          begin
+            if Block.is_meta block then (
+              (* don't return metadata block *)
+              find_valid_data_block_proc_internal (add_okay_meta_block stats) (* move onto finding next block *) )
+            else
+              let file_uid = Block.block_to_file_uid block in
+              let ver      = Block.block_to_ver      block in
+              (* make sure uid and version match *)
+              if file_uid = ref_file_uid && ver = ref_ver then
+                (add_okay_data_block stats, Some block)
               else
-                let file_uid = Block.block_to_file_uid block in
-                let ver      = Block.block_to_ver      block in
-                (* make sure uid and version match *)
-                if file_uid = ref_file_uid && ver = ref_ver then
-                  (add_okay_data_block stats, Some block)
-                else
-                  find_valid_data_block_proc_internal (add_failed_block stats) (* move onto finding next block *)
-            end in
+                find_valid_data_block_proc_internal (add_failed_block stats) (* move onto finding next block *)
+          end in
     find_valid_data_block_proc_internal stats
   ;;
 
