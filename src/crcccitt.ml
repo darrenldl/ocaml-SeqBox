@@ -43,44 +43,38 @@
  *)
 open Stdint
 
-let crc_poly_ccitt       : uint16 = Uint16.of_int 0x1021;;
+let crc_poly_ccitt       : int64 = Int64.of_int 0x1021;;
 
-let crc_start_ccitt_1d0f : uint16 = Uint16.of_int 0x1d0f;;
-let crc_start_ccitt_ffff : uint16 = Uint16.of_int 0xFFFF;;
-let crc_start_xmodem     : uint16 = Uint16.of_int 0x0000;;
+let crc_start_ccitt_1d0f : int64 = Int64.of_int 0x1d0f;;
+let crc_start_ccitt_ffff : int64 = Int64.of_int 0xFFFF;;
+let crc_start_xmodem     : int64 = Int64.of_int 0x0000;;
 
 (* Do NOT rely on precedence of the following operators
  * as they are likely to be incorrect
  *
  * ALWAYS use a pair of paranthesis when multiple expressions are present
  *)
-let (<) (a:uint16) (b:uint16) =
-  let open Uint16 in
-  let res = compare a b in
-  if   res < 0 then
-    true
-  else
-    false;;
+let (<) (a:int64) (b:int64) =
+  let open Int64 in
+  (compare a b) < 0
+;;
 
-let (>) (a:uint16) (b:uint16) =
-  let open Uint16 in
-  let res = compare a b in
-  if   res > 0 then
-    true
-  else
-    false;;
+let (>) (a:int64) (b:int64) =
+  let open Int64 in
+  (compare a b) > 0
+;;
 
-let (&) : uint16 -> uint16 -> uint16 =
-  Uint16.logand;;
+let (&) : int64 -> int64 -> int64 =
+  Int64.logand;;
 
-let (^) : uint16 -> uint16 -> uint16 =
-  Uint16.logxor;;
+let (^) : int64 -> int64 -> int64 =
+  Int64.logxor;;
 
-let (<<) : uint16 -> int -> uint16 =
-  Uint16.shift_left;;
+let (<<) : int64 -> int -> int64 =
+  Int64.shift_left;;
 
-let (>>) : uint16 -> int -> uint16 =
-  Uint16.shift_right;;
+let (>>) : int64 -> int -> int64 =
+  Int64.shift_right_logical;;
 
 (* Translated from init_crcccitt_tab
  *
@@ -88,15 +82,15 @@ let (>>) : uint16 -> int -> uint16 =
  *  Generate the table then return it rather than
  *  writing to a global table then set a ready flag
  *)
-let make_crcccitt_tab () : uint16 array =
-  let open Uint16 in
-  let (i      : uint16 ref)   = ref (of_int 0) in
-  let (crc    : uint16 ref)   = ref (of_int 0) in
-  let (c      : uint16 ref)   = ref (of_int 0) in
-  let (table  : uint16 array) = Array.make 256 (of_int 0) in
+let make_crcccitt_tab () : int64 array =
+  let open Int64 in
+  let (i      : int64 ref)   = ref (of_int 0) in
+  let (crc    : int64 ref)   = ref (of_int 0) in
+  let (c      : int64 ref)   = ref (of_int 0) in
+  let (table  : int64 array) = Array.make 256 (of_int 0) in
   (* while loop is used here because value of i
    * is used in shifting,
-   * thus requiring i to be uint16,
+   * thus requiring i to be int64,
    * which is impossible to do in for loop
    *)
   while (!i < of_int 256) do
@@ -108,9 +102,9 @@ let make_crcccitt_tab () : uint16 array =
     for _ = 0 to 7 do
 
       if ((!crc ^ !c) & (of_int 0x8000)) > (of_int 0) then
-        crc := begin (!crc << 1) ^ crc_poly_ccitt end
+        crc := begin ((!crc << 1) ^ crc_poly_ccitt) & (Int64.of_int 0xFFFF) end
       else
-        crc := begin  !crc << 1                   end;
+        crc := begin  (!crc << 1)                   & (Int64.of_int 0xFFFF) end;
 
       c := !c << 1
     done;
@@ -125,62 +119,60 @@ let make_crcccitt_tab () : uint16 array =
 
 let crc_tabccitt = make_crcccitt_tab ();;
 
-let update_crc_ccitt ~(crc:uint16) ~(single_byte:uint8) : uint16 =
+let update_crc_ccitt ~(crc:int64) ~(single_byte:uint8) : int64 =
   (crc << 8)
   ^
   crc_tabccitt.(
-    Uint16.to_int (
+    Int64.to_int (
       (crc >> 8)
       ^
-      (Uint16.of_uint8 single_byte)
+      (Int64.of_uint8 single_byte)
     )
   )
 ;;
 
 let crc_ccitt_generic ~(input:bytes) ~(start_val:uint16) : uint16 =
-  (* let crc : uint16 ref = ref (Uint16.of_int 0) in *)
-  let crc : int64 ref = ref 0L in
+  (* let crc : int64 ref = ref (Int64.of_int 0) in *)
+  let crc : int64 ref = ref (Int64.of_int 0) in
 
-  let val0x00FF        = Int64.of_int 0x00FF  in
+  let val0x00FF       = Int64.of_int 0x00FF  in
 
   crc := (Uint16.to_int64 start_val);
 
-  let (^)  = Int64.logxor in
+  (*let (^)  = Int64.logxor in
   let (&)  = Int64.logand in
   let (<<) = Int64.shift_left in
-  let (>>) = Int64.shift_right_logical in
+  let (>>) = Int64.shift_right_logical in*)
 
   for i = 0 to (Bytes.length input) - 1 do
     crc := (!crc << 8)
            ^
-           (Uint16.to_int64
-              crc_tabccitt.(
-                Int64.to_int (
-                  (
-                    (!crc >> 8)
-                    ^ 
-                    (* let byte = (Uint8.of_bytes_big_endian input i) in
-                       Uint16.of_uint8 byte *)
-                    Int64.of_int (Char.code (Bytes.get input i))
-                  )
-                  &
-                  val0x00FF
-                )
-              )
+           crc_tabccitt.(
+             Int64.to_int (
+               (
+                 (!crc >> 8)
+                 ^ 
+                 (* let byte = (Uint8.of_bytes_big_endian input i) in
+                    Int64.of_uint8 byte *)
+                 Int64.of_int (Char.code (Bytes.get input i))
+               )
+               &
+               val0x00FF
+             )
            )
   done;
   (Uint16.of_int64 !crc)
 ;;
 
-let crc_ccitt_ffff ~(input:bytes) : uint16 =
+(*let crc_ccitt_ffff ~(input:bytes) : int64 =
   crc_ccitt_generic ~input ~start_val:crc_start_ccitt_ffff
 ;;
 
-let crc_ccitt_1d0f ~(input:bytes) : uint16 =
+let crc_ccitt_1d0f ~(input:bytes) : int64 =
   crc_ccitt_generic ~input ~start_val:crc_start_ccitt_1d0f
 ;;
 
-let crc_xmodem ~(input:bytes) : uint16 =
+let crc_xmodem ~(input:bytes) : int64 =
   crc_ccitt_generic ~input ~start_val:crc_start_xmodem
-;;
+;; *)
 
