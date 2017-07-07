@@ -73,5 +73,4 @@ module Block : sig
   val is_meta             : t -> bool
 
   val is_data             : t -> bool
-
 end

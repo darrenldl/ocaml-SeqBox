@@ -79,9 +79,9 @@ module Processor = struct
     let bytes_to_block (raw_header:Header.raw_header) (chunk:bytes) : Block.t option =
       let want_block =
         if want_meta then
-          raw_header.seq_num =  (Uint32.of_int 0)
+          Header.raw_header_is_meta raw_header
         else
-          raw_header.seq_num != (Uint32.of_int 0) in
+          Header.raw_header_is_data raw_header in
       if want_block then
         try
           (* the error has something to do with ~skipped_already maybe *)
@@ -186,6 +186,22 @@ module Processor = struct
     decode_and_output_proc_internal (make_blank_stats ~ver:(Block.block_to_ver ref_block))
   ;;
 
+  let out_filename_fetcher (in_file:Core.In_channel.t) : string option =
+    let metadata_block : Block.t option =
+      find_first_block_proc ~want_meta:true in_file in
+    match metadata_block with
+    | Some block ->
+      begin
+        let metadata_list  = Metadata.dedup (Block.block_to_meta block) in
+        match List.filter (function | Metadata.FNM _ -> true | _ -> false) metadata_list with
+        | [ ]       -> None
+        | [FNM str] -> Some str
+        | [_]       -> assert false
+        | _ :: _    -> assert false
+      end
+    | None       -> None
+  ;;
+
   let decoder (in_file:Core.In_channel.t) (out_file:Core.Out_channel.t) : stats * (int64 option) =
     (* find a block to use as reference *)
     let ref_block : Block.t option =
@@ -216,24 +232,38 @@ module Processor = struct
 end
 
 module Process = struct
-  let decode_file ~(in_filename:string) ~(out_filename:string) : (stats, string) result =
-    match Stream.process_in_out ~in_filename ~out_filename ~processor:Processor.decoder with
-    | Ok (stats, Some trunc_size) ->
-      begin
-        try
-          Unix.LargeFile.truncate out_filename trunc_size;
-          Ok stats
-        with
-        | _ -> Error "failed to truncate output file"
-      end
-    | Ok (stats, None)            -> Ok stats
-    | Error msg                   -> Error msg
+  let fetch_out_filename ~(in_filename:string) ~(out_filename:string option) : (string option, string) result =
+    match out_filename with
+    | Some str -> Ok (Some str)
+    | None     ->
+      match Stream.process_in ~in_filename ~processor:Processor.out_filename_fetcher with
+      | Ok result -> Ok result
+      | Error msg -> Error msg
+  ;;
+
+  let decode_file ~(in_filename:string) ~(out_filename:string option) : (stats, string) result =
+    match fetch_out_filename ~in_filename ~out_filename with
+    | Error msg -> Error msg
+    | Ok None   ->
+      Error (Printf.sprintf "failed to obtain a filename for output(none is provided and no valid metadata block with filename field is found in %s)" in_filename)
+    | Ok (Some out_filename) ->
+      match Stream.process_in_out ~in_filename ~out_filename ~processor:Processor.decoder with
+      | Ok (stats, Some trunc_size) ->
+        begin
+          try
+            Unix.LargeFile.truncate out_filename trunc_size;
+            Ok stats
+          with
+          | _ -> Error "failed to truncate output file"
+        end
+      | Ok (stats, None)            -> Ok stats
+      | Error msg                   -> Error msg
   ;;
 end
 
 let test_decode () =
   let open Metadata in
-  match Process.decode_file ~in_filename:"dummy_file_encoded" ~out_filename:"dummy_file2" with
+  match Process.decode_file ~in_filename:"dummy_file_encoded" ~out_filename:(Some "dummy_file2") with
   | Ok stats  -> print_stats stats
   | Error msg -> Printf.printf "Error : %s\n" msg
 ;;
