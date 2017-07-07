@@ -586,9 +586,9 @@ end = struct
     | Meta {fields; _} -> fields
 
   let is_meta (block:t) : bool =
-    match block_to_seq_num block with
-    | Some seq_num -> seq_num = (Uint32.of_int 0)
-    | None         -> false
+    match block with
+    | Meta _ -> true
+    | Data _ -> false
   ;;
 
   let is_data (block:t) : bool =
