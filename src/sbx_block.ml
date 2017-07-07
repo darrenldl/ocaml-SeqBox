@@ -58,6 +58,10 @@ module Header : sig
 
   val header_to_seq_num    : t -> uint32 option
 
+  val raw_header_is_meta   : raw_header -> bool
+
+  val raw_header_is_data   : raw_header -> bool
+
 end = struct
 
   exception Invalid_uid_length
@@ -215,6 +219,14 @@ end = struct
     match Angstrom.parse_only Parser.header_p (`String data) with
     | Ok header -> header
     | Error _   -> raise Invalid_bytes
+  ;;
+
+  let raw_header_is_meta (raw_header:raw_header) : bool =
+    (Uint32.to_int raw_header.seq_num) = 0
+  ;;
+
+  let raw_header_is_data (raw_header:raw_header) : bool =
+    not (raw_header_is_meta raw_header)
   ;;
 end
 

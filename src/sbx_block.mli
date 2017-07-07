@@ -22,6 +22,10 @@ module Header : sig
   val make_common_fields   : ?uid:bytes    -> version -> common_fields
 
   val of_bytes             : bytes         -> raw_header
+
+  val raw_header_is_meta   : raw_header -> bool
+
+  val raw_header_is_data   : raw_header -> bool
 end
 
 module Metadata : sig
