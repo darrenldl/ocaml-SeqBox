@@ -17,5 +17,5 @@
 
 (executable
  ((name           test)
-  (ocamlopt_flags (-cclib -Wl,-E crcccitt_c.o))
-  (libraries      (stdint ctypes ctypes.foreign))))
+  (ocamlopt_flags (-cclib -Wl,-E crcccitt.o))
+  (libraries      (stdint ctypes ctypes.foreign crcccitt_c))))

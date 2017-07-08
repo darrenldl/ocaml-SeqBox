@@ -35,7 +35,7 @@
 #include <stdlib.h>
 #include "checksum.h"
 
-static uint16_t		crc_ccitt_generic( const unsigned char *input_str, size_t num_bytes, uint16_t start_value );
+uint16_t		crc_ccitt_generic( const unsigned char *input_str, size_t num_bytes, uint16_t start_value );
 static void             init_crcccitt_tab( void );
 
 static bool             crc_tabccitt_init       = false;
@@ -90,7 +90,7 @@ uint16_t crc_ccitt_ffff( const unsigned char *input_str, size_t num_bytes ) {
  * function accepts an initial start value for the crc.
  */
 
-static uint16_t crc_ccitt_generic( const unsigned char *input_str, size_t num_bytes, uint16_t start_value ) {
+uint16_t crc_ccitt_generic( const unsigned char *input_str, size_t num_bytes, uint16_t start_value ) {
 
 	uint16_t crc;
 	const unsigned char *ptr;
