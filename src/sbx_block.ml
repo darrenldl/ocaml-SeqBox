@@ -14,10 +14,7 @@ end = struct
   ;;
 
   let crc_ccitt_sbx ~(ver:version) ~(input:bytes) : bytes =
-    (* let res = crc_ccitt_generic ~input ~start_val:(ver_to_uint16 ver) in *)
-    let res =
-      match ver with
-      | `V1 -> crc_ccitt_sbx_ver1 ~input in
+    let res = crc_ccitt_generic ~input ~start_val:(ver_to_uint16 ver) in
     Conv_utils.uint16_to_bytes res
   ;;
 end
