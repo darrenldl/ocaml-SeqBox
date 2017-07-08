@@ -1,3 +1,8 @@
+/* This source file has been modified by Darren Ldl in part of the ocaml-SeqBox project
+ * Please see notice below for original license and original author
+ * All modifications are under the same MIT license used by libcrc as stated below
+ */
+
 /*
  * Library: libcrc
  * File:    src/crcccitt.c
