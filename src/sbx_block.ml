@@ -1,5 +1,5 @@
 open Stdint
-open Crcccitt
+open Crcccitt_wrap
 open Sbx_specs
 
 module Helper : sig
@@ -14,7 +14,7 @@ end = struct
   ;;
 
   let crc_ccitt_sbx ~(ver:version) ~(input:bytes) : bytes =
-    let res = crc_ccitt_generic ~input ~start_val:(ver_to_uint16 ver) in
+    let res = crc_ccitt_generic ~data:input ~start_val:(ver_to_uint16 ver) in
     Conv_utils.uint16_to_bytes res
   ;;
 end
