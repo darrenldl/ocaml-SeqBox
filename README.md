@@ -129,8 +129,9 @@ N.B. Current versions differs only by blocksize.
     - Result : CRC-CCITT implementation causes major slowdown
   - Profiling and optimization of decoding - done
     - Result : CRC-CCITT implementation causes major slowdown
-  - Replace CRC-CCITT implementation with a more efficient one(or create FFI to libcrc) - in progress
-  - Commandline interface for encoding and decoding - not started
+  - Replace CRC-CCITT implementation with a more efficient one(or create FFI to libcrc) - done
+    - CRC-CCITT is implemented via FFI to libcrc
+  - Commandline interface for encoding and decoding - in progress
   - Further profiling and optimization of encoding - not started
   - Further profiling and optimization of decoding - not started
   - Scan mode - not started
