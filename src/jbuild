@@ -6,7 +6,7 @@
  ))
 
 (executable
- ((name           decode)
+ ((name           encode)
   (ocamlopt_flags (-cclib -Wl,-E crcccitt.o))
   (libraries      (crcccitt_c stdint nocrypto nocrypto.unix angstrom core hex ctypes ctypes.foreign))
  ))
