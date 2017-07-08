@@ -15,6 +15,16 @@ module Param_for_v1 = struct
   let data_size    : int   = block_size - Common_param.header_size
 end
 
+module Param_for_v2 = struct
+  let block_size   : int   = 128
+  let data_size    : int   = block_size - Common_param.header_size
+end
+
+module Param_for_v3 = struct
+  let block_size   : int   = 4096
+  let data_size    : int   = block_size - Common_param.header_size
+end
+
 let sbx_file_uid_len = Common_param.file_uid_len;;
 
 let sbx_signature    = Common_param.signature;;
