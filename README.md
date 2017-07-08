@@ -65,7 +65,7 @@ N.B. Current versions differs only by blocksize.
 | ver | blocksize | note    |
 |---- | --------- | ------- |
 |  1  | 512       | default |
-|  2  | 128       | NOT IMPLEMENTED |
+|  2  | 128       | NOT IMPLEMENTED (yet) |
 |  3  | 4096      | NOT IMPLEMENTED (yet) |
 
 ### Metadata encoding:
@@ -92,10 +92,10 @@ N.B. Current versions differs only by blocksize.
   - Data hiding (XOR encoding/decoding in official seqbox)
     - Provides neither sufficiently strong encryption nor sufficient stealth for any serious attempt to hide/secure data
     - You should use the appropriate tools for encryption
-  - Version 2 of SBX block
-    - Current set of metadata cannot fit into a 128 bytes block size
-    - No way to extend storage of metadata block in current specs
-    - 128 bytes block is likely only going to be useful for archaic systems
+  - ~~Version 2 of SBX block~~
+    - ~~Current set of metadata cannot fit into a 128 bytes block size~~
+    - ~~No way to extend storage of metadata block in current specs~~
+    - ~~128 bytes block is likely only going to be useful for archaic systems~~
 
 ## Index of source code
  
