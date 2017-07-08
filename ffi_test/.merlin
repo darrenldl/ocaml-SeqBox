@@ -12,3 +12,4 @@ PKG str
 PKG threads
 PKG threads.posix
 PKG unix
+S .

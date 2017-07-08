@@ -9,5 +9,5 @@
 (executable
  ((name test)
   (ocamlopt_flags (-cclib -Wl,-E dummy.o))
-  (libraries      (stdint ctypes ctypes.foreign))
+  (libraries      (stdint ctypes ctypes.foreign hello))
   ))
