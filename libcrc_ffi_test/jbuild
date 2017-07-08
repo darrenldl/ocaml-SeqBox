@@ -4,7 +4,8 @@
  ((name        crcccitt_c)
   (public_name crcccitt_c)
   (c_names     (crcccitt))
-  (libraries   (stdint hex ctypes ctypes.foreign))))
+  (libraries   (stdint hex ctypes ctypes.foreign))
+  ))
 
 #|
 (library
@@ -18,4 +19,5 @@
 (executable
  ((name           test)
   (ocamlopt_flags (-cclib -Wl,-E crcccitt.o))
-  (libraries      (stdint hex ctypes ctypes.foreign crcccitt_c))))
+  (libraries      (stdint hex ctypes ctypes.foreign crcccitt_c))
+ ))
