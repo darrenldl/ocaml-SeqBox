@@ -1,0 +1,11 @@
+(jbuild_version 1)
+
+(library
+ ((name        hello)
+  (public_name hello)
+  (c_names     (dummy))
+  (libraries   (ctypes.foreign))))
+
+(executable
+ ((name test)
+  (libraries (ctypes.foreign ctypes hello))))
