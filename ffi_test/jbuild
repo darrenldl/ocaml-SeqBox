@@ -4,9 +4,10 @@
  ((name        hello)
   (public_name hello)
   (c_names     (dummy))
-  (libraries   (ctypes ctypes.foreign))))
+  (libraries   (stdint ctypes ctypes.foreign))))
 
 (executable
  ((name test)
-  (flags     (-cclib -Wl,-E dummy.o))
-  (libraries (ctypes ctypes.foreign hello))))
+  (ocamlopt_flags (-cclib -Wl,-E dummy.o))
+  (libraries      (stdint ctypes ctypes.foreign))
+  ))

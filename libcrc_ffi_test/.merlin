@@ -1,5 +1,5 @@
 B _build/default
-FLG -open Hello -w -40 -w -40
+FLG -open Crcccitt_c -w -40 -w -40
 PKG bigarray
 PKG bytes
 PKG ctypes

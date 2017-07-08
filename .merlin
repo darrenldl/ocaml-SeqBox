@@ -1,4 +1,4 @@
-PKG core stdint hex nocrypto angstrom
+PKG core stdint hex nocrypto angstrom ctypes ctypes.foreign
 S src
 B _build
 B src/_build
