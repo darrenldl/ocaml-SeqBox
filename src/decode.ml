@@ -72,6 +72,19 @@ let print_stats (stats:stats) : unit =
   print_failed_pos stats.block_size stats.failed_block_pos_list
 ;;
 
+module Helper = struct
+  let patch_block_bytes_if_needed (in_file:Core.In_channel.t) ~(raw_header:Header.raw_header) ~(chunk:bytes) : bytes =
+    let ideal_len   = ver_to_block_size raw_header.version in
+    let missing_len = ideal_len - (Bytes.length chunk) in
+    if missing_len > 0 then
+      match Read_chunk.read in_file ~len:missing_len with
+      | None                           -> chunk (* can't do anything, just give back the original piece *)
+      | Some { chunk = missing_chunk } -> Bytes.concat "" [chunk; missing_chunk]
+    else
+      chunk
+  ;;
+end
+
 module Processor = struct
   let find_first_block_proc ~(want_meta:bool) (in_file:Core.In_channel.t) : Block.t option =
     let open Read_chunk in
@@ -109,6 +122,9 @@ module Processor = struct
           match test_header with
           | None            -> find_first_block_proc_internal () (* go to next block *)
           | Some raw_header ->
+            (* possibly grab more bytes depending on version *)
+            let chunk =
+              Helper.patch_block_bytes_if_needed in_file ~raw_header ~chunk in
             let test_block : Block.t option =
               bytes_to_block raw_header chunk in
             match test_block with
