@@ -10,7 +10,7 @@ Official SeqBox Repo - https://github.com/MarcoPon/SeqBox
 ~~CRC-CCITT implementation is translated from libcrc (https://github.com/lammertb/libcrc) using a copy retrieved on 2017-06-27~~
   - ~~See License section for details on licensing~~
 
-CRC-CCITT is currently implemented via FFI and links to the static object files compiled from libcrc
+CRC-CCITT is currently implemented via FFI and links to the static object files compiled from libcrc (https://github.com/lammertb/libcrc)
   - See crcccitt_wrap.ml, crcccitt_wrap.mli for the FFI bindings
   - See crcccitt.c, checksum.h for libcrc source used(crcccitt.c is slightly modified, modification is under same license used by libcrc)
 
