@@ -46,16 +46,6 @@ static void             init_crcccitt_tab( void );
 static bool             crc_tabccitt_init       = false;
 static uint16_t         crc_tabccitt[256];
 
-/* uint16_t crc_ccitt_sbx_ver1 (const unsigned char* input_str, size_t num_bytes) 
- *
- * This function is used specifically by ocaml-SeqBox project and is not
- * an original part of libcrc
- */
-uint16_t crc_ccitt_sbx_ver1 (const unsigned char* input_str, size_t num_bytes) {
-
-  return crc_ccitt_generic (input_str, num_bytes, 0x0001);
-}
-
 /*
  * uint16_t crc_xmodem( const unsigned char *input_str, size_t num_bytes );
  *
