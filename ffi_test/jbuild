@@ -4,8 +4,9 @@
  ((name        hello)
   (public_name hello)
   (c_names     (dummy))
-  (libraries   (ctypes.foreign))))
+  (libraries   (ctypes ctypes.foreign))))
 
 (executable
  ((name test)
-  (libraries (ctypes.foreign ctypes hello))))
+  (flags     (-cclib -Wl,-E dummy.o))
+  (libraries (ctypes ctypes.foreign hello))))

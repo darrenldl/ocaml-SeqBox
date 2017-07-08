@@ -1,5 +1,5 @@
 B _build/default
-FLG -open Hello -w -40 -w -40
+FLG -open Hello -w -40 -cclib -Wl,-E dummy.o
 PKG bigarray
 PKG bytes
 PKG ctypes
