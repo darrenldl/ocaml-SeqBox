@@ -7,8 +7,12 @@ This is mainly to address the different licenses being used(SeqBox was using AGP
 Official SeqBox Repo - https://github.com/MarcoPon/SeqBox
 
 ## Notes
-CRC-CCITT implementation is translated from libcrc (https://github.com/lammertb/libcrc) using a copy retrieved on 2017-06-27
-  - See License section for details on licensing
+~~CRC-CCITT implementation is translated from libcrc (https://github.com/lammertb/libcrc) using a copy retrieved on 2017-06-27~~
+  - ~~See License section for details on licensing~~
+
+CRC-CCITT is currently implemented via FFI and links to the static object files compiled from libcrc
+  - See crcccitt_wrap.ml, crcccitt_wrap.mli for the FFI bindings
+  - See crcccitt.c, checksum.h for libcrc source used(crcccitt.c is slightly modified, modification is under same license used by libcrc)
 
 Exact behaviours in non-standard cases are not specified in official SeqBox technical specification
   - See Specification of ocaml-SeqBox section for details on how ocaml-SeqBox behaves(if you care about undefined behaviour those sort of things)
@@ -125,8 +129,9 @@ N.B. Current versions differs only by blocksize.
     - Result : CRC-CCITT implementation causes major slowdown
   - Profiling and optimization of decoding - done
     - Result : CRC-CCITT implementation causes major slowdown
-  - Replace CRC-CCITT implementation with a more efficient one(or create FFI to libcrc) - in progress
-  - Commandline interface for encoding and decoding - not started
+  - Replace CRC-CCITT implementation with a more efficient one(or create FFI to libcrc) - done
+    - CRC-CCITT is implemented via FFI to libcrc
+  - Commandline interface for encoding and decoding - in progress
   - Further profiling and optimization of encoding - not started
   - Further profiling and optimization of decoding - not started
   - Scan mode - not started
@@ -189,13 +194,12 @@ Data block is valid if and only if
     e.g. if there are two FNM metadata fields in the metadata block, only the first (in terms of byte order) will be used
 
 ## License
-The following files directly from libcrc(with syntax modification) are under the MIT license as used by libcrc
+The following files directly from libcrc(with slight modification) are under the same MIT license used by libcrc
   - crcccitt.c
   - checksum.h
   
-The following files translated/ported from libcrc are under the MIT license as used by libcrc as well
-  - crcccitt.ml
-  - crcccitt.mli
+~~The following files translated/ported from libcrc are under the MIT license as used by libcrc as well~~
+  - ~~crcccitt.ml~~
+  - ~~crcccitt.mli~~
 
 All remaining files are distributed under the 3-Clause BSD license as stated in the LICENSE file
-
