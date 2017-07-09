@@ -3,18 +3,17 @@
 Table of Contents
 =================
 
-   * [Table of Contents](#table-of-contents)
    * [Specification of ocaml-SeqBox](#specification-of-ocaml-seqbox)
-            * [Encoding workflow](#encoding-workflow)
-            * [Decoding workflow](#decoding-workflow)
-            * [To successfully encode a file](#to-successfully-encode-a-file)
-            * [To successfully decode a sbx container](#to-successfully-decode-a-sbx-container)
-            * [Handling of duplicate metadata/data blocks](#handling-of-duplicate-metadatadata-blocks)
-            * [Handling of duplicate metadata in metadata block given the block is valid](#handling-of-duplicate-metadata-in-metadata-block-given-the-block-is-valid)
+      * [Encoding workflow](#encoding-workflow)
+      * [Decoding workflow](#decoding-workflow)
+      * [To successfully encode a file](#to-successfully-encode-a-file)
+      * [To successfully decode a sbx container](#to-successfully-decode-a-sbx-container)
+      * [Handling of duplicate metadata/data blocks](#handling-of-duplicate-metadatadata-blocks)
+      * [Handling of duplicate metadata in metadata block given the block is valid](#handling-of-duplicate-metadata-in-metadata-block-given-the-block-is-valid)
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
-#### Encoding workflow
+## Encoding workflow
   1. If metadata is enabled, the following file metadata are gathered from file or retrieved from user input : file name, sbx file name, file size, file last modification time, encoding start time
   2. If metadata is enabled, then a partial metadata block is written into the output file as filler
     - The written metadata block is valid, but does not contain the actual file hash, a filler pattern of 0x00 is used in place of the hash part of the multihash(the header and length indicator of multihash are still valid)
@@ -22,7 +21,7 @@ Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
     - data size = block size - header size (e.g. version 1 has data size of 512 - 16 = 496)
   4. If metadata is enabled, the encoder seeks back to starting position of output file and overwrites the metadata block with one that contains the SHA256 hash
 
-#### Decoding workflow
+## Decoding workflow
 Metadata block is valid if and only if
   - Header can be parsed
   - All metadata fields(duplicated or not) can be parsed successfully
@@ -51,20 +50,20 @@ Data block is valid if and only if
       - output file will not be deleted even if hash does not match
     - otherwise nothing is done
 
-#### To successfully encode a file
+## To successfully encode a file
   - File size must be within threshold
     - For version 1, that means  496 * 2^32 - 1 =  ~1.9375 TiB, where 496 is data size, obtained via 512(block size) - 16(header size)
     - For version 2, that means  112 * 2^32 - 1 =  ~0.4375 TiB, where 112 is data size, obtained via 128(block size) - 16(header size)
     - For version 3, that means 4080 * 2^32 - 1 = ~15.9375 TiB, where 4080 is data size, obtained via 4096(block size) - 16(header size)
 
-#### To successfully decode a sbx container
+## To successfully decode a sbx container
   - At least one valid data block for each position must exist
   - If data padding was done for the last block, then at least one valid metadata block must exist for truncation of the output file to happen
 
-#### Handling of duplicate metadata/data blocks
+## Handling of duplicate metadata/data blocks
   - First valid metadata block will be used(if exists)
   - For all other data blocks, the last seen valid data block will be used for a given sequence number
 
-#### Handling of duplicate metadata in metadata block given the block is valid
+## Handling of duplicate metadata in metadata block given the block is valid
   - For a given ID, only the first occurance of the metadata will be used
     e.g. if there are two FNM metadata fields in the metadata block, only the first (in terms of byte order) will be used

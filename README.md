@@ -5,12 +5,11 @@ The original pharsing was "Port of SeqBox to OCaml", but since no direct porting
 This is mainly to address the different licenses being used(SeqBox was using AGPL 3.0 at the time of writing while this project uses 3-Clause BSD license).
 
 Official SeqBox Repo - https://github.com/MarcoPon/SeqBox
-                                                           
+
 Table of Contents
 =================
 
    * [ocaml-SeqBox](#ocaml-seqbox)
-   * [Table of Contents](#table-of-contents)
       * [Notes](#notes)
       * [Possibly useful additional features of ocaml-SeqBox(possibly not yet in official SeqBox)](#possibly-useful-additional-features-of-ocaml-seqboxpossibly-not-yet-in-official-seqbox)
       * [Technical Specification](#technical-specification)
@@ -27,7 +26,7 @@ Table of Contents
       * [License](#license)
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
-
+                                                           
 ## Notes
 CRC-CCITT is currently implemented via FFI and links to the static object files compiled from libcrc (https://github.com/lammertb/libcrc)
   - See crcccitt_wrap.ml, crcccitt_wrap.mli for the FFI bindings
