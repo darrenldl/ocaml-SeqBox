@@ -26,4 +26,18 @@ let info =
   Term.info "chorus" ~version:"%%VERSION%%" ~doc ~exits:Term.default_exits ~man
 ;;
 
-let () = Term.exit @@ Term.eval (chorus_t, info)
+let print () = print_endline "Hello";;
+
+let tmsg = Arg.value ();;
+
+let test_t = Term.(const print $ tmsg);;
+
+let test_info =
+  let doc = "whatever" in
+  let man = [ `S Manpage.s_authors
+            ; `P "Darren"
+            ] in
+  Term.info "tt" ~version:"%%VERSION%%" ~doc ~man
+;;
+
+let () = Term.exit @@ Term.eval_choice (chorus_t, info) [(test_t, test_info)]
