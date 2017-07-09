@@ -9,68 +9,72 @@ let (<->) = Int64.sub;;
 
 let (<*>) = Int64.mul;;
 
-type stats = { block_size            : int
-             ; blocks_processed      : int64
-             ; meta_blocks_decoded   : int64
-             ; data_blocks_decoded   : int64
-             ; blocks_failed         : int64
-             ; failed_block_pos_list : int64 list
-             }
+module Stats = struct
+  type t = { block_size            : int
+           ; blocks_processed      : int64
+           ; meta_blocks_decoded   : int64
+           ; data_blocks_decoded   : int64
+           ; blocks_failed         : int64
+           ; failed_block_pos_list : int64 list
+           }
 
-let make_blank_stats ~(ver:version) : stats =
-  { block_size            = ver_to_block_size ver
-  ; blocks_processed      = 0L
-  ; meta_blocks_decoded   = 0L
-  ; data_blocks_decoded   = 0L
-  ; blocks_failed         = 0L
-  ; failed_block_pos_list = []
-  }
+  let make_blank_stats ~(ver:version) : t =
+    { block_size            = ver_to_block_size ver
+    ; blocks_processed      = 0L
+    ; meta_blocks_decoded   = 0L
+    ; data_blocks_decoded   = 0L
+    ; blocks_failed         = 0L
+    ; failed_block_pos_list = []
+    }
 
-let add_okay_meta_block (stats:stats) : stats =
-  { block_size            = stats.block_size
-  ; blocks_processed      = stats.blocks_processed      <+> 1L
-  ; meta_blocks_decoded   = stats.meta_blocks_decoded   <+> 1L
-  ; data_blocks_decoded   = stats.data_blocks_decoded
-  ; blocks_failed         = stats.blocks_failed
-  ; failed_block_pos_list = stats.failed_block_pos_list
-  }
+  let add_okay_meta_block (stats:t) : t =
+    { block_size            = stats.block_size
+    ; blocks_processed      = stats.blocks_processed      <+> 1L
+    ; meta_blocks_decoded   = stats.meta_blocks_decoded   <+> 1L
+    ; data_blocks_decoded   = stats.data_blocks_decoded
+    ; blocks_failed         = stats.blocks_failed
+    ; failed_block_pos_list = stats.failed_block_pos_list
+    }
 
-let add_okay_data_block (stats:stats) : stats =
-  { block_size            = stats.block_size
-  ; blocks_processed      = stats.blocks_processed      <+> 1L
-  ; meta_blocks_decoded   = stats.meta_blocks_decoded
-  ; data_blocks_decoded   = stats.data_blocks_decoded   <+> 1L
-  ; blocks_failed         = stats.blocks_failed
-  ; failed_block_pos_list = stats.failed_block_pos_list
-  }
+  let add_okay_data_block (stats:t) : t =
+    { block_size            = stats.block_size
+    ; blocks_processed      = stats.blocks_processed      <+> 1L
+    ; meta_blocks_decoded   = stats.meta_blocks_decoded
+    ; data_blocks_decoded   = stats.data_blocks_decoded   <+> 1L
+    ; blocks_failed         = stats.blocks_failed
+    ; failed_block_pos_list = stats.failed_block_pos_list
+    }
 
-let add_failed_block (stats:stats) : stats =
-  { block_size            = stats.block_size
-  ; blocks_processed      = stats.blocks_processed      <+> 1L
-  ; meta_blocks_decoded   = stats.meta_blocks_decoded
-  ; data_blocks_decoded   = stats.data_blocks_decoded
-  ; blocks_failed         = stats.blocks_failed         <+> 1L
-  ; failed_block_pos_list =
-      if stats.blocks_failed < 500L then
-        stats.blocks_processed :: stats.failed_block_pos_list
-      else
-        stats.failed_block_pos_list
-  }
+  let add_failed_block (stats:t) : t =
+    { block_size            = stats.block_size
+    ; blocks_processed      = stats.blocks_processed      <+> 1L
+    ; meta_blocks_decoded   = stats.meta_blocks_decoded
+    ; data_blocks_decoded   = stats.data_blocks_decoded
+    ; blocks_failed         = stats.blocks_failed         <+> 1L
+    ; failed_block_pos_list =
+        if stats.blocks_failed < 500L then
+          stats.blocks_processed :: stats.failed_block_pos_list
+        else
+          stats.failed_block_pos_list
+    }
 
-let print_failed_pos (block_size:int) (pos_list:int64 list) : unit =
-  let block_size = Int64.of_int block_size in
-  List.iter (fun x -> Printf.printf "Failed to decode block %Ld, at %Ld bytes\n" x (block_size <*> x)) (List.rev pos_list)
-;;
+  let print_failed_pos (block_size:int) (pos_list:int64 list) : unit =
+    let block_size = Int64.of_int block_size in
+    List.iter (fun x -> Printf.printf "Failed to decode block %Ld, at %Ld bytes\n" x (block_size <*> x)) (List.rev pos_list)
+  ;;
 
-let print_stats (stats:stats) : unit =
-  Printf.printf "Block size used in decoding                    : %d\n"  stats.block_size;
-  Printf.printf "Number of          blocks processed            : %Ld\n" stats.blocks_processed;
-  Printf.printf "Number of metadata blocks successfully decoded : %Ld\n" stats.meta_blocks_decoded;
-  Printf.printf "Number of data     blocks successfully decoded : %Ld\n" stats.data_blocks_decoded;
-  Printf.printf "Number of          blocks failed to decode     : %Ld\n" stats.blocks_failed;
-  Printf.printf "First up to 500 failing positions (block and bytes index start at 0)\n";
-  print_failed_pos stats.block_size stats.failed_block_pos_list
-;;
+  let print_stats (stats:t) : unit =
+    Printf.printf "Block size used in decoding                    : %d\n"  stats.block_size;
+    Printf.printf "Number of          blocks processed            : %Ld\n" stats.blocks_processed;
+    Printf.printf "Number of metadata blocks successfully decoded : %Ld\n" stats.meta_blocks_decoded;
+    Printf.printf "Number of data     blocks successfully decoded : %Ld\n" stats.data_blocks_decoded;
+    Printf.printf "Number of          blocks failed to decode     : %Ld\n" stats.blocks_failed;
+    Printf.printf "First up to 500 failing positions (block and bytes index start at 0)\n";
+    print_failed_pos stats.block_size stats.failed_block_pos_list
+  ;;
+end
+
+type stats = Stats.t
 
 module Helper = struct
   let patch_block_bytes_if_needed (in_file:Core.In_channel.t) ~(raw_header:Header.raw_header) ~(chunk:bytes) : bytes =
@@ -156,20 +160,20 @@ module Processor = struct
           | Block.Invalid_bytes
           | Block.Invalid_size     -> None in
         match block with
-        | None       -> find_valid_data_block_proc_internal (add_failed_block stats) (* move onto finding next block *)
+        | None       -> find_valid_data_block_proc_internal (Stats.add_failed_block stats) (* move onto finding next block *)
         | Some block ->
           begin
             if Block.is_meta block then (
               (* don't return metadata block *)
-              find_valid_data_block_proc_internal (add_okay_meta_block stats) (* move onto finding next block *) )
+              find_valid_data_block_proc_internal (Stats.add_okay_meta_block stats) (* move onto finding next block *) )
             else
               let file_uid = Block.block_to_file_uid block in
               let ver      = Block.block_to_ver      block in
               (* make sure uid and version match *)
               if file_uid = ref_file_uid && ver = ref_ver then
-                (add_okay_data_block stats, Some block)
+                (Stats.add_okay_data_block stats, Some block)
               else
-                find_valid_data_block_proc_internal (add_failed_block stats) (* move onto finding next block *)
+                find_valid_data_block_proc_internal (Stats.add_failed_block stats) (* move onto finding next block *)
           end in
     find_valid_data_block_proc_internal stats
   ;;
@@ -199,7 +203,7 @@ module Processor = struct
       | (stats, Some block) ->
         output_decoded_data_proc ~ref_block ~block out_file;
         decode_and_output_proc_internal stats in
-    decode_and_output_proc_internal (make_blank_stats ~ver:(Block.block_to_ver ref_block))
+    decode_and_output_proc_internal (Stats.make_blank_stats ~ver:(Block.block_to_ver ref_block))
   ;;
 
   let out_filename_fetcher (in_file:Core.In_channel.t) : string option =
@@ -280,7 +284,7 @@ end
 let test_decode () =
   let open Metadata in
   match Process.decode_file ~in_filename:"dummy_file_encoded" ~out_filename:(Some "dummy_file2") with
-  | Ok stats  -> print_stats stats
+  | Ok stats  -> Stats.print_stats stats
   | Error msg -> Printf.printf "Error : %s\n" msg
 ;;
 
