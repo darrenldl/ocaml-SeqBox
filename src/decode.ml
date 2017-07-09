@@ -88,7 +88,7 @@ end
 module Processor = struct
   let find_first_block_proc ~(want_meta:bool) (in_file:Core.In_channel.t) : Block.t option =
     let open Read_chunk in
-    let len = Param.Decode.ref_block_scan_interval in 
+    let len = Param.Decode.ref_block_scan_alignment in 
     let bytes_to_block (raw_header:Header.raw_header) (chunk:bytes) : Block.t option =
       let want_block =
         if want_meta then
