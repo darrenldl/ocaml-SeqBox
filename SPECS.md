@@ -1,7 +1,10 @@
+# Specification of ocaml-SeqBox
+
 Table of Contents
 =================
 
-      * [Specification of ocaml-SeqBox](#specification-of-ocaml-seqbox)
+   * [Table of Contents](#table-of-contents)
+   * [Specification of ocaml-SeqBox](#specification-of-ocaml-seqbox)
             * [Encoding workflow](#encoding-workflow)
             * [Decoding workflow](#decoding-workflow)
             * [To successfully encode a file](#to-successfully-encode-a-file)
@@ -11,7 +14,6 @@ Table of Contents
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
-## Specification of ocaml-SeqBox
 #### Encoding workflow
   1. If metadata is enabled, the following file metadata are gathered from file or retrieved from user input : file name, sbx file name, file size, file last modification time, encoding start time
   2. If metadata is enabled, then a partial metadata block is written into the output file as filler
