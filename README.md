@@ -145,12 +145,17 @@ N.B. Current versions differs only by blocksize.
     - Result : CRC-CCITT implementation causes major slowdown
   - Replace CRC-CCITT implementation with a more efficient one(or create FFI to libcrc) - done
     - CRC-CCITT is implemented via FFI to libcrc
-  - Commandline interface for encoding and decoding - in progress
-  - Further profiling and optimization of encoding - not started
-  - Further profiling and optimization of decoding - not started
-  - Scan mode - not started
-  - Recovery mode - not started
-  - Commandline options for scanning and recovery - not started
+  - Commandline interface for encoding and decoding - done
+  - Further profiling and optimization of encoding - skipped for now
+  - Further profiling and optimization of decoding - skipped for now
+  - ~~Scan mode - not started~~
+    - Replaced by rescue mode
+  - ~~Recovery mode - not started~~
+    - Replaced by rescue mode
+  - Rescue mode - in progress
+  - ~~Commandline options for scanning and recovery - not started~~
+    - Replaced by rescue mode
+  - Commandline interface for rescue mode - not started
 
 ## License
 The following files directly from libcrc(with slight modification) are under the same MIT license used by libcrc
