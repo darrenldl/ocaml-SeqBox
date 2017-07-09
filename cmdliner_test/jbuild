@@ -1,6 +1,6 @@
 (jbuild_version 1)
 
 (executable
- ((name      darcs)
+ ((name      osbx_mock)
   (libraries (cmdliner))
  ))
