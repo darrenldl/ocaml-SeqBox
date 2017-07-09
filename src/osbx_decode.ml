@@ -18,7 +18,7 @@ let decode (force_out:bool) (in_filename:string) (out_filename:string option) : 
       else
         match Process.decode_file ~in_filename ~out_filename:(Some out_filename) with
         | Ok stats  -> Stats.print_stats stats
-        | Error msg -> raise (Packaged_exn (Printf.sprintf "Error : %s" msg))
+        | Error msg -> raise (Packaged_exn msg)
   with
   | Packaged_exn msg -> Printf.printf "%s\n" msg
 

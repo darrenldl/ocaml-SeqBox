@@ -58,3 +58,8 @@ let ver_to_data_size    (ver:version) : int =
   | `V1 -> Param_for_v1.data_size
 ;;
 
+let string_to_ver       (str:string)  : (version, string) result =
+  match str with
+  | "1" -> Ok `V1
+  | _   -> Error "Invalid version string"
+;;

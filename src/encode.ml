@@ -153,12 +153,12 @@ module Process = struct
     | _ -> raise File_metadata_get_failed
   ;;
 
-  let encode_file ~(uid:bytes option) ~(want_meta:bool) ~(in_filename:string) ~(out_filename:string) : (stats, string) result =
+  let encode_file ~(uid:bytes option) ~(want_meta:bool) ~(ver:version) ~(in_filename:string) ~(out_filename:string) : (stats, string) result =
     try
       let common   =
         match uid with
-        | Some uid -> Header.make_common_fields ~uid `V1
-        | None     -> Header.make_common_fields      `V1 in
+        | Some uid -> Header.make_common_fields ~uid ver
+        | None     -> Header.make_common_fields      ver in
       let metadata =
         match want_meta with
         | true  -> Some (get_file_metadata ~in_filename ~out_filename)

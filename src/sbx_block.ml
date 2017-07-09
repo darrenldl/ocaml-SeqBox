@@ -291,7 +291,7 @@ end = struct
       | (id, data) :: vs -> let str = Printf.sprintf "id : %s, len : %d" (id_to_string id) (Bytes.length data) in
         length_distribution_helper vs (str :: acc) in
     let distribution_str = length_distribution_helper lst [] in
-    String.concat "\n" ["the length distribution of the metadata:"; distribution_str]
+    String.concat "\n" ["The length distribution of the metadata:"; distribution_str]
   ;;
 
   let same_id (a:t) (b:t) : bool =
@@ -352,7 +352,7 @@ end = struct
     if all_bytes_len <= max_data_size then
       Helper.pad_header_or_block_bytes all_bytes max_data_size
     else
-      raise (Too_much_data (Printf.sprintf "metadata is too long when converted to bytes\n%s" (length_distribution id_bytes_list)))
+      raise (Too_much_data (Printf.sprintf "Metadata is too long when converted to bytes\n%s" (length_distribution id_bytes_list)))
   ;;
 
   module Parser = struct

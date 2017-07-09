@@ -20,3 +20,5 @@ val ver_to_bytes        : version -> bytes
 val ver_to_block_size   : version -> int
 
 val ver_to_data_size    : version -> int
+
+val string_to_ver       : string  -> (version, string) result

@@ -1,10 +1,18 @@
 open Cmdliner
 open Encode
+open Sbx_specs
 
 exception Packaged_exn of string
 
-let encode (force_out:bool) (no_meta:bool) (uid:string option) (in_filename:string) (out_filename:string option) : unit =
+let encode (force_out:bool) (no_meta:bool) (ver:string option) (uid:string option) (in_filename:string) (out_filename:string option) : unit =
   try
+    let ver : version =
+      match ver with
+      | None     -> `V1
+      | Some str ->
+        match string_to_ver str with
+        | Ok v      -> v
+        | Error msg -> raise (Packaged_exn msg) in
     let uid : bytes option =
       match uid with
       | None     -> None
@@ -20,9 +28,9 @@ let encode (force_out:bool) (no_meta:bool) (uid:string option) (in_filename:stri
     if out_file_exists && not force_out then
       raise (Packaged_exn (Printf.sprintf "File %s already exists" out_filename))
     else
-      match Process.encode_file ~uid ~want_meta:(not no_meta) ~in_filename ~out_filename with
+      match Process.encode_file ~uid ~want_meta:(not no_meta) ~ver ~in_filename ~out_filename with
       | Ok stats  -> Stats.print_stats stats
-      | Error msg -> raise (Packaged_exn (Printf.sprintf "Error : %s" msg))
+      | Error msg -> raise (Packaged_exn msg)
   with 
   | Packaged_exn str -> Printf.printf "%s\n" str
 ;;

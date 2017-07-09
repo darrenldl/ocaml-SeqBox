@@ -24,5 +24,5 @@ module Processor : sig
 end
 
 module Process : sig
-  val encode_file : uid:bytes option -> want_meta:bool -> in_filename:string -> out_filename:string -> (stats, string) result
+  val encode_file : uid:bytes option -> want_meta:bool -> ver:version -> in_filename:string -> out_filename:string -> (stats, string) result
 end
