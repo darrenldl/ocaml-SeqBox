@@ -4,15 +4,19 @@ open Sbx_specs
 
 exception File_metadata_get_failed
 
-type stats = { block_size          : int
-             ; data_size           : int
-             ; blocks_written      : int64
-             ; meta_blocks_written : int64
-             ; data_blocks_written : int64
-             ; total_data_encoded  : int64
-             }
+module Stats : sig
+  type t = { block_size          : int
+           ; data_size           : int
+           ; blocks_written      : int64
+           ; meta_blocks_written : int64
+           ; data_blocks_written : int64
+           ; total_data_encoded  : int64
+           }
 
-val print_stats : stats -> unit
+  val print_stats : t -> unit
+end
+
+type stats = Stats.t
 
 module Processor : sig
   (* Resulting encoder may do Printf.printf to report progress etc *)
