@@ -1,4 +1,4 @@
-PKG core stdint hex nocrypto angstrom ctypes ctypes.foreign
+PKG core stdint hex nocrypto angstrom ctypes ctypes.foreign cmdliner
 S src
 B _build
 B src/_build

@@ -6,7 +6,7 @@ let chorus count msg =
 
 let count =
   let doc = "Repeat the message $(docv) times." in
-  Arg.(value & opt int 10 & info ["c"; "count"] ~docv:"COUNT" ~doc)
+  Arg.(value & opt int 0 & info ["c"; "count"] ~docv:"COUNT" ~doc)
 ;;
 
 let msg =
@@ -28,9 +28,7 @@ let info =
 
 let print () = print_endline "Hello";;
 
-let tmsg = Arg.value ();;
-
-let test_t = Term.(const print $ tmsg);;
+let test_t = Term.(const (print ()));;
 
 let test_info =
   let doc = "whatever" in
