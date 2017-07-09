@@ -47,6 +47,9 @@ module Read_into_buf = struct
   let read_with_jitter ~(buf:bytes) (in_file:Core.In_channel.t) ~(len:int) : int =
     (* jitter = read where read count is smaller than requested but
      * there is still more data available in the channel
+     *
+     * this sometimes happen for some reason when reading large files
+     * (1GiB file was being used when this occured in testing)
      *)
     let jitter_threshold = 3 in
     let rec read_with_jitter_internal ~(read_so_far:int) ~(tries_left:int) : int =
