@@ -11,6 +11,8 @@ val uint8_to_bytes  : uint8  -> bytes
 
 val string_to_bytes : string -> bytes
 
-val bytes_to_hex_string : bytes -> string
+val bytes_to_hex_string : bytes  -> string
+
+val hex_string_to_bytes : string -> (bytes, string) result
 
 val sha256_hash_state_to_bytes : SHA256.t -> bytes

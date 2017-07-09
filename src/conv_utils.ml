@@ -34,6 +34,15 @@ let bytes_to_hex_string (data:bytes) : string =
   str
 ;;
 
+let hex_string_to_bytes (str:string) : (bytes, string) result =
+  let open Hex in
+  try
+    let hex = `Hex str in
+    Ok (Hex.to_string hex)
+  with
+  | Invalid_argument _ -> Error "Invalid hex string"
+;;
+
 let sha256_hash_state_to_bytes (hash_state:SHA256.t) : bytes =
   Cstruct.to_string (SHA256.get hash_state)
 ;;

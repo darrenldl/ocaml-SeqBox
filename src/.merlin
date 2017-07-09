@@ -8,6 +8,7 @@ PKG bigarray
 PKG bin_prot
 PKG bin_prot.shape
 PKG bytes
+PKG cmdliner
 PKG core
 PKG core_kernel
 PKG core_kernel.base_for_tests
