@@ -27,12 +27,27 @@ let encode (force_out:bool) (no_meta:bool) (uid:string option) (in_filename:stri
   | Packaged_exn str -> Printf.printf "%s\n" str
 ;;
 
+let uid =
+  let doc = "Alternative file uid (by default uid is randomly generated)" in
+  Arg.(value & opt (some string) None & info ["uid"] ~doc)
+;;
+
+let force =
+  let doc = "Force overwrites even if OUTFILE exists" in
+  Arg.(value & flag & info ["f"; "force"] ~doc)
+;;
+
+let no_meta =
+  let doc = "No metadata block" in
+  Arg.(value & flag & info ["nometa"] ~doc)
+;;
+
 let in_file =
   let doc = "File to encode" in
   Arg.(required & pos 0 (some file) None & info [] ~docv:"INFILE" ~doc)
 ;;
 
 let out_file =
-  let doc = "Sbx container name" in
+  let doc = "Sbx container name (defaults to INFILE.sbx)" in
   Arg.(value & pos 1 (some string) None & info [] ~docv:"OUTFILE" ~doc)
 ;;
