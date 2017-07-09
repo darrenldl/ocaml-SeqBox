@@ -5,6 +5,34 @@ The original pharsing was "Port of SeqBox to OCaml", but since no direct porting
 This is mainly to address the different licenses being used(SeqBox was using AGPL 3.0 at the time of writing while this project uses 3-Clause BSD license).
 
 Official SeqBox Repo - https://github.com/MarcoPon/SeqBox
+                                                                                       
+Table of Contents
+=================
+
+   * [ocaml-SeqBox](#ocaml-seqbox)
+      * [Notes](#notes)                                                                
+      * [Possibly useful additional features of ocaml-SeqBox(possibly not yet in official SeqBox)](#possibly-useful-additional-features-of-ocaml-seqboxpossibly-not-yet-in-official-seqbox)                                                                          
+      * [Technical Specification](#technical-specification)                            
+         * [Common blocks header:](#common-blocks-header)                              
+         * [Block 0](#block-0)                                                         
+         * [Blocks &gt; 0 &amp; &lt; last:](#blocks--0---last)                         
+         * [Blocks == last:](#blocks--last)                                            
+         * [Versions:](#versions)
+         * [Metadata encoding:](#metadata-encoding)
+            * [IDs](#ids)
+            * [Features currently NOT planned to be implemented](#features-currently-not-planned-to-be-implemented)
+      * [Index of source code](#index-of-source-code)
+      * [Progress Report](#progress-report)
+      * [Specification of ocaml-SeqBox](#specification-of-ocaml-seqbox)
+            * [Encoding workflow](#encoding-workflow)
+            * [Decoding workflow](#decoding-workflow)
+            * [To successfully encode a file](#to-successfully-encode-a-file)
+            * [To successfully decode a sbx container](#to-successfully-decode-a-sbx-container)
+            * [Handling of duplicate metadata/data blocks](#handling-of-duplicate-metadatadata-blocks)
+            * [Handling of duplicate metadata in metadata block given the block is valid](#handling-of-duplicate-metadata-in-metadata-block-given-the-block-is-valid)
+      * [License](#license)
+
+Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
 ## Notes
 ~~CRC-CCITT implementation is translated from libcrc (https://github.com/lammertb/libcrc) using a copy retrieved on 2017-06-27~~
