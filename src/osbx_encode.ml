@@ -32,11 +32,6 @@ let uid =
   Arg.(value & opt (some string) None & info ["uid"] ~doc)
 ;;
 
-let force =
-  let doc = "Force overwrites even if OUTFILE exists" in
-  Arg.(value & flag & info ["f"; "force"] ~doc)
-;;
-
 let no_meta =
   let doc = "No metadata block" in
   Arg.(value & flag & info ["nometa"] ~doc)

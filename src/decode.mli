@@ -22,5 +22,7 @@ module Processor : sig
 end
 
 module Process : sig
-  val decode_file : in_filename:string -> out_filename:string option -> (stats, string) result
+  val fetch_out_filename : in_filename:string -> out_filename:string option -> (string option, string) result
+
+  val decode_file        : in_filename:string -> out_filename:string option -> (stats, string)         result
 end

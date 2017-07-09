@@ -9,6 +9,11 @@ let help_secs = [ `S Manpage.s_common_options
                 ]
 ;;
 
+let force =
+  let doc = "Force overwrites even if OUTFILE exists" in
+  Arg.(value & flag & info ["f"; "force"] ~doc)
+;;
+
 let default_cmd =
   let doc = "a SeqBox implementation written in OCaml" in
   let sdocs = Manpage.s_common_options in
@@ -26,6 +31,14 @@ let encode_cmd =
   )
 ;;
 
+let decode_cmd =
+  let open Osbx_decode in
+  let doc = "decode file" in
+  (Term.(const decode $ force $ in_file $ out_file),
+   Term.info "decode" ~doc
+  )
+;;
+
 let () =
-  Term.exit @@ Term.eval_choice default_cmd [encode_cmd]
+  Term.exit @@ Term.eval_choice default_cmd [encode_cmd; decode_cmd]
 ;;
