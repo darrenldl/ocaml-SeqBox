@@ -10,22 +10,29 @@ let help_secs = [
  `S Manpage.s_bugs; `P "Check bug reports at http://bugs.example.org.";]
 ;;
 
+let force =
+  Arg.(value & flag & info ["f"; "force"])
+;;
+
 let encode_cmd =
-  let encode in_file out_file =
+  let encode uid force in_file out_file =
     let out_file =
       if (String.length out_file) = 0 then
         in_file
       else
         out_file in
-    Printf.printf "in : %s, out : %s\n" in_file out_file in
+    Printf.printf "uid : %s, force : %b, in : %s, out : %s\n" uid force in_file out_file in
   let in_file =
     let doc = "File to encode" in
     Arg.(required & pos 0 (some file) None & info [] ~docv:"INFILE" ~doc) in
   let out_file =
     let doc = "Sbx container name" in
     Arg.(value & pos 1 string "" & info [] ~docv:"OUTFILE" ~doc) in
+  let uid =
+    let doc = "file uid" in
+    Arg.(value & opt string "" & info ["uid"] ~doc) in
   let doc = "encode files" in
-  Term.(const encode $ in_file $ out_file),
+  Term.(const encode $ uid $ force $ in_file $ out_file),
   Term.info "encode" ~doc
 ;;
 
