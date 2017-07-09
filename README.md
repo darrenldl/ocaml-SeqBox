@@ -35,9 +35,6 @@ Table of Contents
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
 ## Notes
-~~CRC-CCITT implementation is translated from libcrc (https://github.com/lammertb/libcrc) using a copy retrieved on 2017-06-27~~
-  - ~~See License section for details on licensing~~
-
 CRC-CCITT is currently implemented via FFI and links to the static object files compiled from libcrc (https://github.com/lammertb/libcrc)
   - See crcccitt_wrap.ml, crcccitt_wrap.mli for the FFI bindings
   - See crcccitt.c, checksum.h for libcrc source used(crcccitt.c is slightly modified, modification is under same license used by libcrc)
@@ -120,10 +117,6 @@ N.B. Current versions differs only by blocksize.
   - Data hiding (XOR encoding/decoding in official seqbox)
     - Provides neither sufficiently strong encryption nor sufficient stealth for any serious attempt to hide/secure data
     - You should use the appropriate tools for encryption
-  - ~~Version 2 of SBX block~~
-    - ~~Current set of metadata cannot fit into a 128 bytes block size~~
-    - ~~No way to extend storage of metadata block in current specs~~
-    - ~~128 bytes block is likely only going to be useful for archaic systems~~
 
 ## Index of source code
  
@@ -180,16 +173,16 @@ Metadata block is valid if and only if
   - Header can be parsed
   - All metadata fields(duplicated or not) can be parsed successfully
   - All remaining space is filled with 0x1A pattern
-  - version(specifically alignment/block size) matches reference block(see below)
+  - Version(specifically alignment/block size) matches reference block(see below)
   - CRC-CCITT is correct
 
 Data block is valid if and only if
   - Header can be parsed
-  - version and uid matches reference block(see below)
+  - Version and uid matches reference block(see below)
   - CRC-CCITT is correct
 
   1. A reference block is retrieved first(which is used for guidance on alignment, version, and uid)
-    - the entire sbx container is scanned using alignment of 512 bytes, 512 is used as it is the largest common divisor of 512(block size for version 1) and 4096(block size for version 3)
+    - the entire sbx container is scanned using alignment of 128 bytes, 128 is used as it is the largest common divisor of 512(block size for version 1), 128(block size for verion 2), and 4096(block size for version 3)
     - if there is any valid metadata block in sbx container, then the first one will be used as reference block
     - else the first valid data block will be used as reference block
   2. Scan for valid blocks from start of sbx container to decode and output using reference block's block size as alignment
@@ -226,9 +219,5 @@ Data block is valid if and only if
 The following files directly from libcrc(with slight modification) are under the same MIT license used by libcrc
   - crcccitt.c
   - checksum.h
-  
-~~The following files translated/ported from libcrc are under the MIT license as used by libcrc as well~~
-  - ~~crcccitt.ml~~
-  - ~~crcccitt.mli~~
 
 All remaining files are distributed under the 3-Clause BSD license as stated in the LICENSE file
