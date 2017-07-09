@@ -281,11 +281,11 @@ module Process = struct
   ;;
 end
 
-let test_decode () =
+(* let test_decode () =
   let open Metadata in
   match Process.decode_file ~in_filename:"dummy_file_encoded" ~out_filename:(Some "dummy_file2") with
   | Ok stats  -> Stats.print_stats stats
   | Error msg -> Printf.printf "Error : %s\n" msg
 ;;
 
-test_decode ()
+test_decode () *)
