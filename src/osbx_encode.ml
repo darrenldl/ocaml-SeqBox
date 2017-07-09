@@ -11,18 +11,18 @@ let encode (force_out:bool) (no_meta:bool) (uid:string option) (in_filename:stri
       | Some str ->
         match Conv_utils.hex_string_to_bytes str with
         | Ok uid  -> Some uid
-        | Error _ -> raise (Packaged_exn (Printf.sprintf "Uid : %s is not a valid hex string" str)) in
+        | Error _ -> raise (Packaged_exn (Printf.sprintf "Uid %s is not a valid hex string" str)) in
     let out_filename : string =
       match out_filename with
       | None     -> Bytes.concat "" [in_filename; ".sbx"]
       | Some str -> str in
     let out_file_exists = Sys.file_exists out_filename in
     if out_file_exists && not force_out then
-      Printf.printf "File : %s already exists" out_filename
+      raise (Packaged_exn (Printf.sprintf "File %s already exists" out_filename))
     else
       match Process.encode_file ~uid ~want_meta:(not no_meta) ~in_filename ~out_filename with
       | Ok stats  -> Stats.print_stats stats
-      | Error msg -> Printf.printf "Error : %s" msg
+      | Error msg -> raise (Packaged_exn (Printf.sprintf "Error : %s" msg))
   with 
   | Packaged_exn str -> Printf.printf "%s\n" str
 ;;
@@ -44,7 +44,7 @@ let no_meta =
 
 let in_file =
   let doc = "File to encode" in
-  Arg.(required & pos 0 (some file) None & info [] ~docv:"INFILE" ~doc)
+  Arg.(required & pos 0 (some non_dir_file) None & info [] ~docv:"INFILE" ~doc)
 ;;
 
 let out_file =
