@@ -15,10 +15,13 @@ let decode (force_out:bool) (in_filename:string) (out_filename:string option) : 
       let out_file_exists = Sys.file_exists out_filename in
       if out_file_exists && not force_out then
         raise (Packaged_exn (Printf.sprintf "File %s already exists" out_filename))
-      else
+      else begin
+        Printf.printf "Output file name                               : %s" out_filename;
+        print_newline ();
         match Process.decode_file ~in_filename ~out_filename:(Some out_filename) with
         | Ok stats  -> Stats.print_stats stats
         | Error msg -> raise (Packaged_exn msg)
+      end
   with
   | Packaged_exn msg -> Printf.printf "%s\n" msg
 
