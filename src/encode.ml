@@ -60,11 +60,51 @@ end
 
 type stats = Stats.t
 
+module Progress = struct
+  let report : stats -> Core.In_channel.t -> unit  =
+    let print_every_n = 10 in
+    let report_count  = ref 0 in
+    let first_time    = ref true in
+    (fun stats in_file ->
+       let data_size    : int64 =
+         Int64.of_int stats.data_size in
+       let total_chunks : int64 =
+         Int64.div
+           (Int64.add (Core.In_channel.length in_file) (Int64.sub data_size 1L))
+           data_size (* use of data_size is correct here *) in
+       let percent      : int   =
+         Int64.to_int (Int64.div
+                         (Int64.mul
+                            100L
+                            stats.blocks_written)
+                         total_chunks) (* the math is okay cause 1 chunk -> 1 block *) in
+       if !first_time then
+         begin
+           (* print a notice *)
+           Printf.printf "Only data blocks are reported in the progress reporting below\n";
+           first_time := false
+         end;
+       if percent = 100 then (* always print if reached 100% *)
+         Printf.printf "\rData encoding progress : %Ld / %Ld - %d%%\n" stats.blocks_written total_chunks percent
+       else begin
+         if !report_count = 0 then
+           Printf.printf "\rData encoding progress : %Ld / %Ld - %d%%" stats.blocks_written total_chunks percent
+         else
+           () (* do nothing *)
+       end;
+       (* increase and mod report counter *)
+       report_count := !report_count mod print_every_n
+    )
+  ;;
+end
+
 module Processor = struct
   (* Converts data to data blocks *)
   let rec data_to_block_proc (in_file:Core.In_channel.t) (out_file:Core.Out_channel.t) ~(data_len:int) ~(stats:stats) ~(common:Header.common_fields) : stats =
     let open Read_chunk in
     let open Write_chunk in
+    (* report progress *)
+    Progress.report stats in_file;
     match read in_file ~len:data_len with
     | None           -> stats
     | Some { chunk } ->
@@ -72,6 +112,7 @@ module Processor = struct
       let seq_num     = Uint32.of_int64 (stats.data_blocks_written <+> 1L) in (* always off by +1 *)
       let block       = Block.make_data_block ~seq_num common ~data:chunk in
       let block_bytes = Block.to_bytes block in
+      (* write to file *)
       write out_file ~chunk:block_bytes;
       data_to_block_proc in_file out_file ~data_len ~stats:(Stats.add_written_data_block stats ~data_len:chunk_len) ~common
   ;;
@@ -79,6 +120,8 @@ module Processor = struct
   let rec data_to_block_proc_w_hash ?(hash_state:SHA256.t = SHA256.init()) (in_file:Core.In_channel.t) (out_file:Core.Out_channel.t) ~(data_len:int) ~(stats:stats) ~(common:Header.common_fields) : stats * bytes =
     let open Read_chunk in
     let open Write_chunk in
+    (* report progress *)
+    Progress.report stats in_file;
     match read in_file ~len:data_len with
     | None           -> (stats, Conv_utils.sha256_hash_state_to_bytes hash_state)
     | Some { chunk } ->

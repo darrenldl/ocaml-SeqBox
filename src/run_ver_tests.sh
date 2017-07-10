@@ -4,7 +4,7 @@
 
 ./_build/default/osbx.exe encode -f dummy dummy2.sbx --sbx_version 2
 
-./_build/default/osbx.exe encode -f dummy dummy3.sbx --sbx_version 3
+./_build/default/osbx.exe encode -f --nometa dummy dummy3.sbx --sbx_version 3
 
 ./_build/default/osbx.exe decode -f dummy1.sbx dummy1
 

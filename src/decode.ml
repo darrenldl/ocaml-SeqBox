@@ -114,6 +114,14 @@ module Stats = struct
       (match stats.recorded_hash    with | Some hsh -> Conv_utils.bytes_to_hex_string hsh | None -> "N/A");
     Printf.printf "Hash of the output file                        : %s\n"
       (match stats.output_file_hash with | Some hsh -> Conv_utils.bytes_to_hex_string hsh | None -> "N/A");
+    if stats.meta_blocks_decoded = 0L then
+      begin
+        print_newline ();
+        Printf.printf "Warning : no metadata blocks were found in the sbx container\n";
+        Printf.printf "          it is likely that the output file is not of the correct size\n";
+        Printf.printf "          and has data padding bytes attached at the end of it\n";
+        print_newline ();
+      end;
     begin
       match (stats.recorded_hash, stats.output_file_hash) with
       | (Some recorded_hash, Some output_file_hash) ->
