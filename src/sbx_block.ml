@@ -184,16 +184,6 @@ end = struct
   module Parser = struct
     open Angstrom
 
-    let v1_p  : version Angstrom.t =
-      char '\x01' *> return `V1
-    ;;
-
-    let ver_p : version Angstrom.t =
-      v1_p
-      (* v2_p *)
-      (* v3_p *)
-    ;;
-
     let sig_p : string Angstrom.t =
       string "SBx"
     ;;
@@ -211,7 +201,7 @@ end = struct
     ;;
 
     let header_p : raw_header Angstrom.t =
-      sig_p *> lift4 make_raw_header ver_p crc_p uid_p seq_p
+      sig_p *> lift4 make_raw_header Sbx_specs.Parser.ver_p crc_p uid_p seq_p
     ;;
   end
 

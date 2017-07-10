@@ -1,7 +1,10 @@
 open Stdint
 
-(* Only version 1 is supported as of time of writing *)
-type version = [ `V1 ]
+type version = [ `V1 | `V2 | `V3 ]
+
+module Parser : sig
+  val ver_p : version Angstrom.t
+end
 
 val sbx_file_uid_len    : int
 

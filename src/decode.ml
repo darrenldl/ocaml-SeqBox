@@ -160,7 +160,6 @@ module Processor = struct
           Header.raw_header_is_data raw_header in
       if want_block then
         try
-          (* the error has something to do with ~skipped_already maybe *)
           Some (Block.of_bytes ~raw_header chunk)
         with
         | Header.Invalid_bytes
