@@ -6,10 +6,11 @@ This is mainly to address the different licenses being used(SeqBox was using AGP
 
 Official SeqBox Repo - https://github.com/MarcoPon/SeqBox
 
-Table of Contents
-=================
-
-   * [ocaml-SeqBox](#ocaml-seqbox)
+Table of Contents                                                                                                                     
+=================                                                                                                                     
+                                                                                                                                      
+   * [ocaml-SeqBox](#ocaml-seqbox)                                                                                                    
+      * [Acknowledgement](#acknowledgement)
       * [Notes](#notes)
       * [Possibly useful additional features of ocaml-SeqBox(possibly not yet in official SeqBox)](#possibly-useful-additional-features-of-ocaml-seqboxpossibly-not-yet-in-official-seqbox)
       * [Technical Specification](#technical-specification)
@@ -25,6 +26,11 @@ Table of Contents
       * [License](#license)
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
+
+## Acknowledgement
+I would like to thank [Marco](https://github.com/MarcoPon) (author of the official SeqBox) for discussing and clarifying several aspects of his project, and providing me with test data
+
+I would like to thank [Ming](https://github.com/mdchia/) for his feedback on the documentation, UX design, and several other general aspects of this project
 
 ## Notes
 CRC-CCITT is currently implemented via FFI and links to the static object files compiled from libcrc (https://github.com/lammertb/libcrc)
