@@ -42,7 +42,7 @@ Exact behaviours in non-standard cases are not specified in official SeqBox tech
     - This means you can concatenate multiple copies of sbx container together directly to increase chance of recovery in case of corruption
 
 ## Technical Specification
-The following specification is copied directly from the official specification with slight modification(version 2, 3 are stated excplicitly as not implemented yet).
+The following specification is copied directly from the official specification (with possible slight modification).
 
 Also see section "Features currently NOT planned to be implemented" for features ocaml-SeqBox is probably not going to have
 
@@ -83,8 +83,10 @@ N.B. Current versions differs only by blocksize.
 | ver | blocksize | note    |
 |---- | --------- | ------- |
 |  1  | 512       | default |
-|  2  | 128       | NOT IMPLEMENTED (yet) |
-|  3  | 4096      | NOT IMPLEMENTED (yet) |
+|  2  | 128       |         |
+|  3  | 4096      |         |
+
+All versions are implemented in ocaml-SeqBox
 
 ### Metadata encoding:
 
