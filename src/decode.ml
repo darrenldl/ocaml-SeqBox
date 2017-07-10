@@ -143,6 +143,40 @@ end
 
 type stats = Stats.t
 
+module Progress = struct
+  let report : stats -> Core.In_channel.t -> unit  =
+    let print_every_n = Param.Decode.progress_report_interval in
+    let report_count  = ref 0 in
+    (fun stats in_file ->
+       let block_size   : int64 =
+         Int64.of_int stats.block_size in
+       let total_blocks : int64 =
+         Int64.div
+           (Int64.add (Core.In_channel.length in_file) (Int64.sub block_size 1L))
+           block_size in
+       let percent      : int   =
+         Int64.to_int (Int64.div
+                         (Int64.mul
+                            100L
+                            stats.blocks_processed)
+                         total_blocks) (* the math is okay cause 1 chunk -> 1 block *) in
+       if percent = 100 then (* always print if reached 100% *)
+         begin
+           Printf.printf "\rData decoding progress                         : %Ld / %Ld - %d%%\n" stats.blocks_processed total_blocks percent;
+           print_newline ()
+       end
+       else begin
+         if !report_count = 0 then
+           Printf.printf "\rData decoding progress                         : %Ld / %Ld - %d%%" stats.blocks_processed total_blocks percent
+         else
+           () (* do nothing *)
+       end;
+       (* increase and mod report counter *)
+       report_count := !report_count mod print_every_n
+    )
+  ;;
+end
+
 module Helper = struct
   let patch_block_bytes_if_needed (in_file:Core.In_channel.t) ~(raw_header:Header.raw_header) ~(chunk:bytes) : bytes =
     let ideal_len   = ver_to_block_size raw_header.version in
@@ -214,6 +248,8 @@ module Processor = struct
     let len          = ver_to_block_size ref_ver in
     let ref_file_uid = Block.block_to_file_uid ref_block in
     let rec find_valid_data_block_proc_internal (stats:stats) : stats * Block.t option =
+      (* report progress *)
+      Progress.report stats in_file;
       match read in_file ~len with
       | None           -> (stats, None)
       | Some { chunk } ->

@@ -62,7 +62,7 @@ type stats = Stats.t
 
 module Progress = struct
   let report : stats -> Core.In_channel.t -> unit  =
-    let print_every_n = 10 in
+    let print_every_n = Param.Encode.progress_report_interval in
     let report_count  = ref 0 in
     let first_time    = ref true in
     (fun stats in_file ->
@@ -85,7 +85,10 @@ module Progress = struct
            first_time := false
          end;
        if percent = 100 then (* always print if reached 100% *)
-         Printf.printf "\rData encoding progress : %Ld / %Ld - %d%%\n" stats.blocks_written total_chunks percent
+         begin
+           Printf.printf "\rData encoding progress : %Ld / %Ld - %d%%\n" stats.blocks_written total_chunks percent;
+           print_newline ()
+         end
        else begin
          if !report_count = 0 then
            Printf.printf "\rData encoding progress : %Ld / %Ld - %d%%" stats.blocks_written total_chunks percent
