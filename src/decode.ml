@@ -289,7 +289,7 @@ module Processor = struct
       | Some block -> Some block
       | None       -> find_first_block_proc ~want_meta:false in_file (* get the first usable data block *) in
     match ref_block with
-    | None           -> raise (Packaged_exn "no usable blocks in file")
+    | None           -> raise (Packaged_exn "No usable blocks in file")
     | Some ref_block ->
       (* got a reference block, decode all data blocks *)
       let stats = decode_and_output_proc ~ref_block in_file out_file in
