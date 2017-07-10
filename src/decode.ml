@@ -1,4 +1,5 @@
 open Stdint
+open Nocrypto.Hash
 open Sbx_specs
 open Sbx_block
 open Stream_file
@@ -16,6 +17,8 @@ module Stats = struct
            ; data_blocks_decoded   : int64
            ; blocks_failed         : int64
            ; failed_block_pos_list : int64 list
+           ; recorded_hash         : bytes option
+           ; output_file_hash      : bytes option
            }
 
   let make_blank_stats ~(ver:version) : t =
@@ -25,7 +28,10 @@ module Stats = struct
     ; data_blocks_decoded   = 0L
     ; blocks_failed         = 0L
     ; failed_block_pos_list = []
+    ; recorded_hash         = None
+    ; output_file_hash      = None
     }
+  ;;
 
   let add_okay_meta_block (stats:t) : t =
     { block_size            = stats.block_size
@@ -34,7 +40,10 @@ module Stats = struct
     ; data_blocks_decoded   = stats.data_blocks_decoded
     ; blocks_failed         = stats.blocks_failed
     ; failed_block_pos_list = stats.failed_block_pos_list
+    ; recorded_hash         = stats.recorded_hash
+    ; output_file_hash      = stats.output_file_hash
     }
+  ;;
 
   let add_okay_data_block (stats:t) : t =
     { block_size            = stats.block_size
@@ -43,7 +52,10 @@ module Stats = struct
     ; data_blocks_decoded   = stats.data_blocks_decoded   <+> 1L
     ; blocks_failed         = stats.blocks_failed
     ; failed_block_pos_list = stats.failed_block_pos_list
+    ; recorded_hash         = stats.recorded_hash
+    ; output_file_hash      = stats.output_file_hash
     }
+  ;;
 
   let add_failed_block (stats:t) : t =
     { block_size            = stats.block_size
@@ -56,7 +68,36 @@ module Stats = struct
           stats.blocks_processed :: stats.failed_block_pos_list
         else
           stats.failed_block_pos_list
+    ; recorded_hash         = stats.recorded_hash
+    ; output_file_hash      = stats.output_file_hash
     }
+  ;;
+  
+  let add_hashes ~(recorded_hash:bytes option) ~(output_file_hash:bytes option) (stats:t) : t =
+    { block_size            = stats.block_size
+    ; blocks_processed      = stats.blocks_processed
+    ; meta_blocks_decoded   = stats.meta_blocks_decoded
+    ; data_blocks_decoded   = stats.data_blocks_decoded
+    ; blocks_failed         = stats.blocks_failed
+    ; failed_block_pos_list = stats.failed_block_pos_list
+    ; recorded_hash         =
+        begin
+          match (stats.recorded_hash, recorded_hash) with
+          | (Some hsh, Some _)   -> Some hsh
+          | (None,     Some hsh) -> Some hsh
+          | (Some hsh, None)     -> Some hsh
+          | (None,     None)     -> None
+        end
+    ; output_file_hash      =
+        begin
+          match (stats.output_file_hash, output_file_hash) with
+          | (Some hsh, Some _)   -> Some hsh
+          | (None,     Some hsh) -> Some hsh
+          | (Some hsh, None)     -> Some hsh
+          | (None,     None)     -> None
+        end
+    }
+  ;;
 
   let print_failed_pos (block_size:int) (pos_list:int64 list) : unit =
     let block_size = Int64.of_int block_size in
@@ -69,6 +110,24 @@ module Stats = struct
     Printf.printf "Number of metadata blocks successfully decoded : %Ld\n" stats.meta_blocks_decoded;
     Printf.printf "Number of data     blocks successfully decoded : %Ld\n" stats.data_blocks_decoded;
     Printf.printf "Number of          blocks failed to decode     : %Ld\n" stats.blocks_failed;
+    Printf.printf "Recorded hash                                  : %s\n"
+      (match stats.recorded_hash    with | Some hsh -> Conv_utils.bytes_to_hex_string hsh | None -> "N/A");
+    Printf.printf "Hash of the output file                        : %s\n"
+      (match stats.output_file_hash with | Some hsh -> Conv_utils.bytes_to_hex_string hsh | None -> "N/A");
+    begin
+      match (stats.recorded_hash, stats.output_file_hash) with
+      | (Some recorded_hash, Some output_file_hash) ->
+        if (Bytes.compare recorded_hash output_file_hash) = 0 then
+          Printf.printf "The output file hash matches the recorded hash\n"
+        else
+          Printf.printf "The output file hash does NOT match the recorded hash\n"
+      | (Some _,             None)                  ->
+        Printf.printf "No hash is available for output file\n"
+      | (None,               Some _)                ->
+        Printf.printf "No recorded hash is available\n"
+      | (None,               None)                  ->
+        Printf.printf "Neither recorded hash nor output file hash is available\n";
+    end;
     Printf.printf "First up to 500 failing positions (block and bytes index start at 0)\n";
     print_failed_pos stats.block_size stats.failed_block_pos_list
   ;;
@@ -247,7 +306,31 @@ module Processor = struct
           | Not_found -> None
         else
           None in
+      let recorded_hash : bytes option =
+        let open Metadata in
+        let metadata_list      = dedup (Block.block_to_meta ref_block) in
+        try
+          match List.find (function | HSH _ -> true | _ -> false) metadata_list with
+          | HSH hsh -> Some hsh
+          | _       -> None
+        with
+        | Not_found -> None in
+      let stats = Stats.add_hashes ~recorded_hash ~output_file_hash:None stats in
       (stats, truncate)
+  ;;
+
+  let rec hash_proc ?(hash_state:SHA256.t = SHA256.init()) (in_file:Core.In_channel.t) : bytes =
+    let open Read_chunk in
+    let read_len = 1024 * 1024 (* 1 MiB *) in
+    match read in_file ~len:read_len with
+    | None           -> Conv_utils.sha256_hash_state_to_bytes hash_state
+    | Some { chunk } ->
+      SHA256.feed hash_state (Cstruct.of_bytes chunk);
+      hash_proc ~hash_state in_file
+  ;;
+
+  let hasher (in_file:Core.In_channel.t) : bytes =
+    hash_proc in_file 
   ;;
 end
 
@@ -261,6 +344,16 @@ module Process = struct
       | Error msg -> Error msg
   ;;
 
+  let hash_file ~(in_filename:string) : (bytes, string) result =
+    Stream.process_in ~in_filename ~processor:Processor.hasher
+  ;;
+
+  let hash_file_w_warning ~(in_filename:string) : bytes option =
+    match hash_file ~in_filename with
+    | Ok hash   -> Some hash
+    | Error msg -> Printf.printf "Warning : %s\n" msg; None
+  ;;
+
   let decode_file ~(in_filename:string) ~(out_filename:string option) : (stats, string) result =
     match fetch_out_filename ~in_filename ~out_filename with
     | Error msg -> Error msg
@@ -272,13 +365,17 @@ module Process = struct
         begin
           try
             Unix.LargeFile.truncate out_filename trunc_size;
-            Ok stats
+            let output_file_hash = hash_file_w_warning ~in_filename:out_filename in
+            Ok (Stats.add_hashes ~recorded_hash:None ~output_file_hash stats)
           with
           | _ -> Error "failed to truncate output file"
         end
-      | Ok (stats, None)            -> Ok stats
+      | Ok (stats, None)            ->
+        let output_file_hash = hash_file_w_warning ~in_filename:out_filename in
+        Ok (Stats.add_hashes ~recorded_hash:None ~output_file_hash stats)
       | Error msg                   -> Error msg
   ;;
+
 end
 
 (* let test_decode () =
