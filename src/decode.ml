@@ -117,7 +117,7 @@ module Stats = struct
     if stats.meta_blocks_decoded = 0L then
       begin
         print_newline ();
-        Printf.printf "Warning : no metadata blocks were found in the sbx container\n";
+        Printf.printf "Warning : no metadata block was found in the sbx container\n";
         Printf.printf "          it is likely that the output file is not of the correct size\n";
         Printf.printf "          and has data padding bytes attached at the end of it\n";
         print_newline ();
