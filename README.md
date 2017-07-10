@@ -156,6 +156,7 @@ N.B. Current versions differs only by blocksize.
   - ~~Commandline options for scanning and recovery - not started~~
     - Replaced by rescue mode
   - Commandline interface for rescue mode - not started
+  - Package and publish to opam - not started
 
 ## License
 The following files directly from libcrc(with slight modification) are under the same MIT license used by libcrc
