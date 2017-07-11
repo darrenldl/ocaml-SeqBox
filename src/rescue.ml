@@ -64,7 +64,7 @@ module Stats = struct
   ;;
 
   let print_stats_single_line (stats:t) : unit =
-    Printf.printf "\rBytes processed : %Ld, Blocks processed : %Ld, Metadata blocks processed : %Ld, Data blocks processed : %Ld"
+    Printf.printf "\rBytes : %Ld, Blocks : %Ld, Meta : %Ld, Data : %Ld"
       stats.bytes_processed
       stats.blocks_processed
       stats.meta_blocks_processed
