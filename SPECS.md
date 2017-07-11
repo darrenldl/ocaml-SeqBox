@@ -52,7 +52,12 @@ Data block is valid if and only if
     - otherwise nothing is done
 
 ## Rescuing workflow
-  1. Scan for valid blocks from start of the provided file
+  1. Scan for valid blocks from start of the provided file using 128 bytes alignment
+    - rescue mode rescues all 3 versions of sbx blocks
+    - if log file is specified, then
+      - the log file will be used to initialize the scan's starting position
+        - bytes_processed field will be rounded down to multiple of 128 automatically
+      - the log file will be updated in every write of rescued block
     - each block is appended to OUTDIR/uid, where :
       - OUTDIR = output directory specified
       - uid    = uid of the block in hex
@@ -67,6 +72,9 @@ Data block is valid if and only if
 ## To successfully decode a sbx container
   - At least one valid data block for each position must exist
   - If data padding was done for the last block, then at least one valid metadata block must exist for truncation of the output file to happen
+
+## To successfully rescue your sbx container
+  - Get enough valid sbx blocks of your container such that a successful decoding may take place
 
 ## Handling of duplicate metadata/data blocks
   - First valid metadata block will be used(if exists)

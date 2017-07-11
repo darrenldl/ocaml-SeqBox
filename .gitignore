@@ -10,3 +10,4 @@
 /src/dummy_disk
 /src/rescue_folder/*
 /src/rescue_log
+/src/log
