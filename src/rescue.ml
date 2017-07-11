@@ -76,10 +76,10 @@ module Logger = struct
   let make_write_proc ~(stats:stats) : unit Stream.out_processor =
     (fun out_file ->
        let open Write_chunk in
-       write out_file ~chunk:(Printf.sprintf "bytes_processed=%Ld\n" stats.bytes_processed);
-       write out_file ~chunk:(Printf.sprintf "blocks_processed=%Ld\n" stats.blocks_processed);
+       write out_file ~chunk:(Printf.sprintf "bytes_processed=%Ld\n"       stats.bytes_processed);
+       write out_file ~chunk:(Printf.sprintf "blocks_processed=%Ld\n"      stats.blocks_processed);
        write out_file ~chunk:(Printf.sprintf "meta_blocks_processed=%Ld\n" stats.meta_blocks_processed);
-       write out_file ~chunk:(Printf.sprintf "bytes_processed=%Ld\n" stats.bytes_processed);
+       write out_file ~chunk:(Printf.sprintf "data_blocks_processed=%Ld\n" stats.data_blocks_processed);
     )
   ;;
 
@@ -131,9 +131,12 @@ module Logger = struct
 
   let read_log ~(log_filename:string) : (stats option, string) result =
     let processor = make_read_proc () in
-    match Stream.process_in ~in_filename:log_filename ~processor with
-    | Ok v      -> Ok v
-    | Error msg -> Error msg
+    if Sys.file_exists log_filename then
+      match Stream.process_in ~in_filename:log_filename ~processor with
+      | Ok v      -> Ok v
+      | Error msg -> Error msg
+    else
+      Ok (Some (Stats.make_blank_stats ()))
   ;;
 end
 
@@ -281,7 +284,7 @@ module Process = struct
 end
 
 let test () =
-  match Process.rescue_from_file ~in_filename:"dummy_disk" ~out_dirname:"rescue_folder" ~log_filename:None with
+  match Process.rescue_from_file ~in_filename:"dummy_disk" ~out_dirname:"rescue_folder" ~log_filename:(Some "rescue_log") with
   | Ok stats  -> Stats.print_stats stats
   | Error msg -> Printf.printf "%s\n" msg
 ;;
