@@ -154,8 +154,10 @@ module Processor = struct
       match read in_file ~len with
       | None           -> (stats, None)
       | Some { chunk } ->
+        let new_stats =
+          Stats.add_bytes stats ~num:(Int64.of_int (Bytes.length chunk)) in
         if Bytes.length chunk < 16 then
-          (stats, None)  (* no more bytes left in file *)
+          (new_stats, None)  (* no more bytes left in file *)
         else
           let test_header_bytes = Misc_utils.get_bytes chunk ~pos:0 ~len:16 in
           let test_header : Header.raw_header option =
@@ -164,16 +166,18 @@ module Processor = struct
             with
             | Header.Invalid_bytes -> None in
           match test_header with
-          | None            -> scan_proc_internal stats
+          | None            -> scan_proc_internal new_stats
           | Some raw_header ->
             (* possibly grab more bytes depending on version *)
             let chunk =
               Processor_helpers.patch_block_bytes_if_needed in_file ~raw_header ~chunk in
             let test_block : Block.t option =
               bytes_to_block raw_header chunk in
+            let new_stats =
+              Stats.add_bytes stats ~num:(Int64.of_int (Bytes.length chunk)) in
             match test_block with
-            | None       -> scan_proc_internal stats
-            | Some block -> (stats, Some block)  (* found a valid block *) in
+            | None       -> scan_proc_internal new_stats
+            | Some block -> (new_stats, Some block)  (* found a valid block *) in
     scan_proc_internal stats
   ;;
 
