@@ -341,8 +341,8 @@ module Processor = struct
         let metadata_list      = dedup (Block.block_to_meta ref_block) in
         try
           match List.find (function | HSH _ -> true | _ -> false) metadata_list with
-          | HSH hsh -> Some hsh
-          | _       -> None
+          | HSH (_, raw) -> Some raw
+          | _            -> None
         with
         | Not_found -> None in
       let stats = Stats.add_hashes ~recorded_hash ~output_file_hash:None stats in

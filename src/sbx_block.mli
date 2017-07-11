@@ -38,7 +38,7 @@ module Metadata : sig
     | FSZ of uint64
     | FDT of uint64
     | SDT of uint64
-    | HSH of bytes
+    | HSH of Multihash.hash * bytes
     | PID of bytes
 
   val dedup : t list -> t list

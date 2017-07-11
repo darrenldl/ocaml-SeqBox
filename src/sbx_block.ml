@@ -230,7 +230,7 @@ module Metadata : sig
     | FSZ of uint64
     | FDT of uint64
     | SDT of uint64
-    | HSH of bytes  (* should ALWAYS store the RAW hash, to bytes should automatically convert it to multihash *)
+    | HSH of Multihash.hash * bytes  (* should ALWAYS store the RAW hash, to bytes should automatically convert it to multihash *)
     | PID of bytes
 
   val dedup    : t list      -> t list
@@ -250,7 +250,7 @@ end = struct
     | FSZ of uint64
     | FDT of uint64
     | SDT of uint64
-    | HSH of bytes
+    | HSH of Multihash.hash * bytes
     | PID of bytes
 
   type id =
@@ -310,7 +310,7 @@ end = struct
     match entry with
     | FNM v | SNM v         -> Conv_utils.string_to_bytes v
     | FSZ v | FDT v | SDT v -> Conv_utils.uint64_to_bytes v
-    | HSH v                 -> Multihash.raw_hash_to_multihash ~hash_type:`SHA256 ~raw:v
+    | HSH (hash_type, raw)  -> Multihash.raw_hash_to_multihash ~hash_type ~raw
     | PID v                 -> v
   ;;
 
@@ -380,7 +380,7 @@ end = struct
     ;;
     let hsh_p : metadata Angstrom.t =
       string "HSH" *> Multihash.Parser.sha256_p
-      >>| (fun x -> HSH x)
+      >>| (fun x -> HSH (`SHA256, x))
     ;;
     (*let pid_p : metadata Angstrom.t =
       string "PID" *> arb_len_data_p
