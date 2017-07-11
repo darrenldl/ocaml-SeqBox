@@ -222,6 +222,7 @@ end
 
 module Metadata : sig
   exception Too_much_data of string
+  exception Invalid_entry of string
   exception Invalid_bytes
 
   type t =
@@ -242,6 +243,7 @@ module Metadata : sig
 end = struct
 
   exception Too_much_data of string
+  exception Invalid_entry of string
   exception Invalid_bytes
 
   type t =
@@ -307,11 +309,14 @@ end = struct
   ;;
 
   let single_to_bytes (entry:t) : bytes =
-    match entry with
-    | FNM v | SNM v         -> Conv_utils.string_to_bytes v
-    | FSZ v | FDT v | SDT v -> Conv_utils.uint64_to_bytes v
-    | HSH (hash_type, raw)  -> Multihash.raw_hash_to_multihash ~hash_type ~raw
-    | PID v                 -> v
+    try
+      match entry with
+      | FNM v | SNM v         -> Conv_utils.string_to_bytes v
+      | FSZ v | FDT v | SDT v -> Conv_utils.uint64_to_bytes v
+      | HSH (hash_type, raw)  -> Multihash.raw_hash_to_multihash ~hash_type ~raw
+      | PID v                 -> v
+    with
+    | Multihash.Length_mismatch -> raise (Invalid_entry "Raw hash is of incorrect length")
   ;;
 
   let to_id_and_bytes (entry:t) : id * bytes =

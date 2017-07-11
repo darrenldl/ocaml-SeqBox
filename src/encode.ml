@@ -176,7 +176,8 @@ module Processor = struct
            (* update stats *)
            Stats.add_written_meta_block stats
          with
-         | Metadata.Too_much_data msg -> raise (Packaged_exn msg)
+         | Metadata.Too_much_data msg
+         | Metadata.Invalid_entry msg -> raise (Packaged_exn msg)
       )
   ;;
 end
