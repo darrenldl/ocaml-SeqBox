@@ -7,6 +7,8 @@ let (<->) = Int64.sub;;
 
 let (<*>) = Int64.mul;;
 
+let (</>) = Int64.div;;
+
 module Stats = struct
   type t = { bytes_processed       : int64
            ; blocks_processed      : int64
@@ -46,8 +48,15 @@ module Stats = struct
     }
   ;;
 
+  (* automatically correct bytes_processed alignment
+   * by rounding to closest 128 bytes
+   *)
   let make_stats (bytes_processed:int64) (blocks_processed:int64) (meta_blocks_processed:int64) (data_blocks_processed:int64) : t =
-    { bytes_processed
+    { bytes_processed =
+        begin
+          let alignment = Int64.of_int Param.Rescue.scan_alignment in
+          (bytes_processed </> alignment ) <*> alignment
+        end
     ; blocks_processed
     ; meta_blocks_processed
     ; data_blocks_processed
