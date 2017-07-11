@@ -1,2 +1,9 @@
 *.swp
 */_build
+/src/dummy
+/src/dummy1
+/src/dummy1.sbx
+/src/dummy2
+/src/dummy2.sbx
+/src/dummy3
+/src/dummy3.sbx
