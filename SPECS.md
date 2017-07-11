@@ -1,16 +1,17 @@
 # Specification of ocaml-SeqBox
 
-Table of Contents                                                                                                                     
-=================                                                                                                                     
-                                                                                                                                      
-   * [Specification of ocaml-SeqBox](#specification-of-ocaml-seqbox)                                                                  
-      * [Encoding workflow](#encoding-workflow)                                                                                       
-      * [Decoding workflow](#decoding-workflow)                                                                                       
-      * [Rescuing workflow](#rescuing-workflow)                                                                                       
-      * [To successfully encode a file](#to-successfully-encode-a-file)                                                               
+Table of Contents
+=================
+
+   * [Specification of ocaml-SeqBox](#specification-of-ocaml-seqbox)
+      * [Encoding workflow](#encoding-workflow)
+      * [Decoding workflow](#decoding-workflow)
+            * [Handling of duplicate metadata/data blocks](#handling-of-duplicate-metadatadata-blocks)
+            * [Handling of duplicate metadata in metadata block given the block is valid](#handling-of-duplicate-metadata-in-metadata-block-given-the-block-is-valid)
+      * [Rescuing workflow](#rescuing-workflow)
+      * [To successfully encode a file](#to-successfully-encode-a-file)
       * [To successfully decode a sbx container](#to-successfully-decode-a-sbx-container)
-      * [Handling of duplicate metadata/data blocks](#handling-of-duplicate-metadatadata-blocks)
-      * [Handling of duplicate metadata in metadata block given the block is valid](#handling-of-duplicate-metadata-in-metadata-block-given-the-block-is-valid)
+      * [To successfully rescue your sbx container](#to-successfully-rescue-your-sbx-container)
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
