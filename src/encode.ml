@@ -210,7 +210,7 @@ module Process = struct
         | true  -> Some (get_file_metadata ~in_filename ~out_filename)
         | false -> None in
       let encoder  = Processor.make_in_out_encoder ~common ~metadata in
-      Stream.process_in_out ~in_filename ~out_filename ~processor:encoder
+      Stream.process_in_out ~append:false ~in_filename ~out_filename ~processor:encoder
     with
     | File_metadata_get_failed            -> Error "Failed to get file metadata"
     | Sbx_block.Header.Invalid_uid_length -> Error "Invalid uid length"

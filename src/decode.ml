@@ -390,7 +390,7 @@ module Process = struct
     | Ok None   ->
       Error (Printf.sprintf "failed to obtain a filename for output(none is provided and no valid metadata block with filename field is found in %s)" in_filename)
     | Ok (Some out_filename) ->
-      match Stream.process_in_out ~in_filename ~out_filename ~processor:Processor.decoder with
+      match Stream.process_in_out ~append:false ~in_filename ~out_filename ~processor:Processor.decoder with
       | Ok (stats, Some trunc_size) ->
         begin
           try

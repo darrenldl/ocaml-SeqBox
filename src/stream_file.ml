@@ -147,10 +147,10 @@ module Stream = struct
 
   let process_in_out ~(append:bool) ~(in_filename:string) ~(out_filename:string) ~(processor:('a in_out_processor)) : ('a, string) result =
     try
-      let in_file  = Core.In_channel.create ~binary:true ~append in_filename  in
+      let in_file  = Core.In_channel.create ~binary:true in_filename  in
       let res =
         Core.protect ~f:(fun () ->
-            let out_file = Core.Out_channel.create ~binary:true out_filename in
+            let out_file = Core.Out_channel.create ~binary:true ~append out_filename in
             Core.protect ~f:(fun () -> processor in_file out_file)
               ~finally:(fun () ->
                   try
