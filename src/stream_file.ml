@@ -145,9 +145,9 @@ module Stream = struct
 
   type 'a out_processor    = Core.Out_channel.t -> 'a
 
-  let process_in_out ~(in_filename:string) ~(out_filename:string) ~(processor:('a in_out_processor)) : ('a, string) result =
+  let process_in_out ~(append:bool) ~(in_filename:string) ~(out_filename:string) ~(processor:('a in_out_processor)) : ('a, string) result =
     try
-      let in_file  = Core.In_channel.create  ~binary:true in_filename  in
+      let in_file  = Core.In_channel.create ~binary:true ~append in_filename  in
       let res =
         Core.protect ~f:(fun () ->
             let out_file = Core.Out_channel.create ~binary:true out_filename in
@@ -182,7 +182,12 @@ module Stream = struct
       let in_file = Core.In_channel.create ~binary:true in_filename in
       let res =
         Core.protect ~f:(fun () -> processor in_file)
-          ~finally:(fun () -> Core.In_channel.close in_file) in
+          ~finally:(fun () ->
+              try
+                Core.In_channel.close in_file
+              with
+              | _ -> () (* ignore close failures *)
+            ) in
       Ok res
     with
     | Packaged_exn msg                -> Error msg
@@ -193,12 +198,17 @@ module Stream = struct
     | _                               -> Error "Unknown failure"
   ;;
 
-  let process_out ~(out_filename:string) ~(processor:('a out_processor)) : ('a, string) result =
+  let process_out ~(append:bool) ~(out_filename:string) ~(processor:('a out_processor)) : ('a, string) result =
     try
-      let out_file = Core.Out_channel.create ~binary:true out_filename in
+      let out_file = Core.Out_channel.create ~binary:true ~append out_filename in
       let res =
         Core.protect ~f:(fun () -> processor out_file)
-          ~finally:(fun () -> Core.Out_channel.close out_file) in
+          ~finally:(fun () ->
+              try
+                Core.Out_channel.close out_file
+              with
+              | _ -> () (* ignore close failures *)
+            ) in
       Ok res
     with
     | Packaged_exn msg                -> Error msg

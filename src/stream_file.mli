@@ -8,7 +8,7 @@ module Stream : sig
   type 'a out_processor    = Core.Out_channel.t -> 'a
 
   val process_in_out :
-    in_filename:string -> out_filename:string -> processor:('a in_out_processor)
+    append:bool -> in_filename:string -> out_filename:string -> processor:('a in_out_processor)
     -> ('a, string) result
 
   val process_in  :
@@ -16,7 +16,7 @@ module Stream : sig
     -> ('a, string) result
 
   val process_out :
-    out_filename:string -> processor:('a out_processor)
+    append:bool -> out_filename:string -> processor:('a out_processor)
     -> ('a, string) result
 end
 
