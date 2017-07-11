@@ -1,12 +1,13 @@
 # Specification of ocaml-SeqBox
 
-Table of Contents
-=================
-
-   * [Specification of ocaml-SeqBox](#specification-of-ocaml-seqbox)
-      * [Encoding workflow](#encoding-workflow)
-      * [Decoding workflow](#decoding-workflow)
-      * [To successfully encode a file](#to-successfully-encode-a-file)
+Table of Contents                                                                                                                     
+=================                                                                                                                     
+                                                                                                                                      
+   * [Specification of ocaml-SeqBox](#specification-of-ocaml-seqbox)                                                                  
+      * [Encoding workflow](#encoding-workflow)                                                                                       
+      * [Decoding workflow](#decoding-workflow)                                                                                       
+      * [Rescuing workflow](#rescuing-workflow)                                                                                       
+      * [To successfully encode a file](#to-successfully-encode-a-file)                                                               
       * [To successfully decode a sbx container](#to-successfully-decode-a-sbx-container)
       * [Handling of duplicate metadata/data blocks](#handling-of-duplicate-metadatadata-blocks)
       * [Handling of duplicate metadata in metadata block given the block is valid](#handling-of-duplicate-metadata-in-metadata-block-given-the-block-is-valid)
@@ -49,6 +50,13 @@ Data block is valid if and only if
     - if reference block is a metadata block, and contains the hash field, then the output file will be hashed to check against the recorded hash
       - output file will not be deleted even if hash does not match
     - otherwise nothing is done
+
+## Rescuing workflow
+  1. Scan for valid blocks from start of the provided file
+    - each block is appended to OUTDIR/uid, where :
+      - OUTDIR = output directory specified
+      - uid    = uid of the block in hex
+  2. User is expected to attempt to decode the rescued data in OUTDIR using the osbx decode command
 
 ## To successfully encode a file
   - File size must be within threshold
