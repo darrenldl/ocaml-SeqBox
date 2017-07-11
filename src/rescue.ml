@@ -76,7 +76,10 @@ module Logger = struct
   let make_write_proc ~(stats:stats) : unit Stream.out_processor =
     (fun out_file ->
        let open Write_chunk in
-       write out_file (Printf.sprintf "bytes_processed=%Ld\n" stats.bytes_processed)
+       write out_file ~chunk:(Printf.sprintf "bytes_processed=%Ld\n" stats.bytes_processed);
+       write out_file ~chunk:(Printf.sprintf "blocks_processed=%Ld\n" stats.blocks_processed);
+       write out_file ~chunk:(Printf.sprintf "meta_blocks_processed=%Ld\n" stats.meta_blocks_processed);
+       write out_file ~chunk:(Printf.sprintf "bytes_processed=%Ld\n" stats.bytes_processed);
     )
   ;;
 
@@ -99,16 +102,16 @@ module Logger = struct
       string "blocks_processed=" *> integer64 <* string "\n"
     ;;
 
-    let meta_blocks_decoded_p =
-      string "meta_blocks_decoded=" *> integer64 <* string "\n"
+    let meta_blocks_processed_p =
+      string "meta_blocks_processed=" *> integer64 <* string "\n"
     ;;
 
-    let data_blocks_decoded_p =
-      string "data_blocks_decoded=" *> integer64 <* string "\n"
+    let data_blocks_processed_p =
+      string "data_blocks_processed=" *> integer64 <* string "\n"
     ;;
 
     let log_file_p =
-      lift4 Stats.make_stats bytes_processed_p blocks_processed_p meta_blocks_decoded_p data_blocks_decoded_p
+      lift4 Stats.make_stats bytes_processed_p blocks_processed_p meta_blocks_processed_p data_blocks_processed_p
     ;;
   end
 
