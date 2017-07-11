@@ -32,7 +32,7 @@ module Stats = struct
 
   let add_meta_block (stats:t) : t =
     { bytes_processed       = stats.bytes_processed
-    ; blocks_processed      = stats.blocks_processed
+    ; blocks_processed      = stats.blocks_processed      <+> 1L
     ; meta_blocks_processed = stats.meta_blocks_processed <+> 1L
     ; data_blocks_processed = stats.data_blocks_processed
     }
@@ -40,7 +40,7 @@ module Stats = struct
 
   let add_data_block (stats:t) : t =
     { bytes_processed       = stats.bytes_processed
-    ; blocks_processed      = stats.blocks_processed
+    ; blocks_processed      = stats.blocks_processed      <+> 1L
     ; meta_blocks_processed = stats.meta_blocks_processed
     ; data_blocks_processed = stats.data_blocks_processed <+> 1L
     }
@@ -206,9 +206,14 @@ module Processor = struct
       let open Write_chunk in
       (* Core.Out_channel.seek out_file (Int64.sub (Core.Out_channel.length out_file) 1L); (* append to file *) *)
       write out_file ~chunk:output_bytes in
+    let new_stats =
+      if Block.is_meta block then
+        Stats.add_meta_block stats
+      else
+        Stats.add_data_block stats in
     match Stream.process_out ~append:true ~out_filename ~processor:output_proc_internal_processor with
-    | Ok _      -> (stats, Ok ())
-    | Error msg -> (stats, Error msg)
+    | Ok _      -> (new_stats, Ok ())
+    | Error msg -> (new_stats, Error msg)
   ;;
 
   (* if there is any error with outputting, just print directly and return stats
