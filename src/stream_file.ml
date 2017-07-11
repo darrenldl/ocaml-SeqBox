@@ -153,9 +153,18 @@ module Stream = struct
             let out_file = Core.Out_channel.create ~binary:true out_filename in
             Core.protect ~f:(fun () -> processor in_file out_file)
               ~finally:(fun () ->
-                  Core.Out_channel.close out_file))
+                  try
+                    Core.Out_channel.close out_file
+                  with
+                  | _ -> () (* ignore close failures *)
+                )
+          )
           ~finally:(fun () ->
-              Core.In_channel.close in_file) in
+              try
+                Core.In_channel.close in_file
+              with
+              | _ -> () (* ignore close failures *)
+            ) in
       Ok res
     with
     | Packaged_exn msg                -> Error msg
