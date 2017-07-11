@@ -143,7 +143,7 @@ All versions are implemented in ocaml-SeqBox
   - Rescue mode - in progress
   - ~~Commandline options for scanning and recovery - not started~~
     - Replaced by rescue mode
-  - Commandline interface for rescue mode - not started
+  - Commandline interface for rescue mode - done
   - Package and publish to opam - not started
 
 ## License
