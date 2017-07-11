@@ -51,6 +51,14 @@ Data block is valid if and only if
       - output file will not be deleted even if hash does not match
     - otherwise nothing is done
 
+#### Handling of duplicate metadata/data blocks
+  - First valid metadata block will be used(if exists)
+  - For all other data blocks, the last seen valid data block will be used for a given sequence number
+
+#### Handling of duplicate metadata in metadata block given the block is valid
+  - For a given ID, only the first occurance of the metadata will be used
+    e.g. if there are two FNM metadata fields in the metadata block, only the first (in terms of byte order) will be used
+
 ## Rescuing workflow
   1. Scan for valid blocks from start of the provided file using 128 bytes alignment
     - rescue mode rescues all 3 versions of sbx blocks
@@ -75,11 +83,3 @@ Data block is valid if and only if
 
 ## To successfully rescue your sbx container
   - Get enough valid sbx blocks of your container such that a successful decoding may take place
-
-## Handling of duplicate metadata/data blocks
-  - First valid metadata block will be used(if exists)
-  - For all other data blocks, the last seen valid data block will be used for a given sequence number
-
-## Handling of duplicate metadata in metadata block given the block is valid
-  - For a given ID, only the first occurance of the metadata will be used
-    e.g. if there are two FNM metadata fields in the metadata block, only the first (in terms of byte order) will be used
