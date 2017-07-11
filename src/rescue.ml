@@ -54,12 +54,19 @@ module Stats = struct
     }
   ;;
 
-  let print_stats (stats:t) : unit =
+  let print_stats_single_line (stats:t) : unit =
     Printf.printf "\rBytes processed : %Ld, Blocks processed : %Ld, Metadata blocks processed : %Ld, Data blocks processed : %Ld"
       stats.bytes_processed
       stats.blocks_processed
       stats.meta_blocks_processed
       stats.data_blocks_processed
+  ;;
+
+  let print_stats (stats:t) : unit =
+    Printf.printf "Number of          bytes  processed : %Ld\n" stats.bytes_processed;
+    Printf.printf "Number of          blocks processed : %Ld\n" stats.blocks_processed;
+    Printf.printf "Number of metadata blocks processed : %Ld\n" stats.meta_blocks_processed;
+    Printf.printf "Number of data     blocks processed : %Ld\n" stats.data_blocks_processed
   ;;
 end
 
@@ -217,7 +224,7 @@ module Processor = struct
     else
       begin
         (* report progress *)
-        Stats.print_stats stats;
+        Stats.print_stats_single_line stats;
         match scan_proc ~stats in_file with
         | (stats, None)       -> print_newline (); stats  (* ran out of valid blocks in input file *)
         | (stats, Some block) ->
