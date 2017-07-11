@@ -231,7 +231,7 @@ module Metadata : sig
     | FSZ of uint64
     | FDT of uint64
     | SDT of uint64
-    | HSH of Multihash.hash * bytes  (* should ALWAYS store the RAW hash, to bytes should automatically convert it to multihash *)
+    | HSH of Multihash.hash_bytes  (* should ALWAYS store the RAW hash, to bytes should automatically convert it to multihash *)
     | PID of bytes
 
   val dedup    : t list      -> t list
@@ -252,7 +252,7 @@ end = struct
     | FSZ of uint64
     | FDT of uint64
     | SDT of uint64
-    | HSH of Multihash.hash * bytes
+    | HSH of Multihash.hash_bytes
     | PID of bytes
 
   type id =
@@ -309,14 +309,11 @@ end = struct
   ;;
 
   let single_to_bytes (entry:t) : bytes =
-    try
-      match entry with
-      | FNM v | SNM v         -> Conv_utils.string_to_bytes v
-      | FSZ v | FDT v | SDT v -> Conv_utils.uint64_to_bytes v
-      | HSH (hash_type, raw)  -> Multihash.raw_hash_to_multihash ~hash_type ~raw
-      | PID v                 -> v
-    with
-    | Multihash.Length_mismatch -> raise (Invalid_entry "Raw hash is of incorrect length")
+    match entry with
+    | FNM v | SNM v         -> Conv_utils.string_to_bytes v
+    | FSZ v | FDT v | SDT v -> Conv_utils.uint64_to_bytes v
+    | HSH hash_bytes        -> Multihash.hash_bytes_to_multihash ~hash_bytes
+    | PID v                 -> v
   ;;
 
   let to_id_and_bytes (entry:t) : id * bytes =
@@ -385,7 +382,7 @@ end = struct
     ;;
     let hsh_p : metadata Angstrom.t =
       string "HSH" *> Multihash.Parser.sha256_p
-      >>| (fun x -> HSH (`SHA256, x))
+      >>| (fun x -> HSH x)
     ;;
     (*let pid_p : metadata Angstrom.t =
       string "PID" *> arb_len_data_p
