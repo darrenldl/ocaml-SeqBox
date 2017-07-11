@@ -8,4 +8,4 @@ end
 
 val raw_hash_to_multihash : hash_type:hash -> raw:bytes -> bytes
 
-val make_dummy_multihash  : hash_type:hash -> bytes
+val make_dummy_raw_hash   : hash_type:hash -> bytes

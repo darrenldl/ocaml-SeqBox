@@ -230,7 +230,7 @@ module Metadata : sig
     | FSZ of uint64
     | FDT of uint64
     | SDT of uint64
-    | HSH of bytes
+    | HSH of bytes  (* should ALWAYS store the RAW hash, to bytes should automatically convert it to multihash *)
     | PID of bytes
 
   val dedup    : t list      -> t list
@@ -306,15 +306,16 @@ end = struct
     dedup_internal [] fields
   ;;
 
-  let to_bytes (entry:t) : bytes =
+  let single_to_bytes (entry:t) : bytes =
     match entry with
     | FNM v | SNM v         -> Conv_utils.string_to_bytes v
     | FSZ v | FDT v | SDT v -> Conv_utils.uint64_to_bytes v
-    | HSH v | PID v         ->                            v
+    | HSH v                 -> Multihash.raw_hash_to_multihash ~hash_type:`SHA256 ~raw:v
+    | PID v                 -> v
   ;;
 
   let to_id_and_bytes (entry:t) : id * bytes =
-    let res_bytes = to_bytes entry in
+    let res_bytes = single_to_bytes entry in
     match entry with
     | FNM _ -> (`FNM, res_bytes)
     | SNM _ -> (`SNM, res_bytes)
