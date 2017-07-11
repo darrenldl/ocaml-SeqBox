@@ -6,7 +6,7 @@
  ))
 
 (executable
- ((name           rescue)
+ ((name           osbx)
   (public_name    osbx)
   (ocamlopt_flags (-cclib -Wl,-E crcccitt.o))
   (libraries      (crcccitt_c stdint nocrypto nocrypto.unix angstrom core hex ctypes ctypes.foreign cmdliner))

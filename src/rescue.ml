@@ -283,10 +283,10 @@ module Process = struct
   ;;
 end
 
-let test () =
+(* let test () =
   match Process.rescue_from_file ~in_filename:"dummy_disk" ~out_dirname:"rescue_folder" ~log_filename:(Some "rescue_log") with
   | Ok stats  -> Stats.print_stats stats
   | Error msg -> Printf.printf "%s\n" msg
 ;;
 
-test ()
+test () *)

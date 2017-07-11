@@ -38,12 +38,20 @@ let encode_cmd =
 
 let decode_cmd =
   let open Osbx_decode in
-  let doc = "decode file" in
+  let doc = "decode sbx container" in
   (Term.(const decode $ force $ in_file $ out_file),
    Term.info "decode" ~doc
   )
 ;;
 
+let rescue_cmd =
+  let open Osbx_rescue in
+  let doc = "rescue sbx data from file" in
+  (Term.(const rescue $ in_file $ out_dir $ log_file),
+   Term.info "rescue" ~doc
+  )
+;;
+
 let () =
-  Term.exit @@ Term.eval_choice default_cmd [encode_cmd; decode_cmd]
+  Term.exit @@ Term.eval_choice default_cmd [encode_cmd; decode_cmd; rescue_cmd]
 ;;
