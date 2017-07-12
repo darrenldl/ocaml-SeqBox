@@ -44,7 +44,6 @@ PKG sexplib.unix
 PKG spawn
 PKG stdint
 PKG stdio
-PKG str
 PKG threads
 PKG threads.posix
 PKG typerep
