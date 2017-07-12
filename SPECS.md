@@ -81,7 +81,7 @@ Data block is valid if and only if
 
 ## To successfully decode a sbx container
   - At least one valid data block for each position must exist
-  - If data padding was done for the last block, then at least one valid metadata block must exist for truncation of the output file to happen
+  - If data padding was done for the last block, then at least one valid metadata block must exist and the first block amongst the valid metadata blocks needs to contain a field for the file size in order for truncation of the output file to happen
 
 ## To successfully rescue your sbx container
   - Get enough valid sbx blocks of your container such that a successful decoding may take place
