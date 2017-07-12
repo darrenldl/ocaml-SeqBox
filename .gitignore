@@ -30,9 +30,4 @@ tests/osbx
 /tests/rescue2.sbx
 /tests/rescue3.sbx
 /tests/rescue_log
-/tests/rescued_data/5e8c70fe87e2
-/tests/rescued_data/5e8c70fe87e2.decoded
-/tests/rescued_data/9ad493283413
-/tests/rescued_data/9ad493283413.decoded
-/tests/rescued_data/da0d4bec4dcb
-/tests/rescued_data/da0d4bec4dcb.decoded
+/tests/rescued_data/*

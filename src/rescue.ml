@@ -151,7 +151,7 @@ end
 
 module Processor = struct
   (* scan for valid block *)
-  let scan_proc ~(stats:stats) (in_file:Core.In_channel.t) : stats * (Block.t option) =
+  let scan_proc ~(stats:stats) (in_file:Core.In_channel.t) : stats * ((Block.t * bytes) option) =
     let open Read_chunk in
     let len = Param.Rescue.scan_alignment in
     let bytes_to_block (raw_header:Header.raw_header) (chunk:bytes) : Block.t option =
@@ -162,7 +162,7 @@ module Processor = struct
         | Metadata.Invalid_bytes
         | Block.Invalid_bytes
         | Block.Invalid_size     -> None in
-    let rec scan_proc_internal (stats:stats) : stats * (Block.t option) =
+    let rec scan_proc_internal (stats:stats) : stats * ((Block.t * bytes) option) =
       match read in_file ~len with
       | None           -> (stats, None)
       | Some { chunk } ->
@@ -189,14 +189,15 @@ module Processor = struct
               Stats.add_bytes stats ~num:(Int64.of_int (Bytes.length chunk)) in
             match test_block with
             | None       -> scan_proc_internal new_stats
-            | Some block -> (new_stats, Some block)  (* found a valid block *) in
+            | Some block -> (new_stats, Some (block, chunk))  (* found a valid block *) in
     scan_proc_internal stats
   ;;
 
   (* append blocks to filename (use uid in hex string as filename)
    * return Error if failed to write for whatever reason
    *)
-  let output_proc ~(stats:stats) ~(block:Block.t) ~(out_dirname:string) : stats * ((unit, string) result) =
+  let output_proc ~(stats:stats) ~(block_and_chunk:Block.t * bytes) ~(out_dirname:string) : stats * ((unit, string) result) =
+    let (block, chunk) = block_and_chunk in
     let out_filename =
       let uid_hex =
         Conv_utils.bytes_to_hex_string (Block.block_to_file_uid block) in
@@ -206,18 +207,10 @@ module Processor = struct
         else
           "/" in
       String.concat separator [out_dirname; uid_hex] in
-    let output_bytes =
-      try
-        Block.to_bytes block
-      with
-      (* there should not be any exceptions since the block was parsed from bytes
-       * rather than crafted
-      *)
-      | Metadata.Too_much_data _ -> assert false in
     let output_proc_internal_processor (out_file:Core.Out_channel.t) : unit =
       let open Write_chunk in
       (* Core.Out_channel.seek out_file (Int64.sub (Core.Out_channel.length out_file) 1L); (* append to file *) *)
-      write out_file ~chunk:output_bytes in
+      write out_file ~chunk in  (* use the actual bytes in original file rather than generating from scratch *)
     let new_stats =
       if Block.is_meta block then
         Stats.add_meta_block stats
@@ -250,9 +243,9 @@ module Processor = struct
         (* report progress *)
         Stats.print_stats_single_line stats;
         match scan_proc ~stats in_file with
-        | (stats, None)       -> print_newline (); stats  (* ran out of valid blocks in input file *)
-        | (stats, Some block) ->
-          match output_proc ~stats ~block ~out_dirname with
+        | (stats, None)                 -> print_newline (); stats  (* ran out of valid blocks in input file *)
+        | (stats, Some block_and_chunk) ->
+          match output_proc ~stats ~block_and_chunk ~out_dirname with
           | (stats, Ok _ )     -> scan_and_output ~stats ~out_dirname ~log_filename in_file
           | (stats, Error msg) -> print_newline (); Printf.printf "%s" msg; print_newline (); stats
       end
