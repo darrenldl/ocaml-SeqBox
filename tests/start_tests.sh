@@ -3,13 +3,10 @@
 cd ..
 
 echo "Building osbx"
-# jbuilder build @install
-# opam pin add osbx . -n
 opam install osbx
 echo ""
 
 echo "Copying osbx binary over"
-# cp _build/default/src/osbx.exe ./tests/osbx
 cp ~/.opam/system/bin/osbx ./tests/osbx
 echo ""
 
