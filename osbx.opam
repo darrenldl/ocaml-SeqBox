@@ -8,10 +8,8 @@ bug-reports: "https://github.com/darrenldl/ocaml-SeqBox/issues"
 license: "BSD-3-Clause"
 dev-repo: "https://github.com/darrenldl/ocaml-SeqBox.git"
 build: [
-  [make]
+  ["jbuilder" "build" "@install"]
 ]
-install: [make "install"]
-remove: ["ocamlfind" "remove" "osbx"]
 depends: [
   "ocamlfind"      {build}
   "jbuilder"       {build}
