@@ -147,7 +147,8 @@ All versions are implemented in ocaml-SeqBox
   - Packaging preparation - done
   - Final testing - done
     - See tests/ folder for test scripts
-  - Publish - in progress
+  - Publish - done
+    - Available through OPAM - opam install osbx
 
 ## License
 The following files directly from libcrc(with slight modification) are under the same MIT license used by libcrc
