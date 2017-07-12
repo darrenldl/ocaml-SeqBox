@@ -1,6 +1,5 @@
 B ../_build/default/crcccitt
-B ../_build/default/src
-FLG -w -40
+FLG -open Crcccitt_c -w -40
 PKG angstrom
 PKG base
 PKG base.caml
@@ -51,4 +50,3 @@ PKG typerep
 PKG unix
 PKG variantslib
 PKG zarith
-S ../crcccitt

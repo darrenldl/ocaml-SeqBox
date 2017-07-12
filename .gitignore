@@ -1,5 +1,6 @@
 *.swp
 */_build
+_build
 /src/dummy
 /src/dummy1
 /src/dummy1.sbx
@@ -11,3 +12,5 @@
 /src/rescue_folder/*
 /src/rescue_log
 /src/log
+/osbx.install
+/crcccitt/crcccitt_c.install

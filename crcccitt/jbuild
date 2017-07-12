@@ -1,0 +1,6 @@
+(library
+ ((name        crcccitt_c)
+  (public_name crcccitt_c)
+  (c_names     (crcccitt))
+  (libraries   (stdint nocrypto nocrypto.unix angstrom core hex ctypes ctypes.foreign cmdliner))
+ ))
