@@ -70,6 +70,7 @@ Data block is valid if and only if
     - each block is appended to OUTDIR/uid, where :
       - OUTDIR = output directory specified
       - uid    = uid of the block in hex
+    - the original bytes in the file is used, that is, the output block bytes are not generated from scratch by osbx
   2. User is expected to attempt to decode the rescued data in OUTDIR using the osbx decode command
 
 ## To successfully encode a file
