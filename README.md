@@ -144,7 +144,9 @@ All versions are implemented in ocaml-SeqBox
   - ~~Commandline options for scanning and recovery - not started~~
     - Replaced by rescue mode
   - Commandline interface for rescue mode - done
-  - Package and publish to opam - not started
+  - Packaging preparation - done
+  - Final testing - in progress
+  - Publish - waiting for testing to be completed
 
 ## License
 The following files directly from libcrc(with slight modification) are under the same MIT license used by libcrc
