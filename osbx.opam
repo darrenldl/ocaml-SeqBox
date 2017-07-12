@@ -8,7 +8,6 @@ bug-reports: "https://github.com/darrenldl/ocaml-SeqBox/issues"
 license: "BSD-3-Clause"
 dev-repo: "https://github.com/darrenldl/ocaml-SeqBox.git"
 build: [
-  ["./configure" "--prefix=%{prefix}%"]
   [make]
 ]
 install: [make "install"]
