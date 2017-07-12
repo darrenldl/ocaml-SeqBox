@@ -18,11 +18,6 @@ end
 
 type stats = Stats.t
 
-module Processor : sig
-  (* Resulting decoder may do Printf.printf to report progress, errors etc *)
-  val decoder : Core.In_channel.t -> Core.Out_channel.t -> stats * (int64 option)
-end
-
 module Process : sig
   val fetch_out_filename : in_filename:string -> out_filename:string option -> (string option, string) result
 

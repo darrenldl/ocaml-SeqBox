@@ -18,11 +18,6 @@ end
 
 type stats = Stats.t
 
-module Processor : sig
-  (* Resulting encoder may do Printf.printf to report progress etc *)
-  val make_in_out_encoder : common:Header.common_fields -> metadata:(Metadata.t list) option -> stats Stream.in_out_processor
-end
-
 module Process : sig
   val encode_file : uid:bytes option -> want_meta:bool -> ver:version -> in_filename:string -> out_filename:string -> (stats, string) result
 end
