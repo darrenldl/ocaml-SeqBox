@@ -25,7 +25,7 @@ let default_cmd =
   let exits = Term.default_exits in
   let man = help_secs in
   Term.(ret (const (`Help (`Pager, None)))),
-  Term.info "osbx" ~version:"1.0.1" ~doc ~sdocs ~exits ~man
+  Term.info "osbx" ~version:Osbx_version.version ~doc ~sdocs ~exits ~man
 ;;
 
 let encode_cmd =
