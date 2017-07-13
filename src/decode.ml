@@ -149,10 +149,10 @@ module Stats = struct
   ;;
 
   let print_progress_helper =
-    let header        = "Data decoding progress" in
-    let unit          = "blocks" in
-    let print_every_n = Param.Decode.progress_report_interval in
-    Progress_report.gen_print_generic ~header ~unit ~print_every_n
+    let header         = "Data decoding progress" in
+    let unit           = "blocks" in
+    let print_interval = Param.Decode.progress_report_interval in
+    Progress_report.gen_print_generic ~header ~unit ~print_interval
   ;;
 
   let print_progress ~(stats:t) ~(total_blocks:int64) =

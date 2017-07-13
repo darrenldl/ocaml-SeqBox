@@ -79,10 +79,10 @@ module Stats = struct
   ;;
 
   let print_progress_helper =
-    let header        = "Data rescue progress" in
-    let unit          = "bytes" in
-    let print_every_n = Param.Rescue.progress_report_interval in
-    Progress_report.gen_print_generic ~header ~unit ~print_every_n
+    let header         = "Data rescue progress" in
+    let unit           = "bytes" in
+    let print_interval = Param.Rescue.progress_report_interval in
+    Progress_report.gen_print_generic ~header ~unit ~print_interval
   ;;
 
   let print_progress ~(stats:t) ~(total_bytes:int64) =
@@ -137,7 +137,7 @@ module Logger = struct
     | Sys.Break ->
       begin
         write_log_internal_no_exn () |> ignore; 
-        Error "Interrupted" (* return an error so the interrupt still stops the process *)
+        raise Sys.Break (* raise Sys.Break again so the interrupt still stops the process *)
       end
   ;;
 
@@ -265,6 +265,24 @@ module Processor = struct
     | Error msg -> (new_stats, Error msg)
   ;;
 
+  let scan_and_output_helper =
+    let write_interval  : float     = Param.Rescue.log_write_interval in
+    let last_write_time : float ref = ref 0. in
+    (fun ~(stats:stats) ~(log_filename:string) : bool ->
+       let cur_time : float = Sys.time () in
+       let time_since_last_write : float = cur_time -. !last_write_time in
+       if time_since_last_write > write_interval then
+         begin
+           last_write_time := cur_time;
+           match Logger.write_log ~stats ~log_filename with
+           | Error msg -> print_newline (); Printf.printf "%s" msg; print_newline (); false
+           | Ok _      -> true
+         end
+       else
+         true (* things are okay and do nothing *)
+    )
+  ;;
+
   (* if there is any error with outputting, just print directly and return stats
    * this should be very rare however, if happening at all
    *)
@@ -273,27 +291,10 @@ module Processor = struct
      *
      * print a new line before exitting to not print on the same line as the stats
      *)
-    let write_every_n = Param.Rescue.log_write_interval in
-    let write_count   = ref 0 in
     let log_okay : bool =
       match log_filename with
       | None              -> true
-      | Some log_filename ->
-        begin
-          let res =
-            (* log progress *)
-            if !write_count = 0 then
-              begin
-                match Logger.write_log ~stats ~log_filename with
-                | Error msg -> print_newline (); Printf.printf "%s" msg; print_newline (); false
-                | Ok _      -> true
-              end
-            else
-              true  (* do nothing *) in
-          (* increase and mod write counter *)
-          write_count := (!write_count + 1) mod write_every_n;
-          res
-        end in
+      | Some log_filename -> scan_and_output_helper ~stats ~log_filename in
     if not log_okay then
       stats
     else
@@ -336,8 +337,6 @@ end
 
 module Process = struct
   let rescue_from_file ~(in_filename:string) ~(out_dirname:string) ~(log_filename:string option) : (stats, string) result =
-    (* catch CTRL-C breaks *)
-    Sys.catch_break true;
     let processor = Processor.make_rescuer ~out_dirname ~log_filename in
     match Stream.process_in ~in_filename processor with
     | Ok stats  -> stats

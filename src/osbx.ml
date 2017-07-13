@@ -53,5 +53,7 @@ let rescue_cmd =
 ;;
 
 let () =
+  (* catch CTRL-C breaks *)
+  Sys.catch_break true;
   Term.exit @@ Term.eval_choice default_cmd [encode_cmd; decode_cmd; rescue_cmd]
 ;;
