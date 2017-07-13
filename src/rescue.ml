@@ -231,13 +231,27 @@ module Processor = struct
      *)
     let print_every_n = Param.Rescue.progress_report_interval in
     let report_count  = ref 0 in
+    let write_every_n = Param.Rescue.log_write_interval in
+    let write_count   = ref 0 in
     let log_okay : bool =
       match log_filename with
       | None              -> true
       | Some log_filename ->
-        match Logger.write_log ~stats ~log_filename with
-        | Error msg -> print_newline (); Printf.printf "%s" msg; print_newline (); false
-        | Ok _      -> true in
+        begin
+          let res =
+            (* log progress *)
+            if !write_count = 0 then
+              begin
+                match Logger.write_log ~stats ~log_filename with
+                | Error msg -> print_newline (); Printf.printf "%s" msg; print_newline (); false
+                | Ok _      -> true
+              end
+            else
+              true  (* do nothing *) in
+          (* increase and mod write counter *)
+          write_count := (!write_count + 1) mod write_every_n;
+          res
+        end in
     if not log_okay then
       stats
     else

@@ -10,4 +10,5 @@ end
 module Rescue : sig
   val scan_alignment           : int
   val progress_report_interval : int
+  val log_write_interval       : int
 end
