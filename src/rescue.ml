@@ -279,7 +279,7 @@ module Processor = struct
            | Ok _      -> true
          end
        else
-         false
+         true (* things are okay and do nothing *)
     )
   ;;
 

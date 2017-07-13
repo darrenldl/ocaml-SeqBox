@@ -20,7 +20,7 @@ let gen_print_generic ~(header:string) ~(unit:string) ~(print_interval:float) =
      if time_since_last_report > print_interval || percent = 100 (* always print if reached 100% *) then 
        begin
          let cur_rate               : float     = (Int64.to_float (Int64.sub units_so_far !last_reported_units)) /. time_since_last_report in
-         let time_elapsed           : float     = cur_time -. start_time in
+         (* let time_elapsed           : float     = cur_time -. start_time in *)
          (* let avg_rate               : float     = (Int64.to_float units_so_far) /. time_elapsed in *)
          let units_remaining        : int64     = Int64.sub total_units units_so_far in
          let etc_total_secs         : int       = int_of_float (ceil ((Int64.to_float units_remaining) /. cur_rate)) in
