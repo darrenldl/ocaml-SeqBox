@@ -5,7 +5,7 @@ let seconds_to_hms (total_secs:int) : int * int * int =
   (hour, minute, second)
 ;;
 
-let print_generic ~(header:string) ~(unit:string) ~(print_every_n:int) =
+let gen_print_generic ~(header:string) ~(unit:string) ~(print_every_n:int) =
   let last_report_time    : float ref = ref 0. in
   let last_reported_units : int64 ref = ref 0L in
   let print_count         : int   ref = ref 0  in
@@ -20,7 +20,7 @@ let print_generic ~(header:string) ~(unit:string) ~(print_every_n:int) =
        begin
          let cur_time                           = Sys.time () in
          let time_since_last_report : float     = cur_time -. !last_report_time in
-         let cur_rate               : float     = ((Int64.to_float units_so_far) /. time_since_last_report) in
+         let cur_rate               : float     = (Int64.to_float (Int64.sub units_so_far !last_reported_units)) /. time_since_last_report in
          let time_elapsed           : float     = cur_time -. start_time in
          let avg_rate               : float     = (Int64.to_float units_so_far) /. time_elapsed in
          let units_remaining        : int64     = Int64.sub total_units units_so_far in

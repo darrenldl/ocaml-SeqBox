@@ -63,12 +63,15 @@ module Stats = struct
     Printf.printf "Time elapsed                      : %02d:%02d:%02d\n" hour minute second
   ;;
 
-  let print_progress ~(stats:t) ~(total_chunks:int64) =
+  let print_progress_helper =
     let header        = "Data encoding progress" in
     let unit          = "chunks" in
     let print_every_n = Param.Encode.progress_report_interval in
-    let print_progress_internal = Progress_report.print_generic ~header ~unit ~print_every_n in
-    print_progress_internal
+    Progress_report.gen_print_generic ~header ~unit ~print_every_n
+  ;;
+
+  let print_progress ~(stats:t) ~(total_chunks:int64) =
+    print_progress_helper
       ~start_time:stats.start_time
       ~units_so_far:stats.blocks_written
       ~total_units:total_chunks
