@@ -297,18 +297,16 @@ module Processor = struct
     if not log_okay then
       stats
     else
-      let res =
-        begin
-          match scan_proc ~stats in_file with
-          | (stats, None)                 -> print_newline (); stats  (* ran out of valid blocks in input file *)
-          | (stats, Some block_and_chunk) ->
-            match output_proc ~stats ~block_and_chunk ~out_dirname with
-            | (stats, Ok _ )     -> scan_and_output ~stats ~out_dirname ~log_filename in_file
-            | (stats, Error msg) -> print_newline (); Printf.printf "%s" msg; print_newline (); stats
-        end in
-      (* report progress *)
-      Stats.print_progress ~stats ~total_bytes:(Core.In_channel.length in_file);
-      res
+      begin
+        (* report progress *)
+        Stats.print_progress ~stats ~total_bytes:(Core.In_channel.length in_file);
+        match scan_proc ~stats in_file with
+        | (stats, None)                 -> print_newline (); stats  (* ran out of valid blocks in input file *)
+        | (stats, Some block_and_chunk) ->
+          match output_proc ~stats ~block_and_chunk ~out_dirname with
+          | (stats, Ok _ )     -> scan_and_output ~stats ~out_dirname ~log_filename in_file
+          | (stats, Error msg) -> print_newline (); Printf.printf "%s" msg; print_newline (); stats
+      end
   ;;
 
   let make_rescuer ~(out_dirname:string) ~(log_filename:string option) : ((stats, string) result) Stream.in_processor =
