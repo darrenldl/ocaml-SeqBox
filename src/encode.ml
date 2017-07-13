@@ -96,7 +96,7 @@ module Progress = struct
            () (* do nothing *)
        end;
        (* increase and mod report counter *)
-       report_count := !report_count mod print_every_n
+       report_count := (!report_count + 1) mod print_every_n
     )
   ;;
 end

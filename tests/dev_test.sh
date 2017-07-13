@@ -13,7 +13,7 @@ echo ""
 cd tests
 
 echo "Generating test data"
-dd if=/dev/urandom of=dummy bs=1024 count=1024
+dd if=/dev/zero of=dummy bs=$[1024 * 1024 * 1024] count=1
 echo ""
 
 # version tests
