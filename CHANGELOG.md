@@ -4,6 +4,7 @@
   - Added graceful handling of CTRL-C breaks in rescue mode
     - log file stays valid after being interrupted
     - in 1.0.0, log file may be empty/broken when osbx is interrupted during rescuing
+  - Better progress reporting for encoding, decoding and rescuing
 
 ## 1.0.0  (version on opam)
   - Base version
