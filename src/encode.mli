@@ -11,6 +11,7 @@ module Stats : sig
            ; meta_blocks_written : int64
            ; data_blocks_written : int64
            ; total_data_encoded  : int64
+           ; start_time          : float 
            }
 
   val print_stats : t -> unit

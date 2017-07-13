@@ -19,6 +19,7 @@ module Stats = struct
            ; meta_blocks_written : int64
            ; data_blocks_written : int64
            ; total_data_encoded  : int64
+           ; start_time          : float 
            }
 
   let make_blank_stats ~(ver:version) : t =
@@ -28,6 +29,7 @@ module Stats = struct
     ; meta_blocks_written = 0L
     ; data_blocks_written = 0L
     ; total_data_encoded  = 0L
+    ; start_time          = Sys.time ()
     }
 
   let add_written_meta_block (stats:t) : t =
@@ -37,6 +39,7 @@ module Stats = struct
     ; meta_blocks_written = stats.meta_blocks_written <+> 1L
     ; data_blocks_written = stats.data_blocks_written
     ; total_data_encoded  = stats.total_data_encoded
+    ; start_time          = stats.start_time
     }
 
   let add_written_data_block (stats:t) ~(data_len:int) : t =
@@ -46,6 +49,7 @@ module Stats = struct
     ; meta_blocks_written = stats.meta_blocks_written
     ; data_blocks_written = stats.data_blocks_written <+> 1L
     ; total_data_encoded  = stats.total_data_encoded  <+> (Int64.of_int data_len)
+    ; start_time          = stats.start_time
     }
 
   let print_stats (stats:t) : unit =
@@ -54,7 +58,18 @@ module Stats = struct
     Printf.printf "Number of          blocks written : %Ld\n" stats.blocks_written;
     Printf.printf "Number of metadata blocks written : %Ld\n" stats.meta_blocks_written;
     Printf.printf "Number of data     blocks written : %Ld\n" stats.data_blocks_written;
-    Printf.printf "Amount of data encoded (in bytes) : %Ld\n" stats.total_data_encoded
+    Printf.printf "Amount of data encoded (in bytes) : %Ld\n" stats.total_data_encoded;
+    let (hour, minute, second) = Progress_report.seconds_to_hms (int_of_float (Sys.time() -. stats.start_time)) in
+    Printf.printf "Time elapsed                      : %d:%d:%d\n" hour minute second
+  ;;
+
+  let print_progress ~(stats:t) ~(total_chunks:int64) ~(percent:int) =
+    let print_progress_internal = Progress_report.print_generic ~header:"Data encoding progress" in
+    print_progress_internal
+      ~start_time:stats.start_time
+      ~units_so_far:stats.blocks_written
+      ~total_units:total_chunks
+      ~percent
   ;;
 end
 
@@ -86,12 +101,12 @@ module Progress = struct
          end;
        if percent = 100 then (* always print if reached 100% *)
          begin
-           Printf.printf "\rData encoding progress : %Ld / %Ld - %d%%\n" stats.blocks_written total_chunks percent;
-           print_newline ()
+           Stats.print_progress ~stats ~total_chunks ~percent;
+           print_newline  ()
          end
        else begin
          if !report_count = 0 then
-           Printf.printf "\rData encoding progress : %Ld / %Ld - %d%%" stats.blocks_written total_chunks percent
+           Stats.print_progress ~stats ~total_chunks ~percent
          else
            () (* do nothing *)
        end;

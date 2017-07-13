@@ -19,6 +19,7 @@ module Stats = struct
            ; failed_block_pos_list : int64 list
            ; recorded_hash         : bytes option
            ; output_file_hash      : bytes option
+           ; start_time            : float
            }
 
   let make_blank_stats ~(ver:version) : t =
@@ -30,6 +31,7 @@ module Stats = struct
     ; failed_block_pos_list = []
     ; recorded_hash         = None
     ; output_file_hash      = None
+    ; start_time            = Sys.time ()
     }
   ;;
 
@@ -42,6 +44,7 @@ module Stats = struct
     ; failed_block_pos_list = stats.failed_block_pos_list
     ; recorded_hash         = stats.recorded_hash
     ; output_file_hash      = stats.output_file_hash
+    ; start_time            = stats.start_time
     }
   ;;
 
@@ -54,6 +57,7 @@ module Stats = struct
     ; failed_block_pos_list = stats.failed_block_pos_list
     ; recorded_hash         = stats.recorded_hash
     ; output_file_hash      = stats.output_file_hash
+    ; start_time            = stats.start_time
     }
   ;;
 
@@ -70,6 +74,7 @@ module Stats = struct
           stats.failed_block_pos_list
     ; recorded_hash         = stats.recorded_hash
     ; output_file_hash      = stats.output_file_hash
+    ; start_time            = stats.start_time
     }
   ;;
   
@@ -96,6 +101,7 @@ module Stats = struct
           | (Some hsh, None)     -> Some hsh
           | (None,     None)     -> None
         end
+    ; start_time            = stats.start_time
     }
   ;;
 
@@ -110,6 +116,8 @@ module Stats = struct
     Printf.printf "Number of metadata blocks successfully decoded : %Ld\n" stats.meta_blocks_decoded;
     Printf.printf "Number of data     blocks successfully decoded : %Ld\n" stats.data_blocks_decoded;
     Printf.printf "Number of          blocks failed to decode     : %Ld\n" stats.blocks_failed;
+    let (hour, minute, second) = Progress_report.seconds_to_hms (int_of_float (Sys.time() -. stats.start_time)) in
+    Printf.printf "Time elapsed                                   : %d:%d:%d\n" hour minute second;
     Printf.printf "Recorded hash                                  : %s\n"
       (match stats.recorded_hash    with | Some hsh -> Conv_utils.bytes_to_hex_string hsh | None -> "N/A");
     Printf.printf "Hash of the output file                        : %s\n"
@@ -139,6 +147,15 @@ module Stats = struct
     Printf.printf "First up to 500 failing positions (block and bytes index start at 0)\n";
     print_failed_pos stats.block_size stats.failed_block_pos_list
   ;;
+
+  let print_progress ~(stats:t) ~(total_blocks:int64) ~(percent:int) =
+    let print_progress_internal = Progress_report.print_generic ~header:"Data decoding progress" in
+    print_progress_internal
+      ~start_time:stats.start_time
+      ~units_so_far:stats.blocks_processed
+      ~total_units:total_blocks
+      ~percent
+  ;;
 end
 
 type stats = Stats.t
@@ -162,12 +179,12 @@ module Progress = struct
                          total_blocks) (* the math is okay cause 1 chunk -> 1 block *) in
        if percent = 100 then (* always print if reached 100% *)
          begin
-           Printf.printf "\rData decoding progress                         : %Ld / %Ld - %d%%\n" stats.blocks_processed total_blocks percent;
+           Stats.print_progress ~stats ~total_blocks ~percent;
            print_newline ()
        end
        else begin
          if !report_count = 0 then
-           Printf.printf "\rData decoding progress                         : %Ld / %Ld - %d%%" stats.blocks_processed total_blocks percent
+           Stats.print_progress ~stats ~total_blocks ~percent
          else
            () (* do nothing *)
        end;

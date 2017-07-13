@@ -11,6 +11,7 @@ module Stats : sig
            ; failed_block_pos_list : int64 list
            ; recorded_hash         : bytes option
            ; output_file_hash      : bytes option
+           ; start_time            : float
            }
 
   val print_stats : t -> unit
