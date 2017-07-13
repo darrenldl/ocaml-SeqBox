@@ -30,7 +30,7 @@ Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 ## Acknowledgement
 I would like to thank [Marco](https://github.com/MarcoPon) (author of the official SeqBox) for discussing and clarifying several aspects of his project, and providing me with test data
 
-I would like to thank [Ming](https://github.com/mdchia/) for his feedback on the documentation, UX design, and several other general aspects of this project
+I would like to thank [Ming](https://github.com/mdchia/) for his feedback on the documentation, UX design, and several other general aspects of this project. And also his help on testing the building and installation of osbx on macOS.
 
 ## Notes
 CRC-CCITT is currently implemented via FFI and links to the static object files compiled from libcrc (https://github.com/lammertb/libcrc)
@@ -42,6 +42,9 @@ Exact behaviours in non-standard cases are not specified in official SeqBox tech
 
 Index of soure code
   - See [index](INDEX.md)
+
+Changelog
+  - See [changelog](CHANGELOG.md)
 
 ## Possibly useful additional features of ocaml-SeqBox(possibly not yet in official SeqBox)
   - Allows random ordering in sbx container
@@ -147,7 +150,8 @@ All versions are implemented in ocaml-SeqBox
   - Packaging preparation - done
   - Final testing - done
     - See tests/ folder for test scripts
-  - Publish - in progress
+  - Publish - done
+    - Available through OPAM - opam install osbx
 
 ## License
 The following files directly from libcrc(with slight modification) are under the same MIT license used by libcrc

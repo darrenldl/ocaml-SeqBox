@@ -1,19 +1,20 @@
 #!/bin/bash
 
+cd ..
+
 echo "Building osbx"
-opam install osbx
+jbuilder build @install
 echo ""
 
 echo "Copying osbx binary over"
-<<<<<<< HEAD
-cp ~/.opam/system/bin/osbx ./tests/osbx
-=======
-cp ~/.opam/system/bin/osbx ./osbx
->>>>>>> darrenldl/master
+cp _build/default/src/osbx.exe ./tests/osbx
 echo ""
 
+cd tests
+
 echo "Generating test data"
-dd if=/dev/urandom of=dummy bs=1024 count=1024
+# dd if=/dev/zero of=dummy bs=$[1024 * 1024 * 10] count=1
+truncate -s 100m dummy
 echo ""
 
 # version tests

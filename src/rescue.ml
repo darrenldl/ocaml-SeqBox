@@ -14,6 +14,7 @@ module Stats = struct
            ; blocks_processed      : int64
            ; meta_blocks_processed : int64
            ; data_blocks_processed : int64
+           ; start_time            : float
            }
 
   let make_blank_stats () : t =
@@ -21,6 +22,7 @@ module Stats = struct
     ; blocks_processed      = 0L
     ; meta_blocks_processed = 0L
     ; data_blocks_processed = 0L
+    ; start_time            = Sys.time ()
     }
   ;;
 
@@ -29,6 +31,7 @@ module Stats = struct
     ; blocks_processed      = stats.blocks_processed
     ; meta_blocks_processed = stats.meta_blocks_processed
     ; data_blocks_processed = stats.data_blocks_processed
+    ; start_time            = stats.start_time
     }
   ;;
 
@@ -37,6 +40,7 @@ module Stats = struct
     ; blocks_processed      = stats.blocks_processed      <+> 1L
     ; meta_blocks_processed = stats.meta_blocks_processed <+> 1L
     ; data_blocks_processed = stats.data_blocks_processed
+    ; start_time            = stats.start_time
     }
   ;;
 
@@ -45,6 +49,7 @@ module Stats = struct
     ; blocks_processed      = stats.blocks_processed      <+> 1L
     ; meta_blocks_processed = stats.meta_blocks_processed
     ; data_blocks_processed = stats.data_blocks_processed <+> 1L
+    ; start_time            = stats.start_time
     }
   ;;
 
@@ -60,23 +65,40 @@ module Stats = struct
     ; blocks_processed
     ; meta_blocks_processed
     ; data_blocks_processed
+    ; start_time = Sys.time ()
     }
-  ;;
-
-  let print_stats_single_line (stats:t) : unit =
-    Printf.printf "\rBytes : %Ld, Blocks : %Ld, Meta : %Ld, Data : %Ld"
-      stats.bytes_processed
-      stats.blocks_processed
-      stats.meta_blocks_processed
-      stats.data_blocks_processed
   ;;
 
   let print_stats (stats:t) : unit =
     Printf.printf "Number of          bytes  processed : %Ld\n" stats.bytes_processed;
     Printf.printf "Number of          blocks processed : %Ld\n" stats.blocks_processed;
     Printf.printf "Number of metadata blocks processed : %Ld\n" stats.meta_blocks_processed;
-    Printf.printf "Number of data     blocks processed : %Ld\n" stats.data_blocks_processed
+    Printf.printf "Number of data     blocks processed : %Ld\n" stats.data_blocks_processed;
+    let (hour, minute, second) = Progress_report.seconds_to_hms (int_of_float (Sys.time() -. stats.start_time)) in
+    Printf.printf "Time elapsed                        : %02d:%02d:%02d\n" hour minute second
   ;;
+
+  let print_progress_helper =
+    let header        = "Data rescue progress" in
+    let unit          = "bytes" in
+    let print_every_n = Param.Rescue.progress_report_interval in
+    Progress_report.gen_print_generic ~header ~unit ~print_every_n
+  ;;
+
+  let print_progress ~(stats:t) ~(total_bytes:int64) =
+    print_progress_helper
+      ~start_time:stats.start_time
+      ~units_so_far:stats.bytes_processed
+      ~total_units:total_bytes
+  ;;
+
+  (*let print_stats_single_line (stats:t) : unit =
+    Printf.printf "\rBytes : %Ld, Blocks : %Ld, Meta : %Ld, Data : %Ld"
+      stats.bytes_processed
+      stats.blocks_processed
+      stats.meta_blocks_processed
+      stats.data_blocks_processed
+  ;;*)
 end
 
 type stats = Stats.t
@@ -94,9 +116,29 @@ module Logger = struct
 
   let write_log ~(stats:stats) ~(log_filename:string) : (unit, string) result =
     let processor = make_write_proc ~stats in
-    match Stream.process_out ~append:false ~out_filename:log_filename ~processor with
-    | Ok _      -> Ok ()
-    | Error msg -> Error msg
+    let write_log_internal_w_exn () =
+      match Stream.process_out ~pack_break_into_error:false ~append:false ~out_filename:log_filename processor with
+      | Ok _      -> Ok ()
+      | Error msg -> Error msg in
+    let write_log_internal_no_exn () =
+      match Stream.process_out                              ~append:false ~out_filename:log_filename processor with
+      | Ok _      -> Ok ()
+      | Error msg -> Error msg in
+    (* This is to make sure log writing is still done even when CTRL-C is entered
+     *
+     * This probably will not stop extremely frequent CTRL-C presses where Break
+     * exception is raised during the exception handling bit (maybe? Not sure about this really)
+     *
+     * But should be good enough for normal actual human uses
+     *)
+    try
+      write_log_internal_w_exn ()
+    with
+    | Sys.Break ->
+      begin
+        write_log_internal_no_exn () |> ignore; 
+        Error "Interrupted" (* return an error so the interrupt still stops the process *)
+      end
   ;;
 
   module Parser = struct
@@ -141,7 +183,7 @@ module Logger = struct
   let read_log ~(log_filename:string) : (stats option, string) result =
     let processor = make_read_proc () in
     if Sys.file_exists log_filename then
-      match Stream.process_in ~in_filename:log_filename ~processor with
+      match Stream.process_in ~in_filename:log_filename processor with
       | Ok v      -> Ok v
       | Error msg -> Error msg
     else
@@ -163,6 +205,8 @@ module Processor = struct
         | Block.Invalid_bytes
         | Block.Invalid_size     -> None in
     let rec scan_proc_internal (stats:stats) : stats * ((Block.t * bytes) option) =
+      (* report progress *)
+      Stats.print_progress ~stats ~total_bytes:(Core.In_channel.length in_file);
       match read in_file ~len with
       | None           -> (stats, None)
       | Some { chunk } ->
@@ -216,7 +260,7 @@ module Processor = struct
         Stats.add_meta_block stats
       else
         Stats.add_data_block stats in
-    match Stream.process_out ~append:true ~out_filename ~processor:output_proc_internal_processor with
+    match Stream.process_out ~append:true ~out_filename output_proc_internal_processor with
     | Ok _      -> (new_stats, Ok ())
     | Error msg -> (new_stats, Error msg)
   ;;
@@ -229,19 +273,33 @@ module Processor = struct
      *
      * print a new line before exitting to not print on the same line as the stats
      *)
+    let write_every_n = Param.Rescue.log_write_interval in
+    let write_count   = ref 0 in
     let log_okay : bool =
       match log_filename with
       | None              -> true
       | Some log_filename ->
-        match Logger.write_log ~stats ~log_filename with
-        | Error msg -> print_newline (); Printf.printf "%s" msg; print_newline (); false
-        | Ok _      -> true in
+        begin
+          let res =
+            (* log progress *)
+            if !write_count = 0 then
+              begin
+                match Logger.write_log ~stats ~log_filename with
+                | Error msg -> print_newline (); Printf.printf "%s" msg; print_newline (); false
+                | Ok _      -> true
+              end
+            else
+              true  (* do nothing *) in
+          (* increase and mod write counter *)
+          write_count := (!write_count + 1) mod write_every_n;
+          res
+        end in
     if not log_okay then
       stats
     else
       begin
         (* report progress *)
-        Stats.print_stats_single_line stats;
+        Stats.print_progress ~stats ~total_bytes:(Core.In_channel.length in_file);
         match scan_proc ~stats in_file with
         | (stats, None)                 -> print_newline (); stats  (* ran out of valid blocks in input file *)
         | (stats, Some block_and_chunk) ->
@@ -278,8 +336,10 @@ end
 
 module Process = struct
   let rescue_from_file ~(in_filename:string) ~(out_dirname:string) ~(log_filename:string option) : (stats, string) result =
+    (* catch CTRL-C breaks *)
+    Sys.catch_break true;
     let processor = Processor.make_rescuer ~out_dirname ~log_filename in
-    match Stream.process_in ~in_filename ~processor with
+    match Stream.process_in ~in_filename processor with
     | Ok stats  -> stats
     | Error msg -> Error msg
   ;;

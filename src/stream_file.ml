@@ -145,7 +145,7 @@ module Stream = struct
 
   type 'a out_processor    = Core.Out_channel.t -> 'a
 
-  let process_in_out ~(append:bool) ~(in_filename:string) ~(out_filename:string) ~(processor:('a in_out_processor)) : ('a, string) result =
+  let process_in_out ?(pack_break_into_error:bool = true) ~(append:bool) ~(in_filename:string) ~(out_filename:string) (processor:('a in_out_processor)) : ('a, string) result =
     try
       let in_file  = Core.In_channel.create ~binary:true in_filename  in
       let res =
@@ -167,6 +167,11 @@ module Stream = struct
             ) in
       Ok res
     with
+    | Sys.Break                       ->
+      if pack_break_into_error then
+        Error "Interrupted"
+      else
+        raise Sys.Break  (* treat break signal differently *)
     | Packaged_exn msg                -> Error msg
     | Assert_failure (loc, line, col) -> Error (Printf.sprintf "Assert failure at %s %d %d" loc line col)
     | Read_into_buf.Invalid_offset    -> Error "Invalid offset provided to Read_into_buf.read"
@@ -177,7 +182,7 @@ module Stream = struct
     | _                               -> Error "Unknown failure"
   ;;
 
-  let process_in ~(in_filename:string) ~(processor:('a in_processor))   : ('a, string) result =
+  let process_in ?(pack_break_into_error:bool = true) ~(in_filename:string) (processor:('a in_processor))   : ('a, string) result =
     try
       let in_file = Core.In_channel.create ~binary:true in_filename in
       let res =
@@ -190,6 +195,11 @@ module Stream = struct
             ) in
       Ok res
     with
+    | Sys.Break                       ->
+      if pack_break_into_error then
+        Error "Interrupted"
+      else
+        raise Sys.Break  (* treat break signal differently *)
     | Packaged_exn msg                -> Error msg
     | Assert_failure (loc, line, col) -> Error (Printf.sprintf "Assert failure at %s %d %d" loc line col)
     | Read_into_buf.Invalid_offset    -> Error "Invalid offset provided to Read_into_buf.read"
@@ -198,7 +208,7 @@ module Stream = struct
     | _                               -> Error "Unknown failure"
   ;;
 
-  let process_out ~(append:bool) ~(out_filename:string) ~(processor:('a out_processor)) : ('a, string) result =
+  let process_out ?(pack_break_into_error:bool = true) ~(append:bool) ~(out_filename:string) (processor:('a out_processor)) : ('a, string) result =
     try
       let out_file = Core.Out_channel.create ~binary:true ~append out_filename in
       let res =
@@ -211,6 +221,11 @@ module Stream = struct
             ) in
       Ok res
     with
+    | Sys.Break                       ->
+      if pack_break_into_error then
+        Error "Interrupted"
+      else
+        raise Sys.Break  (* treat break signal differently *)
     | Packaged_exn msg                -> Error msg
     | Assert_failure (loc, line, col) -> Error (Printf.sprintf "Assert failure at %s %d %d" loc line col)
     | Write_from_buf.Invalid_offset   -> Error "Invalid offset provided to Write_from_buf.write"
