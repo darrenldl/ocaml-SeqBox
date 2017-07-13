@@ -112,7 +112,11 @@ module Logger = struct
     try
       write_log_internal_w_exn ()
     with
-    | Sys.Break -> write_log_internal_no_exn ()
+    | Sys.Break ->
+      begin
+        write_log_internal_no_exn () |> ignore; 
+        Error "Interrupted" (* return an error so the interrupt still stops the process *)
+      end
   ;;
 
   module Parser = struct
