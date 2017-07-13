@@ -229,6 +229,8 @@ module Processor = struct
      *
      * print a new line before exitting to not print on the same line as the stats
      *)
+    let print_every_n = Param.Rescue.progress_report_interval in
+    let report_count  = ref 0 in
     let log_okay : bool =
       match log_filename with
       | None              -> true
@@ -241,7 +243,14 @@ module Processor = struct
     else
       begin
         (* report progress *)
-        Stats.print_stats_single_line stats;
+        begin
+          if !report_count = 0 then
+            Stats.print_stats_single_line stats
+          else
+            ()  (* do nothing *)
+        end;
+        (* increase and mod report counter *)
+        report_count := (!report_count + 1) mod print_every_n;
         match scan_proc ~stats in_file with
         | (stats, None)                 -> print_newline (); stats  (* ran out of valid blocks in input file *)
         | (stats, Some block_and_chunk) ->
