@@ -94,9 +94,21 @@ module Logger = struct
 
   let write_log ~(stats:stats) ~(log_filename:string) : (unit, string) result =
     let processor = make_write_proc ~stats in
-    match Stream.process_out ~append:false ~out_filename:log_filename ~processor with
-    | Ok _      -> Ok ()
-    | Error msg -> Error msg
+    let write_log_internal () =
+      match Stream.process_out ~append:false ~out_filename:log_filename ~processor with
+      | Ok _      -> Ok ()
+      | Error msg -> Error msg in
+    (* This is to make sure log writing is still done even when CTRL-C is entered
+     *
+     * This probably will not stop extremely frequent CTRL-C presses where Break
+     * exception is raised during the exception handling bit (maybe? Not sure about this really)
+     *
+     * But should be good enough for normal actual human uses
+     *)
+    try
+      write_log_internal ()
+    with
+    | Sys.Break -> write_log_internal ()
   ;;
 
   module Parser = struct
@@ -301,6 +313,8 @@ end
 
 module Process = struct
   let rescue_from_file ~(in_filename:string) ~(out_dirname:string) ~(log_filename:string option) : (stats, string) result =
+    (* catch CTRL-C breaks *)
+    Sys.catch_break true;
     let processor = Processor.make_rescuer ~out_dirname ~log_filename in
     match Stream.process_in ~in_filename ~processor with
     | Ok stats  -> stats
