@@ -63,13 +63,14 @@ module Stats = struct
     Printf.printf "Time elapsed                      : %d:%d:%d\n" hour minute second
   ;;
 
-  let print_progress ~(stats:t) ~(total_chunks:int64) ~(percent:int) =
-    let print_progress_internal = Progress_report.print_generic ~header:"Data encoding progress" in
+  let print_progress ~(stats:t) ~(total_chunks:int64) =
+    let header        = "Data encoding progress" in
+    let print_every_n = Param.Encode.progress_report_interval in
+    let print_progress_internal = Progress_report.print_generic ~header ~print_every_n in
     print_progress_internal
       ~start_time:stats.start_time
       ~units_so_far:stats.blocks_written
       ~total_units:total_chunks
-      ~percent
   ;;
 end
 
@@ -77,8 +78,6 @@ type stats = Stats.t
 
 module Progress = struct
   let report : stats -> Core.In_channel.t -> unit  =
-    let print_every_n = Param.Encode.progress_report_interval in
-    let report_count  = ref 0 in
     let first_time    = ref true in
     (fun stats in_file ->
        let data_size    : int64 =
@@ -87,31 +86,13 @@ module Progress = struct
          Int64.div
            (Int64.add (Core.In_channel.length in_file) (Int64.sub data_size 1L))
            data_size (* use of data_size is correct here *) in
-       let percent      : int   =
-         Int64.to_int (Int64.div
-                         (Int64.mul
-                            100L
-                            stats.blocks_written)
-                         total_chunks) (* the math is okay cause 1 chunk -> 1 block *) in
        if !first_time then
          begin
            (* print a notice *)
            Printf.printf "Only data blocks are reported in the progress reporting below\n";
            first_time := false
          end;
-       if percent = 100 then (* always print if reached 100% *)
-         begin
-           Stats.print_progress ~stats ~total_chunks ~percent;
-           print_newline  ()
-         end
-       else begin
-         if !report_count = 0 then
-           Stats.print_progress ~stats ~total_chunks ~percent
-         else
-           () (* do nothing *)
-       end;
-       (* increase and mod report counter *)
-       report_count := (!report_count + 1) mod print_every_n
+       Stats.print_progress ~stats ~total_chunks;
     )
   ;;
 end

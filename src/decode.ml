@@ -148,13 +148,14 @@ module Stats = struct
     print_failed_pos stats.block_size stats.failed_block_pos_list
   ;;
 
-  let print_progress ~(stats:t) ~(total_blocks:int64) ~(percent:int) =
-    let print_progress_internal = Progress_report.print_generic ~header:"Data decoding progress" in
+  let print_progress ~(stats:t) ~(total_blocks:int64) =
+    let header        = "Data decoding progress" in
+    let print_every_n = Param.Decode.progress_report_interval in
+    let print_progress_internal = Progress_report.print_generic ~header ~print_every_n in
     print_progress_internal
       ~start_time:stats.start_time
       ~units_so_far:stats.blocks_processed
       ~total_units:total_blocks
-      ~percent
   ;;
 end
 
@@ -162,8 +163,6 @@ type stats = Stats.t
 
 module Progress = struct
   let report : stats -> Core.In_channel.t -> unit  =
-    let print_every_n = Param.Decode.progress_report_interval in
-    let report_count  = ref 0 in
     (fun stats in_file ->
        let block_size   : int64 =
          Int64.of_int stats.block_size in
@@ -171,25 +170,7 @@ module Progress = struct
          Int64.div
            (Int64.add (Core.In_channel.length in_file) (Int64.sub block_size 1L))
            block_size in
-       let percent      : int   =
-         Int64.to_int (Int64.div
-                         (Int64.mul
-                            100L
-                            stats.blocks_processed)
-                         total_blocks) (* the math is okay cause 1 chunk -> 1 block *) in
-       if percent = 100 then (* always print if reached 100% *)
-         begin
-           Stats.print_progress ~stats ~total_blocks ~percent;
-           print_newline ()
-       end
-       else begin
-         if !report_count = 0 then
-           Stats.print_progress ~stats ~total_blocks ~percent
-         else
-           () (* do nothing *)
-       end;
-       (* increase and mod report counter *)
-       report_count := (!report_count + 1) mod print_every_n
+       Stats.print_progress ~stats ~total_blocks;
     )
   ;;
 end
