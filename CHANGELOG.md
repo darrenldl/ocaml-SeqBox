@@ -5,9 +5,12 @@
     - log file stays valid after being interrupted
     - in 1.0.0, log file may be empty/broken when osbx is interrupted during rescuing
   - Better progress reporting for encoding, decoding and rescuing
-  - Fixed reporting issues with rescuing
+  - Fixed progress reporting issues with rescuing
     - in 1.0.0, rescue mode only does a progress report when it outputs a block, rather than after scanning the block bytes
     - this makes osbx outputs nothing when the scanned file is large and contains no valid blocks
+  - Fixed progress reporting code
+    - in 1.0.0, Frequency limit was not actually used due to misuse of function generating function
+    - in 1.0.0, calculation of current rate is incorrect
 
 ## 1.0.0  (version on opam)
   - Base version
