@@ -43,6 +43,9 @@ Exact behaviours in non-standard cases are not specified in official SeqBox tech
 Index of soure code
   - See [index](INDEX.md)
 
+Changelog
+  - See [changelog](CHANGELOG.md)
+
 ## Possibly useful additional features of ocaml-SeqBox(possibly not yet in official SeqBox)
   - Allows random ordering in sbx container
     - This also means block corruption will not stop the decoding process
