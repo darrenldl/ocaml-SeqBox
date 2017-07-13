@@ -137,7 +137,7 @@ module Logger = struct
     | Sys.Break ->
       begin
         write_log_internal_no_exn () |> ignore; 
-        Error "Interrupted" (* return an error so the interrupt still stops the process *)
+        raise Sys.Break (* raise Sys.Break again so the interrupt still stops the process *)
       end
   ;;
 
