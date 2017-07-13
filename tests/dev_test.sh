@@ -13,7 +13,8 @@ echo ""
 cd tests
 
 echo "Generating test data"
-dd if=/dev/zero of=dummy bs=$[1024 * 1024 * 10] count=1
+# dd if=/dev/zero of=dummy bs=$[1024 * 1024 * 10] count=1
+truncate -s 1G dummy
 echo ""
 
 # version tests

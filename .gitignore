@@ -1,5 +1,7 @@
 *.swp
 */_build
+*/*.sbx
+*.sbx
 _build
 /src/dummy
 /src/dummy1

@@ -202,6 +202,8 @@ module Processor = struct
         | Block.Invalid_bytes
         | Block.Invalid_size     -> None in
     let rec scan_proc_internal (stats:stats) : stats * ((Block.t * bytes) option) =
+      (* report progress *)
+      Stats.print_progress ~stats ~total_bytes:(Core.In_channel.length in_file);
       match read in_file ~len with
       | None           -> (stats, None)
       | Some { chunk } ->
@@ -292,16 +294,18 @@ module Processor = struct
     if not log_okay then
       stats
     else
-      begin
-        (* report progress *)
-        Stats.print_progress ~stats ~total_bytes:(Core.In_channel.length in_file);
-        match scan_proc ~stats in_file with
-        | (stats, None)                 -> print_newline (); stats  (* ran out of valid blocks in input file *)
-        | (stats, Some block_and_chunk) ->
-          match output_proc ~stats ~block_and_chunk ~out_dirname with
-          | (stats, Ok _ )     -> scan_and_output ~stats ~out_dirname ~log_filename in_file
-          | (stats, Error msg) -> print_newline (); Printf.printf "%s" msg; print_newline (); stats
-      end
+      let res =
+        begin
+          match scan_proc ~stats in_file with
+          | (stats, None)                 -> print_newline (); stats  (* ran out of valid blocks in input file *)
+          | (stats, Some block_and_chunk) ->
+            match output_proc ~stats ~block_and_chunk ~out_dirname with
+            | (stats, Ok _ )     -> scan_and_output ~stats ~out_dirname ~log_filename in_file
+            | (stats, Error msg) -> print_newline (); Printf.printf "%s" msg; print_newline (); stats
+        end in
+      (* report progress *)
+      Stats.print_progress ~stats ~total_bytes:(Core.In_channel.length in_file);
+      res
   ;;
 
   let make_rescuer ~(out_dirname:string) ~(log_filename:string option) : ((stats, string) result) Stream.in_processor =
