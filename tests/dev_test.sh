@@ -14,7 +14,7 @@ cd tests
 
 echo "Generating test data"
 # dd if=/dev/zero of=dummy bs=$[1024 * 1024 * 10] count=1
-truncate -s 1G dummy
+truncate -s 100m dummy
 echo ""
 
 # version tests
