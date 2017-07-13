@@ -21,9 +21,9 @@ let gen_print_generic ~(header:string) ~(unit:string) ~(print_interval:float) =
        begin
          let cur_rate               : float     = (Int64.to_float (Int64.sub units_so_far !last_reported_units)) /. time_since_last_report in
          let time_elapsed           : float     = cur_time -. start_time in
-         let avg_rate               : float     = (Int64.to_float units_so_far) /. time_elapsed in
+         (* let avg_rate               : float     = (Int64.to_float units_so_far) /. time_elapsed in *)
          let units_remaining        : int64     = Int64.sub total_units units_so_far in
-         let etc_total_secs         : int       = int_of_float (ceil ((Int64.to_float units_remaining) /. avg_rate)) in
+         let etc_total_secs         : int       = int_of_float (ceil ((Int64.to_float units_remaining) /. cur_rate)) in
          let (etc_hour, etc_minute, etc_second) = seconds_to_hms etc_total_secs in
          last_report_time    := cur_time;
          last_reported_units := units_so_far;
