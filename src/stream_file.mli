@@ -8,15 +8,15 @@ module Stream : sig
   type 'a out_processor    = Core.Out_channel.t -> 'a
 
   val process_in_out :
-    append:bool -> in_filename:string -> out_filename:string -> processor:('a in_out_processor)
+    ?pack_break_into_error:bool -> append:bool -> in_filename:string -> out_filename:string -> ('a in_out_processor)
     -> ('a, string) result
 
   val process_in  :
-    in_filename:string  -> processor:('a in_processor)
+    ?pack_break_into_error:bool -> in_filename:string  -> ('a in_processor)
     -> ('a, string) result
 
   val process_out :
-    append:bool -> out_filename:string -> processor:('a out_processor)
+    ?pack_break_into_error:bool -> append:bool -> out_filename:string -> ('a out_processor)
     -> ('a, string) result
 end
 

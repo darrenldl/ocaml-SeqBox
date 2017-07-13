@@ -94,8 +94,12 @@ module Logger = struct
 
   let write_log ~(stats:stats) ~(log_filename:string) : (unit, string) result =
     let processor = make_write_proc ~stats in
-    let write_log_internal () =
-      match Stream.process_out ~append:false ~out_filename:log_filename ~processor with
+    let write_log_internal_w_exn () =
+      match Stream.process_out ~pack_break_into_error:false ~append:false ~out_filename:log_filename processor with
+      | Ok _      -> Ok ()
+      | Error msg -> Error msg in
+    let write_log_internal_no_exn () =
+      match Stream.process_out                              ~append:false ~out_filename:log_filename processor with
       | Ok _      -> Ok ()
       | Error msg -> Error msg in
     (* This is to make sure log writing is still done even when CTRL-C is entered
@@ -106,9 +110,9 @@ module Logger = struct
      * But should be good enough for normal actual human uses
      *)
     try
-      write_log_internal ()
+      write_log_internal_w_exn ()
     with
-    | Sys.Break -> write_log_internal ()
+    | Sys.Break -> write_log_internal_no_exn ()
   ;;
 
   module Parser = struct
@@ -153,7 +157,7 @@ module Logger = struct
   let read_log ~(log_filename:string) : (stats option, string) result =
     let processor = make_read_proc () in
     if Sys.file_exists log_filename then
-      match Stream.process_in ~in_filename:log_filename ~processor with
+      match Stream.process_in ~in_filename:log_filename processor with
       | Ok v      -> Ok v
       | Error msg -> Error msg
     else
@@ -228,7 +232,7 @@ module Processor = struct
         Stats.add_meta_block stats
       else
         Stats.add_data_block stats in
-    match Stream.process_out ~append:true ~out_filename ~processor:output_proc_internal_processor with
+    match Stream.process_out ~append:true ~out_filename output_proc_internal_processor with
     | Ok _      -> (new_stats, Ok ())
     | Error msg -> (new_stats, Error msg)
   ;;
@@ -316,7 +320,7 @@ module Process = struct
     (* catch CTRL-C breaks *)
     Sys.catch_break true;
     let processor = Processor.make_rescuer ~out_dirname ~log_filename in
-    match Stream.process_in ~in_filename ~processor with
+    match Stream.process_in ~in_filename processor with
     | Ok stats  -> stats
     | Error msg -> Error msg
   ;;

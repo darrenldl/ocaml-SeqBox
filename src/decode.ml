@@ -369,13 +369,13 @@ module Process = struct
     match out_filename with
     | Some str -> Ok (Some str)
     | None     ->
-      match Stream.process_in ~in_filename ~processor:Processor.out_filename_fetcher with
+      match Stream.process_in ~in_filename Processor.out_filename_fetcher with
       | Ok result -> Ok result
       | Error msg -> Error msg
   ;;
 
   let hash_file ~(in_filename:string) : (bytes, string) result =
-    Stream.process_in ~in_filename ~processor:Processor.hasher
+    Stream.process_in ~in_filename Processor.hasher
   ;;
 
   let hash_file_w_warning ~(in_filename:string) : bytes option =
@@ -390,7 +390,7 @@ module Process = struct
     | Ok None   ->
       Error (Printf.sprintf "failed to obtain a filename for output(none is provided and no valid metadata block with filename field is found in %s)" in_filename)
     | Ok (Some out_filename) ->
-      match Stream.process_in_out ~append:false ~in_filename ~out_filename ~processor:Processor.decoder with
+      match Stream.process_in_out ~append:false ~in_filename ~out_filename Processor.decoder with
       | Ok (stats, Some trunc_size) ->
         begin
           try
