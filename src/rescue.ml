@@ -337,8 +337,6 @@ end
 
 module Process = struct
   let rescue_from_file ~(in_filename:string) ~(out_dirname:string) ~(log_filename:string option) : (stats, string) result =
-    (* catch CTRL-C breaks *)
-    Sys.catch_break true;
     let processor = Processor.make_rescuer ~out_dirname ~log_filename in
     match Stream.process_in ~in_filename processor with
     | Ok stats  -> stats
