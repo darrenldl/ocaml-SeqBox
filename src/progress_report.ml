@@ -5,7 +5,7 @@ let seconds_to_hms (total_secs:int) : int * int * int =
   (hour, minute, second)
 ;;
 
-let print_generic ~(header:string) ~(print_every_n:int) =
+let print_generic ~(header:string) ~(unit:string) ~(print_every_n:int) =
   let last_report_time    : float ref = ref 0. in
   let last_reported_units : int64 ref = ref 0L in
   let print_count         : int   ref = ref 0  in
@@ -28,12 +28,14 @@ let print_generic ~(header:string) ~(print_every_n:int) =
          let (etc_hour, etc_minute, etc_second) = seconds_to_hms etc_total_secs in
          last_report_time    := cur_time;
          last_reported_units := units_so_far;
-         Printf.printf "\r%s : %Ld / %Ld - %d%%  cur : %.0f/s  etc : %d:%d:%d          "
+         Printf.printf "\r%s : %Ld / %Ld %s - %d%%  cur : %.0f %s/s  etc : %d:%d:%d          "
            header
            units_so_far
            total_units
+           unit
            percent
            cur_rate
+           unit
            etc_hour
            etc_minute
            etc_second

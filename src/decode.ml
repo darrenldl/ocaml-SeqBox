@@ -150,8 +150,9 @@ module Stats = struct
 
   let print_progress ~(stats:t) ~(total_blocks:int64) =
     let header        = "Data decoding progress" in
+    let unit          = "blocks" in
     let print_every_n = Param.Decode.progress_report_interval in
-    let print_progress_internal = Progress_report.print_generic ~header ~print_every_n in
+    let print_progress_internal = Progress_report.print_generic ~header ~unit ~print_every_n in
     print_progress_internal
       ~start_time:stats.start_time
       ~units_so_far:stats.blocks_processed

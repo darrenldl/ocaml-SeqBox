@@ -6,6 +6,7 @@ module Stats : sig
            ; blocks_processed      : int64
            ; meta_blocks_processed : int64
            ; data_blocks_processed : int64
+           ; start_time            : float
            }
 
   val print_stats : t -> unit

@@ -14,6 +14,7 @@ module Stats = struct
            ; blocks_processed      : int64
            ; meta_blocks_processed : int64
            ; data_blocks_processed : int64
+           ; start_time            : float
            }
 
   let make_blank_stats () : t =
@@ -21,6 +22,7 @@ module Stats = struct
     ; blocks_processed      = 0L
     ; meta_blocks_processed = 0L
     ; data_blocks_processed = 0L
+    ; start_time            = Sys.time ()
     }
   ;;
 
@@ -29,6 +31,7 @@ module Stats = struct
     ; blocks_processed      = stats.blocks_processed
     ; meta_blocks_processed = stats.meta_blocks_processed
     ; data_blocks_processed = stats.data_blocks_processed
+    ; start_time            = stats.start_time
     }
   ;;
 
@@ -37,6 +40,7 @@ module Stats = struct
     ; blocks_processed      = stats.blocks_processed      <+> 1L
     ; meta_blocks_processed = stats.meta_blocks_processed <+> 1L
     ; data_blocks_processed = stats.data_blocks_processed
+    ; start_time            = stats.start_time
     }
   ;;
 
@@ -45,6 +49,7 @@ module Stats = struct
     ; blocks_processed      = stats.blocks_processed      <+> 1L
     ; meta_blocks_processed = stats.meta_blocks_processed
     ; data_blocks_processed = stats.data_blocks_processed <+> 1L
+    ; start_time            = stats.start_time
     }
   ;;
 
@@ -60,23 +65,37 @@ module Stats = struct
     ; blocks_processed
     ; meta_blocks_processed
     ; data_blocks_processed
+    ; start_time = Sys.time ()
     }
-  ;;
-
-  let print_stats_single_line (stats:t) : unit =
-    Printf.printf "\rBytes : %Ld, Blocks : %Ld, Meta : %Ld, Data : %Ld"
-      stats.bytes_processed
-      stats.blocks_processed
-      stats.meta_blocks_processed
-      stats.data_blocks_processed
   ;;
 
   let print_stats (stats:t) : unit =
     Printf.printf "Number of          bytes  processed : %Ld\n" stats.bytes_processed;
     Printf.printf "Number of          blocks processed : %Ld\n" stats.blocks_processed;
     Printf.printf "Number of metadata blocks processed : %Ld\n" stats.meta_blocks_processed;
-    Printf.printf "Number of data     blocks processed : %Ld\n" stats.data_blocks_processed
+    Printf.printf "Number of data     blocks processed : %Ld\n" stats.data_blocks_processed;
+    let (hour, minute, second) = Progress_report.seconds_to_hms (int_of_float (Sys.time() -. stats.start_time)) in
+    Printf.printf "Time elapsed                        : %d:%d:%d\n" hour minute second
   ;;
+
+  let print_progress ~(stats:t) ~(total_bytes:int64) =
+    let header        = "Data rescue progress" in
+    let unit          = "bytes" in
+    let print_every_n = Param.Rescue.progress_report_interval in
+    let print_progress_internal = Progress_report.print_generic ~header ~unit ~print_every_n in
+    print_progress_internal
+      ~start_time:stats.start_time
+      ~units_so_far:stats.bytes_processed
+      ~total_units:total_bytes
+  ;;
+
+  (*let print_stats_single_line (stats:t) : unit =
+    Printf.printf "\rBytes : %Ld, Blocks : %Ld, Meta : %Ld, Data : %Ld"
+      stats.bytes_processed
+      stats.blocks_processed
+      stats.meta_blocks_processed
+      stats.data_blocks_processed
+  ;;*)
 end
 
 type stats = Stats.t
@@ -249,8 +268,6 @@ module Processor = struct
      *
      * print a new line before exitting to not print on the same line as the stats
      *)
-    let print_every_n = Param.Rescue.progress_report_interval in
-    let report_count  = ref 0 in
     let write_every_n = Param.Rescue.log_write_interval in
     let write_count   = ref 0 in
     let log_okay : bool =
@@ -277,14 +294,7 @@ module Processor = struct
     else
       begin
         (* report progress *)
-        begin
-          if !report_count = 0 then
-            Stats.print_stats_single_line stats
-          else
-            ()  (* do nothing *)
-        end;
-        (* increase and mod report counter *)
-        report_count := (!report_count + 1) mod print_every_n;
+        Stats.print_progress ~stats ~total_bytes:(Core.In_channel.length in_file);
         match scan_proc ~stats in_file with
         | (stats, None)                 -> print_newline (); stats  (* ran out of valid blocks in input file *)
         | (stats, Some block_and_chunk) ->
