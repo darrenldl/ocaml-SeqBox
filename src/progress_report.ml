@@ -28,7 +28,7 @@ let gen_print_generic ~(header:string) ~(unit:string) ~(print_every_n:int) =
          let (etc_hour, etc_minute, etc_second) = seconds_to_hms etc_total_secs in
          last_report_time    := cur_time;
          last_reported_units := units_so_far;
-         Printf.printf "\r%s : %Ld / %Ld %s - %d%%  cur : %.0f %s/s  etc : %d:%d:%d          "
+         Printf.printf "\r%s : %Ld / %Ld %s - %d%%  cur : %.0f %s/s  etc : %02d:%02d:%02d          "
            header
            units_so_far
            total_units
