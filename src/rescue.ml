@@ -75,7 +75,7 @@ module Stats = struct
     Printf.printf "Number of metadata blocks processed : %Ld\n" stats.meta_blocks_processed;
     Printf.printf "Number of data     blocks processed : %Ld\n" stats.data_blocks_processed;
     let (hour, minute, second) = Progress_report.seconds_to_hms (int_of_float (Sys.time() -. stats.start_time)) in
-    Printf.printf "Time elapsed                        : %d:%d:%d\n" hour minute second
+    Printf.printf "Time elapsed                        : %02d:%02d:%02d\n" hour minute second
   ;;
 
   let print_progress ~(stats:t) ~(total_bytes:int64) =

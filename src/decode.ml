@@ -117,7 +117,7 @@ module Stats = struct
     Printf.printf "Number of data     blocks successfully decoded : %Ld\n" stats.data_blocks_decoded;
     Printf.printf "Number of          blocks failed to decode     : %Ld\n" stats.blocks_failed;
     let (hour, minute, second) = Progress_report.seconds_to_hms (int_of_float (Sys.time() -. stats.start_time)) in
-    Printf.printf "Time elapsed                                   : %d:%d:%d\n" hour minute second;
+    Printf.printf "Time elapsed                                   : %02d:%02d:%02d\n" hour minute second;
     Printf.printf "Recorded hash                                  : %s\n"
       (match stats.recorded_hash    with | Some hsh -> Conv_utils.bytes_to_hex_string hsh | None -> "N/A");
     Printf.printf "Hash of the output file                        : %s\n"
