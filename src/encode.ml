@@ -206,16 +206,22 @@ module Process = struct
 
   let encode_file ~(uid:bytes option) ~(want_meta:bool) ~(ver:version) ~(in_filename:string) ~(out_filename:string) : (stats, string) result =
     try
-      let common   =
-        match uid with
-        | Some uid -> Header.make_common_fields ~uid ver
-        | None     -> Header.make_common_fields      ver in
-      let metadata =
-        match want_meta with
-        | true  -> Some (get_file_metadata ~in_filename ~out_filename)
-        | false -> None in
-      let encoder  = Processor.make_in_out_encoder ~common ~metadata in
-      Stream.process_in_out ~append:false ~in_filename ~out_filename encoder
+      (* check file size first *)
+      let max_file_size = ver_to_max_file_size ver in
+      let file_size     = File_utils.getsize ~filename:in_filename in
+      if file_size > max_file_size then
+        Error (Printf.sprintf "File size (%Ld) exceeds upper limit (%Ld)" file_size max_file_size)
+      else
+        let common   =
+          match uid with
+          | Some uid -> Header.make_common_fields ~uid ver
+          | None     -> Header.make_common_fields      ver in
+        let metadata =
+          match want_meta with
+          | true  -> Some (get_file_metadata ~in_filename ~out_filename)
+          | false -> None in
+        let encoder  = Processor.make_in_out_encoder ~common ~metadata in
+        Stream.process_in_out ~append:false ~in_filename ~out_filename encoder
     with
     | File_metadata_get_failed            -> Error "Failed to get file metadata"
     | Sbx_block.Header.Invalid_uid_length -> Error "Invalid uid length"
