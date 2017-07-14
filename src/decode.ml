@@ -22,6 +22,10 @@ module Stats = struct
            ; start_time            : float
            }
 
+  type scan_stats = { bytes_processed : int64
+                    ; start_time      : float
+                    }
+
   let make_blank_stats ~(ver:version) : t =
     { block_size            = ver_to_block_size ver
     ; blocks_processed      = 0L
@@ -105,6 +109,18 @@ module Stats = struct
     }
   ;;
 
+  let make_blank_scan_stats () : scan_stats =
+    { bytes_processed = 0L
+    ; start_time      = Sys.time ()
+    }
+  ;;
+
+  let add_bytes_scanned (stats:scan_stats) ~(num:int64) : scan_stats =
+    { bytes_processed = stats.bytes_processed <+> num
+    ; start_time      = stats.start_time
+    }
+  ;;
+
   let print_failed_pos (block_size:int) (pos_list:int64 list) : unit =
     let block_size = Int64.of_int block_size in
     List.iter (fun x -> Printf.printf "Failed to decode block %Ld, at %Ld bytes\n" x (block_size <*> x)) (List.rev pos_list)
@@ -149,13 +165,36 @@ module Stats = struct
   ;;
 end
 
-type stats = Stats.t
+type stats      = Stats.t
+
+type scan_stats = Stats.scan_stats
 
 module Progress : sig
-  val report_decode : stats -> Core.In_channel.t -> unit
+  val report_scan   : scan_stats -> Core.In_channel.t -> unit
+
+  val report_decode : stats      -> Core.In_channel.t -> unit
 
 end = struct
 
+  let print_scan_progress ~(stats:scan_stats) ~(total_bytes:int64) =
+    let print_scan_progress_helper =
+      let header         = "Scan progress" in
+      let unit           = "bytes" in
+      let print_interval = Param.Decode.progress_report_interval in
+      Progress_report.gen_print_generic ~header ~unit ~print_interval in
+    print_scan_progress_helper
+      ~start_time:stats.start_time
+      ~units_so_far:stats.bytes_processed
+      ~total_units:total_bytes
+  ;;
+
+  let report_scan : scan_stats -> Core.In_channel.t -> unit =
+    (fun stats in_file ->
+       let total_bytes =
+         (Core.In_channel.length in_file) in
+       print_scan_progress ~stats ~total_bytes
+    )
+  ;;
 
   let print_decode_progress ~(stats:stats) ~(total_blocks:int64) =
     let print_decode_progress_helper =
@@ -177,7 +216,7 @@ end = struct
          Int64.div
            (Int64.add (Core.In_channel.length in_file) (Int64.sub block_size 1L))
            block_size in
-       print_decode_progress ~stats ~total_blocks;
+       print_decode_progress ~stats ~total_blocks
     )
   ;;
 end
@@ -202,10 +241,13 @@ module Processor = struct
         | Block.Invalid_size     -> None
       else
         None in
-    let rec find_first_block_proc_internal () : Block.t option =
+    let rec find_first_block_proc_internal (stats:scan_stats) : Block.t option =
+      Progress.report_scan stats in_file;
       match read in_file ~len with
       | None           -> None
       | Some { chunk } ->
+        (* report progress *)
+        Progress.report_scan stats in_file;
         if Bytes.length chunk < 16 then
           None  (* no more bytes left in file *)
         else
@@ -216,17 +258,22 @@ module Processor = struct
             with
             | Header.Invalid_bytes -> None in
           match test_header with
-          | None            -> find_first_block_proc_internal () (* go to next block *)
+          | None            -> 
+            let new_stats =
+              Stats.add_bytes_scanned stats ~num:(Int64.of_int (Bytes.length chunk)) in
+            find_first_block_proc_internal new_stats (* go to next block *)
           | Some raw_header ->
             (* possibly grab more bytes depending on version *)
             let chunk =
               Processor_helpers.patch_block_bytes_if_needed in_file ~raw_header ~chunk in
             let test_block : Block.t option =
               bytes_to_block raw_header chunk in
+            let new_stats =
+              Stats.add_bytes_scanned stats ~num:(Int64.of_int (Bytes.length chunk)) in
             match test_block with
-            | None       -> find_first_block_proc_internal () (* go to next block *)
+            | None       -> find_first_block_proc_internal new_stats (* go to next block *)
             | Some block -> Some block  (* found a valid block *) in
-    let res = find_first_block_proc_internal () in
+    let res = find_first_block_proc_internal (Stats.make_blank_scan_stats ()) in
     Core.In_channel.seek in_file 0L;  (* reset seek position *)
     res
   ;;
@@ -301,6 +348,7 @@ module Processor = struct
   ;;
 
   let out_filename_fetcher (in_file:Core.In_channel.t) : string option =
+    Printf.printf "Scanning for metadata block to get output file name\n";
     let metadata_block : Block.t option =
       find_first_block_proc ~want_meta:true in_file in
     match metadata_block with
@@ -320,9 +368,14 @@ module Processor = struct
     (* find a block to use as reference *)
     let ref_block : Block.t option =
       (* try to find a metadata block first *)
+      Printf.printf "Scanning for metadata block to be used as reference block\n";
       match find_first_block_proc ~want_meta:true in_file with
       | Some block -> Some block
-      | None       -> find_first_block_proc ~want_meta:false in_file (* get the first usable data block *) in
+      | None       ->
+        begin
+          Printf.printf "Scanning for data block to be used as reference block\n";
+          find_first_block_proc ~want_meta:false in_file (* get the first usable data block *)
+        end in
     match ref_block with
     | None           -> raise (Packaged_exn "No usable blocks in file")
     | Some ref_block ->
