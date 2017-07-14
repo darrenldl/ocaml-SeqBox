@@ -65,7 +65,7 @@ Data block is valid if and only if
     - rescue mode rescues all 3 versions of sbx blocks
     - if log file is specified, then
       - the log file will be used to initialize the scan's starting position
-        - bytes_processed field will be rounded down to multiple of 128 automatically
+        - bytes_processed field will be rounded down to closest multiple of 128 automatically
       - the log file will be updated in every write of rescued block
     - each block is appended to OUTDIR/uid, where :
       - OUTDIR = output directory specified
