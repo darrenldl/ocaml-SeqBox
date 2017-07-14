@@ -4,6 +4,8 @@ let help_secs = [ `S Manpage.s_common_options
                 ; `P "These options are common to all comamnds."
                 ; `S "MORE HELP"
                 ; `P "Use `$(mname) $(i,COMMAND) --help' for help on a single command."
+                ; `S Manpage.s_authors
+                ; `P "Darren Ldl <darrenldldev@gmail.com>"
                 ; `S Manpage.s_bugs
                 ; `P "Report bugs at ocaml-SeqBox github page via issues (https://github.com/darrenldl/ocaml-SeqBox)"
                 ]
