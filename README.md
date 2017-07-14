@@ -6,11 +6,12 @@ This is mainly to address the different licenses being used(SeqBox was using AGP
 
 Official SeqBox Repo - https://github.com/MarcoPon/SeqBox
 
-Table of Contents                                                                                                                     
-=================                                                                                                                     
-                                                                                                                                      
-   * [ocaml-SeqBox](#ocaml-seqbox)                                                                                                    
+Table of Contents
+=================
+
+   * [ocaml-SeqBox](#ocaml-seqbox)
       * [Acknowledgement](#acknowledgement)
+      * [Getting started](#getting-started)
       * [Notes](#notes)
       * [Possibly useful additional features of ocaml-SeqBox(possibly not yet in official SeqBox)](#possibly-useful-additional-features-of-ocaml-seqboxpossibly-not-yet-in-official-seqbox)
       * [Technical Specification](#technical-specification)
