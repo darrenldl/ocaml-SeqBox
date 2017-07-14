@@ -19,10 +19,14 @@ let getmtime_uint64 ~(filename:string) : uint64 =
   Uint64.of_float (getmtime ~filename)
 ;;
 
-let getsize_uint64 ~(filename:string) : uint64 =
+let getsize ~(filename:string) : int64 =
   try
     let { Unix.LargeFile.st_size = size; _ } = Unix.LargeFile.stat filename in
-    Uint64.of_int64 size
+    size
   with
   | _ -> raise File_access_error
+;;
+
+let getsize_uint64 ~(filename:string) : uint64 =
+    Uint64.of_int64 (getsize ~filename)
 ;;
