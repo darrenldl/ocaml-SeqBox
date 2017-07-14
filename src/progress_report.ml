@@ -44,3 +44,16 @@ let gen_print_generic ~(header:string) ~(unit:string) ~(print_interval:float) =
        print_newline ()
   )
 ;;
+
+let print_newline_if_not_done ~(units_so_far:int64) ~(total_units:int64) : unit =
+  let percent : int =
+    Int64.to_int (Int64.div
+                    (Int64.mul
+                       100L
+                       units_so_far)
+                    total_units) in
+  if percent != 0 then
+    print_newline ()
+  else
+    ()  (* do nothing *)
+;;
