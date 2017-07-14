@@ -1,4 +1,5 @@
 open Stdint
+open Stream_file
 
 exception File_access_error
 
@@ -19,12 +20,18 @@ let getmtime_uint64 ~(filename:string) : uint64 =
   Uint64.of_float (getmtime ~filename)
 ;;
 
+module Processor = struct
+  let file_size_getter : int64 Stream.in_processor =
+    (fun in_file ->
+       Core.In_channel.length in_file
+    )
+  ;;
+end
+
 let getsize ~(filename:string) : int64 =
-  try
-    let { Unix.LargeFile.st_size = size; _ } = Unix.LargeFile.stat filename in
-    size
-  with
-  | _ -> raise File_access_error
+  match Stream.process_in ~in_filename:filename Processor.file_size_getter with
+  | Ok size -> size
+  | Error _ -> raise File_access_error
 ;;
 
 let getsize_uint64 ~(filename:string) : uint64 =
