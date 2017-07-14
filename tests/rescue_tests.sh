@@ -48,5 +48,11 @@ echo ""
 echo "Comparing decoded data to original"
 FILES=rescued_data/*.decoded
 for f in $FILES; do
+  echo "Comparing decoded version $ver container data to original"
   cmp dummy $f
+  if [[ $? == 0 ]]; then
+    echo "No mismatches detected"
+  else
+    echo "Mismatch detected"
+  fi
 done

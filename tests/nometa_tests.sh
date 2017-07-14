@@ -5,7 +5,7 @@ VERSIONS=(1 2 3)
 # Encode in all 3 versions
 for ver in ${VERSIONS[*]}; do
   echo "Encoding in version $ver"
-  ./osbx encode --sbx_version $ver -f dummy dummy$ver.sbx
+  ./osbx encode --sbx_version $ver -f --nometa dummy dummy$ver.sbx
   echo ""
 done
 
