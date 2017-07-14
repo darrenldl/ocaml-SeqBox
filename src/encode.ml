@@ -210,7 +210,7 @@ module Process = struct
       let max_file_size = ver_to_max_file_size ver in
       let file_size     = File_utils.getsize ~filename:in_filename in
       if file_size > max_file_size then
-        Error (Printf.sprintf "File size (%Ld) exceeds upper limit (%Ld)" file_size max_file_size)
+        Error (Printf.sprintf "File size (%Ld bytes) exceeds upper limit (%Ld bytes)" file_size max_file_size)
       else
         let common   =
           match uid with
