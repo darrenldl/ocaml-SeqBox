@@ -13,6 +13,7 @@
     - now it is changed to update log on bytes read, not on blocks written
   - Updated file size retrieval function to act correctly when dealing with block devices
     - Changed File\_utils.getsize to use Core.In\_channel.length instead of Unix.LargeFile.stat
+  - Added progress reporting for hash in decode mode
 
 ## 1.0.0  (version on opam)
   - Base version
