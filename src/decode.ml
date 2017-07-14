@@ -176,12 +176,14 @@ module Progress : sig
 
 end = struct
 
+  let print_scan_progress_helper =
+    let header         = "Scan progress" in
+    let unit           = "bytes" in
+    let print_interval = Param.Decode.progress_report_interval in
+    Progress_report.gen_print_generic ~header ~unit ~print_interval
+  ;;
+
   let print_scan_progress ~(stats:scan_stats) ~(total_bytes:int64) =
-    let print_scan_progress_helper =
-      let header         = "Scan progress" in
-      let unit           = "bytes" in
-      let print_interval = Param.Decode.progress_report_interval in
-      Progress_report.gen_print_generic ~header ~unit ~print_interval in
     print_scan_progress_helper
       ~start_time:stats.start_time
       ~units_so_far:stats.bytes_processed
@@ -196,12 +198,14 @@ end = struct
     )
   ;;
 
+  let print_decode_progress_helper =
+    let header         = "Data decoding progress" in
+    let unit           = "blocks" in
+    let print_interval = Param.Decode.progress_report_interval in
+    Progress_report.gen_print_generic ~header ~unit ~print_interval
+  ;;
+
   let print_decode_progress ~(stats:stats) ~(total_blocks:int64) =
-    let print_decode_progress_helper =
-      let header         = "Data decoding progress" in
-      let unit           = "blocks" in
-      let print_interval = Param.Decode.progress_report_interval in
-      Progress_report.gen_print_generic ~header ~unit ~print_interval in
     print_decode_progress_helper
       ~start_time:stats.start_time
       ~units_so_far:stats.blocks_processed

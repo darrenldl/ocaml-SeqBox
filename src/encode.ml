@@ -72,12 +72,14 @@ module Progress : sig
 
 end = struct
 
+  let print_encode_progress_helper =
+    let header         = "Data encoding progress" in
+    let unit           = "chunks" in
+    let print_interval = Param.Encode.progress_report_interval in
+    Progress_report.gen_print_generic ~header ~unit ~print_interval
+  ;;
+
   let print_encode_progress ~(stats:stats) ~(total_chunks:int64) =
-    let print_encode_progress_helper =
-      let header         = "Data encoding progress" in
-      let unit           = "chunks" in
-      let print_interval = Param.Encode.progress_report_interval in
-      Progress_report.gen_print_generic ~header ~unit ~print_interval in
     print_encode_progress_helper
       ~start_time:stats.start_time
       ~units_so_far:stats.blocks_written
