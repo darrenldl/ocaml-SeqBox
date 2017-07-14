@@ -164,7 +164,7 @@ module Logger = struct
          begin
            last_write_time := cur_time;
            match write_helper ~stats ~log_filename with
-           | Error msg -> print_newline (); Printf.printf "%s" msg; print_newline (); false
+           | Error msg -> Printf.printf "%s\n" msg; false
            | Ok _      -> true
          end
        else
@@ -318,11 +318,11 @@ module Processor = struct
     (* report progress *)
     (* Progress.report_rescue stats in_file; *)
     match scan_proc ~stats ~log_filename in_file with
-    | (stats, None)                 -> print_newline (); stats  (* ran out of valid blocks in input file *)
+    | (stats, None)                 -> stats  (* ran out of valid blocks in input file *)
     | (stats, Some block_and_chunk) ->
       match output_proc ~stats ~block_and_chunk ~out_dirname with
       | (stats, Ok _ )     -> scan_and_output ~stats ~out_dirname ~log_filename in_file
-      | (stats, Error msg) -> print_newline (); Printf.printf "%s" msg; print_newline (); stats
+      | (stats, Error msg) -> Printf.printf "%s\n" msg; stats
   ;;
 
   let make_rescuer ~(out_dirname:string) ~(log_filename:string option) : ((stats, string) result) Stream.in_processor =

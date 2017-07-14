@@ -16,8 +16,7 @@ let decode (force_out:bool) (in_filename:string) (out_filename:string option) : 
       if out_file_exists && not force_out then
         raise (Packaged_exn (Printf.sprintf "File %s already exists" out_filename))
       else begin
-        Printf.printf "Output file name                               : %s" out_filename;
-        print_newline ();
+        Printf.printf "Output file name                               : %s\n" out_filename;
         match Process.decode_file ~in_filename ~out_filename:(Some out_filename) with
         | Ok stats  -> Stats.print_stats stats
         | Error msg -> raise (Packaged_exn msg)
