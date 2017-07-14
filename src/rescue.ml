@@ -126,13 +126,13 @@ module Logger = struct
     )
   ;;
 
-  let write_log ~(stats:stats) ~(log_filename:string) : (unit, string) result =
+  let write_helper ~(stats:stats) ~(log_filename:string) : (unit, string) result =
     let processor = make_write_proc ~stats in
-    let write_log_internal_w_exn () =
+    let write_helper_internal_w_exn () =
       match Stream.process_out ~pack_break_into_error:false ~append:false ~out_filename:log_filename processor with
       | Ok _      -> Ok ()
       | Error msg -> Error msg in
-    let write_log_internal_no_exn () =
+    let write_helper_internal_no_exn () =
       match Stream.process_out                              ~append:false ~out_filename:log_filename processor with
       | Ok _      -> Ok ()
       | Error msg -> Error msg in
@@ -144,13 +144,32 @@ module Logger = struct
      * But should be good enough for normal actual human uses
      *)
     try
-      write_log_internal_w_exn ()
+      write_helper_internal_w_exn ()
     with
     | Sys.Break ->
       begin
-        write_log_internal_no_exn () |> ignore; 
+        write_helper_internal_no_exn () |> ignore; 
         raise Sys.Break (* raise Sys.Break again so the interrupt still stops the process *)
       end
+  ;;
+
+  let write =
+    let write_interval  : float     = Param.Rescue.log_write_interval in
+    let last_write_time : float ref = ref 0. in
+    (fun ~(stats:stats) ~(log_filename:string) ~(in_file:Core.In_channel.t) : bool ->
+       let cur_time : float = Sys.time () in
+       let time_since_last_write : float = cur_time -. !last_write_time in
+       let total_bytes = Core.In_channel.length in_file in
+       if time_since_last_write > write_interval || stats.bytes_processed = total_bytes (* always write when 100% done *) then
+         begin
+           last_write_time := cur_time;
+           match write_helper ~stats ~log_filename with
+           | Error msg -> print_newline (); Printf.printf "%s" msg; print_newline (); false
+           | Ok _      -> true
+         end
+       else
+         true (* things are okay and do nothing *)
+    )
   ;;
 
   module Parser = struct
@@ -192,7 +211,7 @@ module Logger = struct
     )
   ;;
 
-  let read_log ~(log_filename:string) : (stats option, string) result =
+  let read ~(log_filename:string) : (stats option, string) result =
     let processor = make_read_proc () in
     if Sys.file_exists log_filename then
       match Stream.process_in ~in_filename:log_filename processor with
@@ -204,24 +223,6 @@ module Logger = struct
 end
 
 module Processor = struct
-  let write_log_helper =
-    let write_interval  : float     = Param.Rescue.log_write_interval in
-    let last_write_time : float ref = ref 0. in
-    (fun ~(stats:stats) ~(log_filename:string) : bool ->
-       let cur_time : float = Sys.time () in
-       let time_since_last_write : float = cur_time -. !last_write_time in
-       if time_since_last_write > write_interval then
-         begin
-           last_write_time := cur_time;
-           match Logger.write_log ~stats ~log_filename with
-           | Error msg -> print_newline (); Printf.printf "%s" msg; print_newline (); false
-           | Ok _      -> true
-         end
-       else
-         true (* things are okay and do nothing *)
-    )
-  ;;
-
   (* scan for valid block *)
   let scan_proc ~(stats:stats) ~(log_filename:string option) (in_file:Core.In_channel.t) : stats * ((Block.t * bytes) option) =
     let open Read_chunk in
@@ -240,7 +241,7 @@ module Processor = struct
       let log_okay : bool =
         match log_filename with
         | None              -> true
-        | Some log_filename -> write_log_helper ~stats ~log_filename in
+        | Some log_filename -> Logger.write ~stats ~log_filename ~in_file in
       if not log_okay then
         (stats, None)
       else
@@ -333,7 +334,7 @@ module Processor = struct
          match log_filename with
          | None      -> Ok (Stats.make_blank_stats ())
          | Some log_filename ->
-           match Logger.read_log ~log_filename with
+           match Logger.read ~log_filename with
            | Error msg       -> Error msg
            | Ok None         -> Error "Failed to parse log file"
            | Ok (Some stats) -> Ok stats in
