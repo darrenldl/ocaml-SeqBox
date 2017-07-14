@@ -10,7 +10,7 @@ let decode (force_out:bool) (in_filename:string) (out_filename:string option) : 
       | Ok name   -> name
       | Error msg -> raise (Packaged_exn msg) in
     match out_filename with
-    | None              -> raise (Packaged_exn "No original filename found in sbx container and no output file name is provided")
+    | None              -> raise (Packaged_exn "No original filename was found in sbx container and no output file name is provided")
     | Some out_filename ->
       let out_file_exists = Sys.file_exists out_filename in
       if out_file_exists && not force_out then
