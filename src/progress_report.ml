@@ -17,7 +17,7 @@ let gen_print_generic ~(header:string) ~(unit:string) ~(print_interval:float) =
                        total_units) in
      let cur_time               : float = Sys.time () in
      let time_since_last_report : float = cur_time -. !last_report_time in
-     if time_since_last_report > print_interval || percent = 100 (* always print if reached 100% *) then 
+     if time_since_last_report > print_interval || percent = 0 || percent = 100 (* always print if at 0% or reached 100% *) then 
        begin
          let cur_rate               : float     = (Int64.to_float (Int64.sub units_so_far !last_reported_units)) /. time_since_last_report in
          (* let time_elapsed           : float     = cur_time -. start_time in *)
@@ -27,7 +27,7 @@ let gen_print_generic ~(header:string) ~(unit:string) ~(print_interval:float) =
          let (etc_hour, etc_minute, etc_second) = seconds_to_hms etc_total_secs in
          last_report_time    := cur_time;
          last_reported_units := units_so_far;
-         Printf.printf "\r%s : %Ld / %Ld %s - %d%%  cur : %.0f %s/s  etc : %02d:%02d:%02d          "
+         Printf.printf "\r%s : %Ld / %Ld %s - %d%%  cur : %.0f %s/s  etc : %02d:%02d:%02d                    "
            header
            units_so_far
            total_units
@@ -52,7 +52,7 @@ let print_newline_if_not_done ~(units_so_far:int64) ~(total_units:int64) : unit 
                        100L
                        units_so_far)
                     total_units) in
-  if percent != 0 then
+  if percent != 100 then
     print_newline ()
   else
     ()  (* do nothing *)

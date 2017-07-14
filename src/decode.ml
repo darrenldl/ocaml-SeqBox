@@ -170,9 +170,11 @@ type stats      = Stats.t
 type scan_stats = Stats.scan_stats
 
 module Progress : sig
-  val report_scan   : scan_stats -> Core.In_channel.t -> unit
+  val report_scan                 : scan_stats -> Core.In_channel.t -> unit
 
-  val report_decode : stats      -> Core.In_channel.t -> unit
+  val report_decode               : stats      -> Core.In_channel.t -> unit
+
+  val print_newline_possibly_scan : scan_stats -> Core.In_channel.t -> unit
 
 end = struct
 
@@ -223,10 +225,16 @@ end = struct
        print_decode_progress ~stats ~total_blocks
     )
   ;;
+
+  let print_newline_possibly_scan (stats:scan_stats) (in_file:Core.In_channel.t) : unit =
+    Progress_report.print_newline_if_not_done
+      ~units_so_far:stats.bytes_processed
+      ~total_units:(Core.In_channel.length in_file)
+  ;;
 end
 
 module Processor = struct
-  let find_first_block_proc ~(want_meta:bool) (in_file:Core.In_channel.t) : Block.t option =
+  let find_first_block_proc ?(newline_if_unfinished:bool = false) ~(want_meta:bool) (in_file:Core.In_channel.t) : Block.t option =
     let open Read_chunk in
     let len = Param.Decode.ref_block_scan_alignment in 
     let bytes_to_block (raw_header:Header.raw_header) (chunk:bytes) : Block.t option =
@@ -245,15 +253,15 @@ module Processor = struct
         | Block.Invalid_size     -> None
       else
         None in
-    let rec find_first_block_proc_internal (stats:scan_stats) : Block.t option =
+    let rec find_first_block_proc_internal (stats:scan_stats) : scan_stats * (Block.t option) =
       Progress.report_scan stats in_file;
       match read in_file ~len with
-      | None           -> None
+      | None           -> (stats, None)
       | Some { chunk } ->
         (* report progress *)
         Progress.report_scan stats in_file;
         if Bytes.length chunk < 16 then
-          None  (* no more bytes left in file *)
+          (stats, None)  (* no more bytes left in file *)
         else
           let test_header_bytes = Misc_utils.get_bytes chunk ~pos:0 ~len:16 in
           let test_header : Header.raw_header option =
@@ -276,9 +284,11 @@ module Processor = struct
               Stats.add_bytes_scanned stats ~num:(Int64.of_int (Bytes.length chunk)) in
             match test_block with
             | None       -> find_first_block_proc_internal new_stats (* go to next block *)
-            | Some block -> Some block  (* found a valid block *) in
-    let res = find_first_block_proc_internal (Stats.make_blank_scan_stats ()) in
+            | Some block -> (new_stats, Some block)  (* found a valid block *) in
+    let (stats, res) = find_first_block_proc_internal (Stats.make_blank_scan_stats ()) in
     Core.In_channel.seek in_file 0L;  (* reset seek position *)
+    if newline_if_unfinished then
+      Progress.print_newline_possibly_scan stats in_file;
     res
   ;;
 
@@ -354,7 +364,7 @@ module Processor = struct
   let out_filename_fetcher (in_file:Core.In_channel.t) : string option =
     Printf.printf "Scanning for metadata block to get output file name\n";
     let metadata_block : Block.t option =
-      find_first_block_proc ~want_meta:true in_file in
+      find_first_block_proc ~newline_if_unfinished:true ~want_meta:true in_file in
     match metadata_block with
     | Some block ->
       begin
@@ -374,7 +384,7 @@ module Processor = struct
     let ref_block : Block.t option =
       (* try to find a metadata block first *)
       Printf.printf "Scanning for metadata block to be used as reference block\n";
-      match find_first_block_proc ~want_meta:true in_file with
+      match find_first_block_proc ~newline_if_unfinished:true ~want_meta:true in_file with
       | Some block ->
         begin
           Printf.printf "Metadata block found\n";
@@ -384,7 +394,7 @@ module Processor = struct
         begin
           Printf.printf "No metadata blocks were found, resorting to data blocks\n";
           Printf.printf "Scanning for data block to be used as reference block\n";
-          find_first_block_proc ~want_meta:false in_file (* get the first usable data block *)
+          find_first_block_proc ~newline_if_unfinished:true ~want_meta:false in_file (* get the first usable data block *)
         end in
     match ref_block with
     | None           -> raise (Packaged_exn "No usable blocks in file")
