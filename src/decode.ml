@@ -170,13 +170,9 @@ type stats      = Stats.t
 type scan_stats = Stats.scan_stats
 
 module Progress : sig
-  val report_scan                   : scan_stats -> Core.In_channel.t -> unit
+  val report_scan   : scan_stats -> Core.In_channel.t -> unit
 
-  val report_decode                 : stats      -> Core.In_channel.t -> unit
-
-  val print_newline_possibly_scan   : scan_stats -> Core.In_channel.t -> unit
-
-  val print_newline_possibly_decode : stats      -> Core.In_channel.t -> unit
+  val report_decode : stats      -> Core.In_channel.t -> unit
 
 end = struct
 
@@ -227,18 +223,6 @@ end = struct
        print_decode_progress ~stats ~total_blocks
     )
   ;;
-
-  let print_newline_possibly_scan (stats:scan_stats) (in_file:Core.In_channel.t) : unit =
-    Progress_report.print_newline_if_not_done
-      ~units_so_far:stats.bytes_processed
-      ~total_units:(Core.In_channel.length in_file)
-  ;;
-
-  let print_newline_possibly_decode (stats:stats) (in_file:Core.In_channel.t) : unit =
-    Progress_report.print_newline_if_not_done
-      ~units_so_far:stats.blocks_processed
-      ~total_units:(Core.In_channel.length in_file)
-  ;;
 end
 
 module Processor = struct
@@ -261,14 +245,15 @@ module Processor = struct
         | Block.Invalid_size     -> None
       else
         None in
-    let rec find_first_block_proc_internal (stats:scan_stats) : scan_stats * (Block.t option) =
-      (* report progress *)
+    let rec find_first_block_proc_internal (stats:scan_stats) : Block.t option =
       Progress.report_scan stats in_file;
       match read in_file ~len with
-      | None           -> (stats, None)
+      | None           -> None
       | Some { chunk } ->
+        (* report progress *)
+        Progress.report_scan stats in_file;
         if Bytes.length chunk < 16 then
-          (stats, None)  (* no more bytes left in file *)
+          None  (* no more bytes left in file *)
         else
           let test_header_bytes = Misc_utils.get_bytes chunk ~pos:0 ~len:16 in
           let test_header : Header.raw_header option =
@@ -291,10 +276,9 @@ module Processor = struct
               Stats.add_bytes_scanned stats ~num:(Int64.of_int (Bytes.length chunk)) in
             match test_block with
             | None       -> find_first_block_proc_internal new_stats (* go to next block *)
-            | Some block -> (stats, Some block)  (* found a valid block *) in
-    let (stats, res) = find_first_block_proc_internal (Stats.make_blank_scan_stats ()) in
+            | Some block -> Some block  (* found a valid block *) in
+    let res = find_first_block_proc_internal (Stats.make_blank_scan_stats ()) in
     Core.In_channel.seek in_file 0L;  (* reset seek position *)
-    Progress.print_newline_possibly_scan stats in_file;
     res
   ;;
 
@@ -336,9 +320,7 @@ module Processor = struct
               else
                 find_valid_data_block_proc_internal (Stats.add_failed_block stats) (* move onto finding next block *)
           end in
-    let (stats, res) = find_valid_data_block_proc_internal stats in
-    Progress.print_newline_possibly_decode stats in_file;
-    (stats, res)
+    find_valid_data_block_proc_internal stats
   ;;
 
   let output_decoded_data_proc ~(ref_block:Block.t) ~(block:Block.t) (out_file:Core.Out_channel.t) : unit =

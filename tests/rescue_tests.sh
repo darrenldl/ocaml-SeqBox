@@ -11,8 +11,7 @@ done
 
 # Generate random filler data
 echo "Generating random filler data"
-#dd if=/dev/urandom of=filler1 bs=10240 count=1
-truncate -s 100m filler1
+dd if=/dev/urandom of=filler1 bs=10240 count=1
 dd if=/dev/urandom of=filler2 bs=128   count=1
 dd if=/dev/urandom of=filler3 bs=512   count=1
 echo ""
