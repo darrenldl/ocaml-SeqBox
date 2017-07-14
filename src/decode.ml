@@ -141,8 +141,8 @@ module Stats = struct
     if stats.meta_blocks_decoded = 0L then
       begin
         print_newline ();
-        Printf.printf "Warning : no metadata block was found in the sbx container\n";
-        Printf.printf "          it is likely that the output file is not of the correct size\n";
+        Printf.printf "Warning : No metadata blocks were found in the sbx container\n";
+        Printf.printf "          It is likely that the output file is not of the correct size\n";
         Printf.printf "          and has data padding bytes attached at the end of it\n";
         print_newline ();
       end;
@@ -354,6 +354,7 @@ module Processor = struct
     match metadata_block with
     | Some block ->
       begin
+        Printf.printf "Metadata block found\n";
         let metadata_list  = Metadata.dedup (Block.block_to_meta block) in
         match List.filter (function | Metadata.FNM _ -> true | _ -> false) metadata_list with
         | [ ]       -> None
@@ -370,9 +371,14 @@ module Processor = struct
       (* try to find a metadata block first *)
       Printf.printf "Scanning for metadata block to be used as reference block\n";
       match find_first_block_proc ~want_meta:true in_file with
-      | Some block -> Some block
+      | Some block ->
+        begin
+          Printf.printf "Metadata block found\n";
+          Some block
+        end
       | None       ->
         begin
+          Printf.printf "No metadata blocks were found, resorting to data blocks\n";
           Printf.printf "Scanning for data block to be used as reference block\n";
           find_first_block_proc ~want_meta:false in_file (* get the first usable data block *)
         end in
