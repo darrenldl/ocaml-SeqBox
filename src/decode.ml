@@ -26,6 +26,10 @@ module Stats = struct
                     ; start_time      : float
                     }
 
+  type hash_stats = { bytes_processed : int64
+                    ; start_time      : float
+                    }
+
   let make_blank_stats ~(ver:version) : t =
     { block_size            = ver_to_block_size ver
     ; blocks_processed      = 0L
@@ -121,6 +125,18 @@ module Stats = struct
     }
   ;;
 
+  let make_blank_hash_stats () : hash_stats =
+    { bytes_processed = 0L
+    ; start_time      = Sys.time ()
+    }
+  ;;
+
+  let add_bytes_hashed (stats:hash_stats) ~(num:int64) : hash_stats =
+    { bytes_processed = stats.bytes_processed <+> num
+    ; start_time      = stats.start_time
+    }
+  ;;
+
   let print_failed_pos (block_size:int) (pos_list:int64 list) : unit =
     let block_size = Int64.of_int block_size in
     List.iter (fun x -> Printf.printf "Failed to decode block %Ld, at %Ld bytes\n" x (block_size <*> x)) (List.rev pos_list)
@@ -169,10 +185,14 @@ type stats      = Stats.t
 
 type scan_stats = Stats.scan_stats
 
+type hash_stats = Stats.hash_stats
+
 module Progress : sig
   val report_scan                 : scan_stats -> Core.In_channel.t -> unit
 
   val report_decode               : stats      -> Core.In_channel.t -> unit
+
+  val report_hash                 : hash_stats -> Core.In_channel.t -> unit
 
   val print_newline_possibly_scan : scan_stats -> Core.In_channel.t -> unit
 
@@ -195,7 +215,7 @@ end = struct
   let report_scan : scan_stats -> Core.In_channel.t -> unit =
     (fun stats in_file ->
        let total_bytes =
-         (Core.In_channel.length in_file) in
+         Core.In_channel.length in_file in
        print_scan_progress ~stats ~total_bytes
     )
   ;;
@@ -223,6 +243,28 @@ end = struct
            (Int64.add (Core.In_channel.length in_file) (Int64.sub block_size 1L))
            block_size in
        print_decode_progress ~stats ~total_blocks
+    )
+  ;;
+
+  let print_hash_progress_helper =
+    let header         = "Hash progress" in
+    let unit           = "bytes" in
+    let print_interval = Param.Decode.progress_report_interval in
+    Progress_report.gen_print_generic ~header ~unit ~print_interval
+  ;;
+
+  let print_hash_progress ~(stats:hash_stats) ~(total_bytes:int64) =
+    print_hash_progress_helper
+      ~start_time:stats.start_time
+      ~units_so_far:stats.bytes_processed
+      ~total_units:total_bytes
+  ;;
+
+  let report_hash : hash_stats -> Core.In_channel.t -> unit =
+    (fun stats in_file ->
+       let total_bytes =
+         Core.In_channel.length in_file in
+       print_hash_progress ~stats ~total_bytes
     )
   ;;
 
@@ -427,18 +469,21 @@ module Processor = struct
       (stats, truncate)
   ;;
 
-  let rec hash_proc ?(hash_state:SHA256.t = SHA256.init()) (in_file:Core.In_channel.t) : bytes =
+  let rec hash_proc ?(stats:hash_stats = Stats.make_blank_hash_stats ()) ?(hash_state:SHA256.t = SHA256.init()) (in_file:Core.In_channel.t) : bytes =
     let open Read_chunk in
     let read_len = 1024 * 1024 (* 1 MiB *) in
+    Progress.report_hash stats in_file;
     match read in_file ~len:read_len with
     | None           -> Conv_utils.sha256_hash_state_to_bytes hash_state
     | Some { chunk } ->
       SHA256.feed hash_state (Cstruct.of_bytes chunk);
-      hash_proc ~hash_state in_file
+      let new_stats =
+        Stats.add_bytes_hashed stats ~num:(Int64.of_int (Bytes.length chunk)) in
+      hash_proc ~stats:new_stats ~hash_state in_file
   ;;
 
   let hasher (in_file:Core.In_channel.t) : bytes =
-    hash_proc in_file 
+    hash_proc in_file
   ;;
 end
 
