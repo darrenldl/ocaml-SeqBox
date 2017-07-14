@@ -32,6 +32,21 @@ I would like to thank [Marco](https://github.com/MarcoPon) (author of the offici
 
 I would like to thank [Ming](https://github.com/mdchia/) for his feedback on the documentation, UX design, and several other general aspects of this project. And also his help on testing the building and installation of osbx on macOS.
 
+## Getting started
+Osbx 1.0.0 is currently on OPAM, 1.0.1 (dev version) will be published shortly
+```
+opam install osbx
+```
+There are three modes/commands for osbx currently : encode, decode, rescue
+
+You can consult the man pages of osbx itself and all the three commands via
+```
+osbx        --help
+osbx encode --help
+osbx decode --help
+osbx rescue --help
+```
+
 ## Notes
 CRC-CCITT is currently implemented via FFI and links to the static object files compiled from libcrc (https://github.com/lammertb/libcrc)
   - See crcccitt_wrap.ml, crcccitt_wrap.mli for the FFI bindings
