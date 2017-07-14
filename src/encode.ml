@@ -63,25 +63,28 @@ module Stats = struct
     Printf.printf "Time elapsed                      : %02d:%02d:%02d\n" hour minute second
   ;;
 
-  let print_progress_helper =
-    let header         = "Data encoding progress" in
-    let unit           = "chunks" in
-    let print_interval = Param.Encode.progress_report_interval in
-    Progress_report.gen_print_generic ~header ~unit ~print_interval
-  ;;
-
-  let print_progress ~(stats:t) ~(total_chunks:int64) =
-    print_progress_helper
-      ~start_time:stats.start_time
-      ~units_so_far:stats.blocks_written
-      ~total_units:total_chunks
-  ;;
 end
 
 type stats = Stats.t
 
-module Progress = struct
-  let report : stats -> Core.In_channel.t -> unit  =
+module Progress : sig
+  val report_encode : stats -> Core.In_channel.t -> unit
+
+end = struct
+
+  let print_encode_progress ~(stats:stats) ~(total_chunks:int64) =
+    let print_encode_progress_helper =
+      let header         = "Data encoding progress" in
+      let unit           = "chunks" in
+      let print_interval = Param.Encode.progress_report_interval in
+      Progress_report.gen_print_generic ~header ~unit ~print_interval in
+    print_encode_progress_helper
+      ~start_time:stats.start_time
+      ~units_so_far:stats.blocks_written
+      ~total_units:total_chunks
+  ;;
+
+  let report_encode : stats -> Core.In_channel.t -> unit  =
     let first_time    = ref true in
     (fun stats in_file ->
        let data_size    : int64 =
@@ -96,7 +99,7 @@ module Progress = struct
            Printf.printf "Only data blocks are reported in the progress reporting below\n";
            first_time := false
          end;
-       Stats.print_progress ~stats ~total_chunks;
+       print_encode_progress ~stats ~total_chunks;
     )
   ;;
 end
@@ -107,7 +110,7 @@ module Processor = struct
     let open Read_chunk in
     let open Write_chunk in
     (* report progress *)
-    Progress.report stats in_file;
+    Progress.report_encode stats in_file;
     match read in_file ~len:data_len with
     | None           -> stats
     | Some { chunk } ->
@@ -124,7 +127,7 @@ module Processor = struct
     let open Read_chunk in
     let open Write_chunk in
     (* report progress *)
-    Progress.report stats in_file;
+    Progress.report_encode stats in_file;
     match read in_file ~len:data_len with
     | None           -> (stats, Conv_utils.sha256_hash_state_to_bytes hash_state)
     | Some { chunk } ->

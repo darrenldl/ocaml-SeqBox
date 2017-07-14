@@ -147,26 +147,29 @@ module Stats = struct
     Printf.printf "First up to 500 failing positions (block and bytes index start at 0)\n";
     print_failed_pos stats.block_size stats.failed_block_pos_list
   ;;
-
-  let print_progress_helper =
-    let header         = "Data decoding progress" in
-    let unit           = "blocks" in
-    let print_interval = Param.Decode.progress_report_interval in
-    Progress_report.gen_print_generic ~header ~unit ~print_interval
-  ;;
-
-  let print_progress ~(stats:t) ~(total_blocks:int64) =
-    print_progress_helper
-      ~start_time:stats.start_time
-      ~units_so_far:stats.blocks_processed
-      ~total_units:total_blocks
-  ;;
 end
 
 type stats = Stats.t
 
-module Progress = struct
-  let report : stats -> Core.In_channel.t -> unit  =
+module Progress : sig
+  val report_decode : stats -> Core.In_channel.t -> unit
+
+end = struct
+
+
+  let print_decode_progress ~(stats:stats) ~(total_blocks:int64) =
+    let print_decode_progress_helper =
+      let header         = "Data decoding progress" in
+      let unit           = "blocks" in
+      let print_interval = Param.Decode.progress_report_interval in
+      Progress_report.gen_print_generic ~header ~unit ~print_interval in
+    print_decode_progress_helper
+      ~start_time:stats.start_time
+      ~units_so_far:stats.blocks_processed
+      ~total_units:total_blocks
+  ;;
+
+  let report_decode : stats -> Core.In_channel.t -> unit  =
     (fun stats in_file ->
        let block_size   : int64 =
          Int64.of_int stats.block_size in
@@ -174,7 +177,7 @@ module Progress = struct
          Int64.div
            (Int64.add (Core.In_channel.length in_file) (Int64.sub block_size 1L))
            block_size in
-       Stats.print_progress ~stats ~total_blocks;
+       print_decode_progress ~stats ~total_blocks;
     )
   ;;
 end
@@ -238,7 +241,7 @@ module Processor = struct
     let ref_file_uid = Block.block_to_file_uid ref_block in
     let rec find_valid_data_block_proc_internal (stats:stats) : stats * Block.t option =
       (* report progress *)
-      Progress.report stats in_file;
+      Progress.report_decode stats in_file;
       match read in_file ~len with
       | None           -> (stats, None)
       | Some { chunk } ->
