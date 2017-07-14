@@ -54,7 +54,7 @@ module Stats = struct
   ;;
 
   (* automatically correct bytes_processed alignment
-   * by rounding to closest 128 bytes
+   * by rounding down to closest 128 bytes
    *)
   let make_stats (bytes_processed:int64) (blocks_processed:int64) (meta_blocks_processed:int64) (data_blocks_processed:int64) : t =
     { bytes_processed =
