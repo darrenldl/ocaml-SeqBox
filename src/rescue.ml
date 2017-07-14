@@ -246,8 +246,6 @@ module Processor = struct
         (stats, None)
       else
         begin
-          (* report progress *)
-          (* Progress.report_rescue stats in_file; *)
           match read in_file ~len with
           | None           -> (stats, None)
           | Some { chunk } ->
