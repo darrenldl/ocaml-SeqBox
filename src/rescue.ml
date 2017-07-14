@@ -78,20 +78,6 @@ module Stats = struct
     Printf.printf "Time elapsed                        : %02d:%02d:%02d\n" hour minute second
   ;;
 
-  let print_progress_helper =
-    let header         = "Data rescue progress" in
-    let unit           = "bytes" in
-    let print_interval = Param.Rescue.progress_report_interval in
-    Progress_report.gen_print_generic ~header ~unit ~print_interval
-  ;;
-
-  let print_progress ~(stats:t) ~(total_bytes:int64) =
-    print_progress_helper
-      ~start_time:stats.start_time
-      ~units_so_far:stats.bytes_processed
-      ~total_units:total_bytes
-  ;;
-
   (*let print_stats_single_line (stats:t) : unit =
     Printf.printf "\rBytes : %Ld, Blocks : %Ld, Meta : %Ld, Data : %Ld"
       stats.bytes_processed
@@ -102,6 +88,32 @@ module Stats = struct
 end
 
 type stats = Stats.t
+
+module Progress : sig
+  val report_rescue : stats -> Core.In_channel.t -> unit
+end = struct
+  let print_rescue_progress_helper =
+    let header         = "Data rescue progress" in
+    let unit           = "bytes" in
+    let print_interval = Param.Rescue.progress_report_interval in
+    Progress_report.gen_print_generic ~header ~unit ~print_interval
+  ;;
+
+  let print_rescue_progress ~(stats:stats) ~(total_bytes:int64) =
+    print_rescue_progress_helper
+      ~start_time:stats.start_time
+      ~units_so_far:stats.bytes_processed
+      ~total_units:total_bytes
+  ;;
+
+  let report_rescue : stats -> Core.In_channel.t -> unit =
+    (fun stats in_file ->
+       let total_bytes =
+         (Core.In_channel.length in_file) in
+       print_rescue_progress ~stats ~total_bytes
+    )
+  ;;
+end
 
 module Logger = struct
   let make_write_proc ~(stats:stats) : unit Stream.out_processor =
@@ -192,8 +204,26 @@ module Logger = struct
 end
 
 module Processor = struct
+  let write_log_helper =
+    let write_interval  : float     = Param.Rescue.log_write_interval in
+    let last_write_time : float ref = ref 0. in
+    (fun ~(stats:stats) ~(log_filename:string) : bool ->
+       let cur_time : float = Sys.time () in
+       let time_since_last_write : float = cur_time -. !last_write_time in
+       if time_since_last_write > write_interval then
+         begin
+           last_write_time := cur_time;
+           match Logger.write_log ~stats ~log_filename with
+           | Error msg -> print_newline (); Printf.printf "%s" msg; print_newline (); false
+           | Ok _      -> true
+         end
+       else
+         true (* things are okay and do nothing *)
+    )
+  ;;
+
   (* scan for valid block *)
-  let scan_proc ~(stats:stats) (in_file:Core.In_channel.t) : stats * ((Block.t * bytes) option) =
+  let scan_proc ~(stats:stats) ~(log_filename:string option) (in_file:Core.In_channel.t) : stats * ((Block.t * bytes) option) =
     let open Read_chunk in
     let len = Param.Rescue.scan_alignment in
     let bytes_to_block (raw_header:Header.raw_header) (chunk:bytes) : Block.t option =
@@ -206,34 +236,45 @@ module Processor = struct
         | Block.Invalid_size     -> None in
     let rec scan_proc_internal (stats:stats) : stats * ((Block.t * bytes) option) =
       (* report progress *)
-      Stats.print_progress ~stats ~total_bytes:(Core.In_channel.length in_file);
-      match read in_file ~len with
-      | None           -> (stats, None)
-      | Some { chunk } ->
-        let new_stats =
-          Stats.add_bytes stats ~num:(Int64.of_int (Bytes.length chunk)) in
-        if Bytes.length chunk < 16 then
-          (new_stats, None)  (* no more bytes left in file *)
-        else
-          let test_header_bytes = Misc_utils.get_bytes chunk ~pos:0 ~len:16 in
-          let test_header : Header.raw_header option =
-            try
-              Some (Header.of_bytes test_header_bytes)
-            with
-            | Header.Invalid_bytes -> None in
-          match test_header with
-          | None            -> scan_proc_internal new_stats
-          | Some raw_header ->
-            (* possibly grab more bytes depending on version *)
-            let chunk =
-              Processor_helpers.patch_block_bytes_if_needed in_file ~raw_header ~chunk in
-            let test_block : Block.t option =
-              bytes_to_block raw_header chunk in
+      Progress.report_rescue stats in_file;
+      let log_okay : bool =
+        match log_filename with
+        | None              -> true
+        | Some log_filename -> write_log_helper ~stats ~log_filename in
+      if not log_okay then
+        (stats, None)
+      else
+        begin
+          (* report progress *)
+          (* Progress.report_rescue stats in_file; *)
+          match read in_file ~len with
+          | None           -> (stats, None)
+          | Some { chunk } ->
             let new_stats =
               Stats.add_bytes stats ~num:(Int64.of_int (Bytes.length chunk)) in
-            match test_block with
-            | None       -> scan_proc_internal new_stats
-            | Some block -> (new_stats, Some (block, chunk))  (* found a valid block *) in
+            if Bytes.length chunk < 16 then
+              (new_stats, None)  (* no more bytes left in file *)
+            else
+              let test_header_bytes = Misc_utils.get_bytes chunk ~pos:0 ~len:16 in
+              let test_header : Header.raw_header option =
+                try
+                  Some (Header.of_bytes test_header_bytes)
+                with
+                | Header.Invalid_bytes -> None in
+              match test_header with
+              | None            -> scan_proc_internal new_stats
+              | Some raw_header ->
+                (* possibly grab more bytes depending on version *)
+                let chunk =
+                  Processor_helpers.patch_block_bytes_if_needed in_file ~raw_header ~chunk in
+                let test_block : Block.t option =
+                  bytes_to_block raw_header chunk in
+                let new_stats =
+                  Stats.add_bytes stats ~num:(Int64.of_int (Bytes.length chunk)) in
+                match test_block with
+                | None       -> scan_proc_internal new_stats
+                | Some block -> (new_stats, Some (block, chunk))  (* found a valid block *)
+        end in
     scan_proc_internal stats
   ;;
 
@@ -265,24 +306,6 @@ module Processor = struct
     | Error msg -> (new_stats, Error msg)
   ;;
 
-  let scan_and_output_helper =
-    let write_interval  : float     = Param.Rescue.log_write_interval in
-    let last_write_time : float ref = ref 0. in
-    (fun ~(stats:stats) ~(log_filename:string) : bool ->
-       let cur_time : float = Sys.time () in
-       let time_since_last_write : float = cur_time -. !last_write_time in
-       if time_since_last_write > write_interval then
-         begin
-           last_write_time := cur_time;
-           match Logger.write_log ~stats ~log_filename with
-           | Error msg -> print_newline (); Printf.printf "%s" msg; print_newline (); false
-           | Ok _      -> true
-         end
-       else
-         true (* things are okay and do nothing *)
-    )
-  ;;
-
   (* if there is any error with outputting, just print directly and return stats
    * this should be very rare however, if happening at all
    *)
@@ -290,24 +313,15 @@ module Processor = struct
     (* exit if failed to write to log
      *
      * print a new line before exitting to not print on the same line as the stats
-     *)
-    let log_okay : bool =
-      match log_filename with
-      | None              -> true
-      | Some log_filename -> scan_and_output_helper ~stats ~log_filename in
-    if not log_okay then
-      stats
-    else
-      begin
-        (* report progress *)
-        Stats.print_progress ~stats ~total_bytes:(Core.In_channel.length in_file);
-        match scan_proc ~stats in_file with
-        | (stats, None)                 -> print_newline (); stats  (* ran out of valid blocks in input file *)
-        | (stats, Some block_and_chunk) ->
-          match output_proc ~stats ~block_and_chunk ~out_dirname with
-          | (stats, Ok _ )     -> scan_and_output ~stats ~out_dirname ~log_filename in_file
-          | (stats, Error msg) -> print_newline (); Printf.printf "%s" msg; print_newline (); stats
-      end
+    *)
+    (* report progress *)
+    (* Progress.report_rescue stats in_file; *)
+    match scan_proc ~stats ~log_filename in_file with
+    | (stats, None)                 -> print_newline (); stats  (* ran out of valid blocks in input file *)
+    | (stats, Some block_and_chunk) ->
+      match output_proc ~stats ~block_and_chunk ~out_dirname with
+      | (stats, Ok _ )     -> scan_and_output ~stats ~out_dirname ~log_filename in_file
+      | (stats, Error msg) -> print_newline (); Printf.printf "%s" msg; print_newline (); stats
   ;;
 
   let make_rescuer ~(out_dirname:string) ~(log_filename:string option) : ((stats, string) result) Stream.in_processor =
