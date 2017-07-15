@@ -62,6 +62,9 @@ Index of soure code
 Changelog
   - See [changelog](CHANGELOG.md)
 
+Todo/wishlist
+  - See [todo](TODO.md)
+
 ## Possibly useful additional features of ocaml-SeqBox(possibly not yet in official SeqBox)
   - Allows random ordering in sbx container
     - This also means block corruption will not stop the decoding process
