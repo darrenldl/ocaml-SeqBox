@@ -8,7 +8,7 @@ let seconds_to_hms (total_secs:int) : int * int * int =
 let gen_print_generic ~(header:string) ~(unit:string) ~(print_interval:float) =
   let last_report_time    : float ref = ref 0. in
   let last_reported_units : int64 ref = ref 0L in
-  let padding             : string    = String.make 10 ' ' in
+  let max_print_length    : int   ref = ref 0  in
   (fun ~(start_time:float) ~(units_so_far:int64) ~(total_units:int64) : unit ->
      let percent : int =
        Int64.to_int (Int64.div
@@ -28,7 +28,7 @@ let gen_print_generic ~(header:string) ~(unit:string) ~(print_interval:float) =
          let (etc_hour, etc_minute, etc_second) = seconds_to_hms etc_total_secs in
          last_report_time    := cur_time;
          last_reported_units := units_so_far;
-         Printf.printf "\r%s : %Ld / %Ld %s - %d%%  cur : %.0f %s/s  etc : %02d:%02d:%02d%s"
+         let message = Printf.sprintf "\r%s : %Ld / %Ld %s - %d%%  cur : %.0f %s/s  etc : %02d:%02d:%02d"
            header
            units_so_far
            total_units
@@ -38,8 +38,18 @@ let gen_print_generic ~(header:string) ~(unit:string) ~(print_interval:float) =
            unit
            etc_hour
            etc_minute
-           etc_second
-           padding;
+           etc_second in
+         let padding =
+           let msg_len = String.length message in
+           let pad_len = !max_print_length - msg_len in
+           if pad_len > 0 then
+             String.make pad_len ' '
+           else
+             begin
+               max_print_length := msg_len;
+               ""
+             end in
+         Printf.printf "%s%s " message padding;
          flush stdout
        end;
      if percent = 100 then

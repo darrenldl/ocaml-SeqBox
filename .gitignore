@@ -3,6 +3,8 @@
 */*.sbx
 *.sbx
 _build
+*.install
+*/*.install
 /src/dummy
 /src/dummy1
 /src/dummy1.sbx
