@@ -7,7 +7,7 @@
   - Better progress reporting for encoding, decoding and rescuing
   - Fixed progress reporting issues with rescuing
     - in 1.0.0, rescue mode only does a progress report when it outputs a block, rather than after scanning the block bytes
-    - this makes osbx outputs nothing when the scanned file is large and contains no valid blocks
+    - this makes osbx outputs no log when the scanned file section is large and contains no valid blocks
   - Fixed log writing with rescuing
     - in 1.0.0, rescue mode only writes to log file when a valid block is found
     - now it is changed to update log on bytes read, not on blocks written
