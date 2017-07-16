@@ -1,4 +1,7 @@
-## 1.0.1  (development version, not published yet)
+## 1.1.0  (development version, not published yet)
+  - Added "show" command
+
+## 1.0.1  (submitted to opam repo, waiting for merge approval)
   - Changed rescue mode to use the original bytes of the file, rather than regenerating the block bytes itself
   - Fixed jbuild file to work on macOS when building
   - Added graceful handling of CTRL-C breaks in rescue mode
