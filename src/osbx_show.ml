@@ -109,7 +109,7 @@ let show (find_all:bool) (in_filename:string) : unit =
           | []         -> Printf.printf "No metadata blocks found\n"
           | lst        ->
             begin
-              Printf.printf "Showing first up to 100 metadata blocks\n";
+              Printf.printf "Showing first up to %Ld metadata blocks\n" Param.Show.meta_list_max_length;
               print_newline ();
               print_meta_blocks lst
             end

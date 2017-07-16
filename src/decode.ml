@@ -176,7 +176,7 @@ module Stats = struct
       | (None,               None)                  ->
         Printf.printf "Neither recorded hash nor output file hash is available\n";
     end;
-    Printf.printf "First up to 500 failing positions (block and bytes index start at 0)\n";
+    Printf.printf "First up to %Ld failing positions (block and bytes index start at 0)\n" Param.Decode.failure_list_max_length;
     print_failed_pos stats.block_size stats.failed_block_pos_list
   ;;
 end
