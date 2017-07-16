@@ -76,7 +76,7 @@ module Stats = struct
     ; data_blocks_decoded   = stats.data_blocks_decoded
     ; blocks_failed         = stats.blocks_failed         <+> 1L
     ; failed_block_pos_list =
-        if stats.blocks_failed < 500L then
+        if stats.blocks_failed < Param.Decode.failure_list_max_length then
           stats.blocks_processed :: stats.failed_block_pos_list
         else
           stats.failed_block_pos_list

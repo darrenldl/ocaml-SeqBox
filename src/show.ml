@@ -8,19 +8,29 @@ let (<->) = Int64.sub;;
 let (<*>) = Int64.mul;;
 
 module Stats = struct
-  type t = { bytes_processed : int64
-           ; start_time      : float
+  type t = { bytes_processed   : int64
+           ; meta_blocks_found : int64
+           ; start_time        : float
            }
 
   let add_bytes_scanned (stats:t) ~(num:int64) : t =
-    { bytes_processed = stats.bytes_processed <+> num
-    ; start_time      = stats.start_time
+    { bytes_processed   = stats.bytes_processed <+> num
+    ; meta_blocks_found = stats.meta_blocks_found
+    ; start_time        = stats.start_time
+    }
+  ;;
+
+  let add_meta_block (stats:t) : t =
+    { bytes_processed   = stats.bytes_processed
+    ; meta_blocks_found = stats.meta_blocks_found <+> 1L
+    ; start_time        = stats.start_time
     }
   ;;
 
   let make_blank_scan_stats () : t =
-    { bytes_processed = 0L
-    ; start_time      = Sys.time ()
+    { bytes_processed   = 0L
+    ; meta_blocks_found = 0L
+    ; start_time        = Sys.time ()
     }
   ;;
 end
@@ -64,7 +74,7 @@ end = struct
 end
 
 module Processor = struct
-  let find_meta_blocks_proc ~(get_at_most:int) (in_file:Core.In_channel.t) : Block.t list =
+  let find_meta_blocks_proc ~(get_at_most:int64) (in_file:Core.In_channel.t) : Block.t list =
     let open Read_chunk in
     let len = Param.Decode.ref_block_scan_alignment in
     let bytes_to_block (raw_header:Header.raw_header) (chunk:bytes) : Block.t option =
@@ -78,7 +88,7 @@ module Processor = struct
     let rec find_meta_blocks_proc_internal (stats:stats) (acc:Block.t list) : stats * (Block.t list) =
       (* report progress *)
       Progress.report_scan stats in_file;
-      if List.length acc >= get_at_most then
+      if stats.meta_blocks_found >= get_at_most then
         (stats, acc)
       else
         match read in_file ~len with
@@ -106,14 +116,14 @@ module Processor = struct
               bytes_to_block raw_header chunk in
             let new_stats =
               Stats.add_bytes_scanned stats ~num:(Int64.of_int (Bytes.length chunk)) in
-            let new_acc =
+            let (new_stats, new_acc) =
               match test_block with
-              | None       -> acc
+              | None       -> (new_stats, acc)
               | Some block ->
                 if Block.is_meta block then
-                  block :: acc
+                  (Stats.add_meta_block new_stats, block :: acc)
                 else
-                  acc in
+                  (new_stats, acc) in
             find_meta_blocks_proc_internal new_stats new_acc in
     let (stats, res) = find_meta_blocks_proc_internal (Stats.make_blank_scan_stats ()) [] in
     Progress.print_newline_possibly_scan stats in_file;
@@ -121,7 +131,7 @@ module Processor = struct
   ;;
 
   let single_meta_fetcher (in_file:Core.In_channel.t) : Block.t option =
-    match find_meta_blocks_proc ~get_at_most:1 in_file with
+    match find_meta_blocks_proc ~get_at_most:1L in_file with
     | []       -> None
     | [x]      -> Some x
     | hd :: tl -> assert false
@@ -129,7 +139,7 @@ module Processor = struct
 
   (* return up to 100 metadata blocks found *)
   let multi_meta_fetcher (in_file:Core.In_channel.t) : Block.t list =
-    find_meta_blocks_proc ~get_at_most:100 in_file
+    find_meta_blocks_proc ~get_at_most:Param.Show.meta_list_max_length in_file
   ;;
 end
 
