@@ -13,7 +13,7 @@ let help_secs = [ `S Manpage.s_common_options
 
 let sbx_version =
   let doc = "Sbx container version" in
-  Arg.(value & opt (some string) None & info ["sbx_version"] ~docv:"SBX_VERSION" ~doc)
+  Arg.(value & opt (some string) None & info ["sbx-version"] ~docv:"SBX_VERSION" ~doc)
 ;;
 
 let force =
