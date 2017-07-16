@@ -276,6 +276,77 @@ end = struct
 end
 
 module Processor = struct
+  type find_both_result = { meta : Block.t option
+                          ; data : Block.t option
+                          }
+
+  let find_first_both_proc ?(newline_if_unfinished:bool = false) (in_file:Core.In_channel.t) : find_both_result =
+    let open Read_chunk in
+    let len = Param.Decode.ref_block_scan_alignment in
+    let bytes_to_block (raw_header:Header.raw_header) (chunk:bytes) : Block.t option =
+      try
+        Some (Block.of_bytes ~raw_header chunk)
+      with
+      | Header.Invalid_bytes
+      | Metadata.Invalid_bytes
+      | Block.Invalid_bytes
+      | Block.Invalid_size     -> None in
+    let rec find_first_both_proc_internal (result_so_far:find_both_result) (stats:scan_stats) : scan_stats * find_both_result =
+      (* report progress *)
+      Progress.report_scan stats in_file;
+      match result_so_far with
+      | { meta = Some _; data = Some _ } -> (stats, result_so_far)
+      | _                                ->
+        match read in_file ~len with
+        | None           -> (stats, result_so_far)
+        | Some { chunk } ->
+          if Bytes.length chunk < 16 then
+            (stats, result_so_far)
+          else
+            let test_header_bytes = Misc_utils.get_bytes chunk ~pos:0 ~len:16 in
+            let test_header : Header.raw_header option =
+              try
+                Some (Header.of_bytes test_header_bytes)
+              with
+              | Header.Invalid_bytes -> None in
+            match test_header with
+            | None            ->
+              let new_stats =
+                Stats.add_bytes_scanned stats ~num:(Int64.of_int (Bytes.length chunk)) in
+              find_first_both_proc_internal result_so_far new_stats (* go to next block *)
+            | Some raw_header ->
+              (* possibly grab more bytes depending on version *)
+              let chunk =
+                Processor_helpers.patch_block_bytes_if_needed in_file ~raw_header ~chunk in
+              let test_block : Block.t option =
+                bytes_to_block raw_header chunk in
+              let new_stats =
+                Stats.add_bytes_scanned stats ~num:(Int64.of_int (Bytes.length chunk)) in
+              match test_block with
+              | None       -> find_first_both_proc_internal result_so_far new_stats (* go to next block *)
+              | Some block ->
+                let new_result_so_far =
+                  { meta =
+                      begin
+                        match result_so_far.meta with
+                        | Some meta -> Some meta
+                        | None      -> if Block.is_meta block then Some block else None
+                      end
+                  ; data =
+                      begin
+                        match result_so_far.data with
+                        | Some data -> Some data
+                        | None      -> if Block.is_data block then Some block else None
+                      end
+                  } in
+                find_first_both_proc_internal new_result_so_far new_stats in
+    let (stats, res) = find_first_both_proc_internal { meta = None; data = None } (Stats.make_blank_scan_stats ()) in
+    Core.In_channel.seek in_file 0L;  (* reset seek position *)
+    if newline_if_unfinished then
+      Progress.print_newline_possibly_scan stats in_file;
+    res
+  ;;
+
   let find_first_block_proc ?(newline_if_unfinished:bool = false) ~(want_meta:bool) (in_file:Core.In_channel.t) : Block.t option =
     let open Read_chunk in
     let len = Param.Decode.ref_block_scan_alignment in 
@@ -296,12 +367,11 @@ module Processor = struct
       else
         None in
     let rec find_first_block_proc_internal (stats:scan_stats) : scan_stats * (Block.t option) =
+      (* report progress *)
       Progress.report_scan stats in_file;
       match read in_file ~len with
       | None           -> (stats, None)
       | Some { chunk } ->
-        (* report progress *)
-        Progress.report_scan stats in_file;
         if Bytes.length chunk < 16 then
           (stats, None)  (* no more bytes left in file *)
         else
