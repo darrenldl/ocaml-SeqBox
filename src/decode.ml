@@ -280,7 +280,9 @@ module Processor = struct
                           ; data : Block.t option
                           }
 
-  let find_first_both_proc ?(newline_if_unfinished:bool = false) (in_file:Core.In_channel.t) : find_both_result =
+  type preference = [ `Meta | `Data ]
+
+  let find_first_both_proc ?(newline_if_unfinished:bool = false) ~(prefer:preference) (in_file:Core.In_channel.t) : find_both_result =
     let open Read_chunk in
     let len = Param.Decode.ref_block_scan_alignment in
     let bytes_to_block (raw_header:Header.raw_header) (chunk:bytes) : Block.t option =
@@ -295,8 +297,10 @@ module Processor = struct
       (* report progress *)
       Progress.report_scan stats in_file;
       match result_so_far with
-      | { meta = Some _; data = Some _ } -> (stats, result_so_far)
-      | _                                ->
+      | { meta = Some _; data = Some _ }                     -> (stats, result_so_far)
+      | { meta = Some _; data = _ }      when prefer = `Meta -> (stats, result_so_far)
+      | { meta = _;      data = Some _ } when prefer = `Data -> (stats, result_so_far)
+      | _                                                    ->
         match read in_file ~len with
         | None           -> (stats, result_so_far)
         | Some { chunk } ->
@@ -495,19 +499,19 @@ module Processor = struct
     (* find a block to use as reference *)
     let ref_block : Block.t option =
       (* try to find a metadata block first *)
-      Printf.printf "Scanning for metadata block to be used as reference block\n";
-      match find_first_block_proc ~newline_if_unfinished:true ~want_meta:true in_file with
-      | Some block ->
+      Printf.printf "Scanning for a reference block\n";
+      match find_first_both_proc ~newline_if_unfinished:true ~prefer:`Meta in_file with
+      | { meta = Some block; data = _ }          ->
         begin
           Printf.printf "Metadata block found\n";
           Some block
         end
-      | None       ->
+      | { meta = None;       data = Some block } ->
         begin
           Printf.printf "No metadata blocks were found, resorting to data blocks\n";
-          Printf.printf "Scanning for data block to be used as reference block\n";
-          find_first_block_proc ~newline_if_unfinished:true ~want_meta:false in_file (* get the first usable data block *)
-        end in
+          Some block
+        end
+      | { meta = None;       data = None }       -> None in
     match ref_block with
     | None           -> raise (Packaged_exn "No usable blocks in file")
     | Some ref_block ->
