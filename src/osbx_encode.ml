@@ -42,7 +42,7 @@ let uid =
 
 let no_meta =
   let doc = "No metadata block" in
-  Arg.(value & flag & info ["nometa"] ~doc)
+  Arg.(value & flag & info ["no-meta"] ~doc)
 ;;
 
 let in_file =
