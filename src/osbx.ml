@@ -56,7 +56,7 @@ let rescue_cmd =
 
 let show_cmd =
   let open Osbx_show in
-  let doc = "search for and print metadata in sbx container" in
+  let doc = "search for and print metadata in sbx container (or file)" in
   (Term.(const show $ find_all $ in_file),
    Term.info "show" ~doc
   )
