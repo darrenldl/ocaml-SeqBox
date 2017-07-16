@@ -16,3 +16,7 @@ module Rescue = struct
   let progress_report_interval = 0.1  (* update every 100ms *)
   let log_write_interval       = 0.1  (* write  every 100ms *)
 end
+
+module Show = struct
+  let progress_report_interval = 0.1  (* update every 100ms *)
+end

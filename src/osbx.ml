@@ -54,8 +54,16 @@ let rescue_cmd =
   )
 ;;
 
+let show_cmd =
+  let open Osbx_show in
+  let doc = "search for and print metadata in sbx container" in
+  (Term.(const show $ find_all $ in_file),
+   Term.info "show" ~doc
+  )
+;;
+
 let () =
   (* catch CTRL-C breaks *)
   Sys.catch_break true;
-  Term.exit @@ Term.eval_choice default_cmd [encode_cmd; decode_cmd; rescue_cmd]
+  Term.exit @@ Term.eval_choice default_cmd [encode_cmd; decode_cmd; rescue_cmd; show_cmd]
 ;;

@@ -1,0 +1,144 @@
+open Sbx_block
+open Stream_file
+
+let (<+>) = Int64.add;;
+
+let (<->) = Int64.sub;;
+
+let (<*>) = Int64.mul;;
+
+module Stats = struct
+  type t = { bytes_processed : int64
+           ; start_time      : float
+           }
+
+  let add_bytes_scanned (stats:t) ~(num:int64) : t =
+    { bytes_processed = stats.bytes_processed <+> num
+    ; start_time      = stats.start_time
+    }
+  ;;
+
+  let make_blank_scan_stats () : t =
+    { bytes_processed = 0L
+    ; start_time      = Sys.time ()
+    }
+  ;;
+end
+
+type stats = Stats.t
+
+module Progress : sig
+  val report_scan                 : stats -> Core.In_channel.t -> unit
+
+  val print_newline_possibly_scan : stats -> Core.In_channel.t -> unit
+
+end = struct
+
+  let print_scan_progress_helper =
+    let header         = "Scan progress" in
+    let unit           = "bytes" in
+    let print_interval = Param.Show.progress_report_interval in
+    Progress_report.gen_print_generic ~header ~unit ~print_interval
+  ;;
+
+  let print_scan_progress ~(stats:stats) ~(total_bytes:int64) =
+    print_scan_progress_helper
+      ~start_time:stats.start_time
+      ~units_so_far:stats.bytes_processed
+      ~total_units:total_bytes
+  ;;
+
+  let report_scan : stats -> Core.In_channel.t -> unit =
+    (fun stats in_file ->
+       let total_bytes =
+         Core.In_channel.length in_file in
+       print_scan_progress ~stats ~total_bytes
+    )
+  ;;
+
+  let print_newline_possibly_scan (stats:stats) (in_file:Core.In_channel.t) : unit =
+    Progress_report.print_newline_if_not_done
+      ~units_so_far:stats.bytes_processed
+      ~total_units:(Core.In_channel.length in_file)
+  ;;
+end
+
+module Processor = struct
+  let find_meta_blocks_proc ~(get_at_most:int) (in_file:Core.In_channel.t) : Block.t list =
+    let open Read_chunk in
+    let len = Param.Decode.ref_block_scan_alignment in
+    let bytes_to_block (raw_header:Header.raw_header) (chunk:bytes) : Block.t option =
+      try
+        Some (Block.of_bytes ~raw_header chunk)
+      with
+      | Header.Invalid_bytes
+      | Metadata.Invalid_bytes
+      | Block.Invalid_bytes
+      | Block.Invalid_size     -> None in
+    let rec find_meta_blocks_proc_internal (stats:stats) (acc:Block.t list) : stats * (Block.t list) =
+      (* report progress *)
+      Progress.report_scan stats in_file;
+      if List.length acc >= get_at_most then
+        (stats, acc)
+      else
+        match read in_file ~len with
+        | None           -> (stats, acc)
+        | Some { chunk } ->
+          if Bytes.length chunk < 16 then
+            (stats, acc)
+          else
+          let test_header_bytes = Misc_utils.get_bytes chunk ~pos:0 ~len:16 in
+          let test_header : Header.raw_header option =
+            try
+              Some (Header.of_bytes test_header_bytes)
+            with
+            | Header.Invalid_bytes -> None in
+          match test_header with
+          | None            -> 
+            let new_stats =
+              Stats.add_bytes_scanned stats ~num:(Int64.of_int (Bytes.length chunk)) in
+            find_meta_blocks_proc_internal new_stats acc (* go to next block *)
+          | Some raw_header ->
+            (* possibly grab more bytes depending on version *)
+            let chunk =
+              Processor_helpers.patch_block_bytes_if_needed in_file ~raw_header ~chunk in
+            let test_block : Block.t option =
+              bytes_to_block raw_header chunk in
+            let new_stats =
+              Stats.add_bytes_scanned stats ~num:(Int64.of_int (Bytes.length chunk)) in
+            let new_acc =
+              match test_block with
+              | None       -> acc
+              | Some block ->
+                if Block.is_meta block then
+                  block :: acc
+                else
+                  acc in
+            find_meta_blocks_proc_internal new_stats new_acc in
+    let (stats, res) = find_meta_blocks_proc_internal (Stats.make_blank_scan_stats ()) [] in
+    Progress.print_newline_possibly_scan stats in_file;
+    res
+  ;;
+
+  let single_meta_fetcher (in_file:Core.In_channel.t) : Block.t option =
+    match find_meta_blocks_proc ~get_at_most:1 in_file with
+    | []       -> None
+    | [x]      -> Some x
+    | hd :: tl -> assert false
+  ;;
+
+  (* return up to 100 metadata blocks found *)
+  let multi_meta_fetcher (in_file:Core.In_channel.t) : Block.t list =
+    find_meta_blocks_proc ~get_at_most:100 in_file
+  ;;
+end
+
+module Process = struct
+  let fetch_single_meta ~(in_filename:string) : (Block.t option, string) result =
+    Stream.process_in ~in_filename Processor.single_meta_fetcher
+  ;;
+
+  let fetch_multi_meta ~(in_filename:string) : (Block.t list, string) result =
+    Stream.process_in ~in_filename Processor.multi_meta_fetcher
+  ;;
+end

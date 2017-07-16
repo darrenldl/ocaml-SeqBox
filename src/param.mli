@@ -12,3 +12,7 @@ module Rescue : sig
   val progress_report_interval : float
   val log_write_interval       : float
 end
+
+module Show : sig
+  val progress_report_interval : float
+end
