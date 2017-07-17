@@ -38,9 +38,9 @@ end
 type stats = Stats.t
 
 module Progress : sig
-  val report_scan                 : stats -> Core.In_channel.t -> unit
+  val report_scan                 : stats -> Core_kernel.In_channel.t -> unit
 
-  val print_newline_possibly_scan : stats -> Core.In_channel.t -> unit
+  val print_newline_possibly_scan : stats -> Core_kernel.In_channel.t -> unit
 
 end = struct
 
@@ -58,23 +58,23 @@ end = struct
       ~total_units:total_bytes
   ;;
 
-  let report_scan : stats -> Core.In_channel.t -> unit =
+  let report_scan : stats -> Core_kernel.In_channel.t -> unit =
     (fun stats in_file ->
        let total_bytes =
-         Core.In_channel.length in_file in
+         Core_kernel.In_channel.length in_file in
        print_scan_progress ~stats ~total_bytes
     )
   ;;
 
-  let print_newline_possibly_scan (stats:stats) (in_file:Core.In_channel.t) : unit =
+  let print_newline_possibly_scan (stats:stats) (in_file:Core_kernel.In_channel.t) : unit =
     Progress_report.print_newline_if_not_done
       ~units_so_far:stats.bytes_processed
-      ~total_units:(Core.In_channel.length in_file)
+      ~total_units:(Core_kernel.In_channel.length in_file)
   ;;
 end
 
 module Processor = struct
-  let find_meta_blocks_proc ~(get_at_most:int64) (in_file:Core.In_channel.t) : Block.t list =
+  let find_meta_blocks_proc ~(get_at_most:int64) (in_file:Core_kernel.In_channel.t) : Block.t list =
     let open Read_chunk in
     let len = Param.Decode.ref_block_scan_alignment in
     let rec find_meta_blocks_proc_internal (stats:stats) (acc:Block.t list) : stats * (Block.t list) =
@@ -122,7 +122,7 @@ module Processor = struct
     res
   ;;
 
-  let single_meta_fetcher (in_file:Core.In_channel.t) : Block.t option =
+  let single_meta_fetcher (in_file:Core_kernel.In_channel.t) : Block.t option =
     match find_meta_blocks_proc ~get_at_most:1L in_file with
     | []       -> None
     | [x]      -> Some x
@@ -130,7 +130,7 @@ module Processor = struct
   ;;
 
   (* return up to 100 metadata blocks found *)
-  let multi_meta_fetcher (in_file:Core.In_channel.t) : Block.t list =
+  let multi_meta_fetcher (in_file:Core_kernel.In_channel.t) : Block.t list =
     find_meta_blocks_proc ~get_at_most:Param.Show.meta_list_max_length in_file
   ;;
 end
