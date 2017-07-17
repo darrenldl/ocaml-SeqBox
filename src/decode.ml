@@ -487,7 +487,7 @@ module Processor = struct
         end
       | { meta = None;       data = Some block } ->
         begin
-          Printf.printf "No metadata blocks were found, resorting to data blocks\n";
+          Printf.printf "No metadata blocks were found, resorting to data block\n";
           Some block
         end
       | { meta = None;       data = None }       -> None in
