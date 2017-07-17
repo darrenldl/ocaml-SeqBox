@@ -1,5 +1,7 @@
 ## 1.1.0  (development version, not published yet)
   - Added "show" command
+  - Switched from using Core to Core\_kernel
+    - Now osbx can be compiled on Windows
 
 ## 1.0.1  (submitted to opam repo, waiting for merge approval)
   - Changed rescue mode to use the original bytes of the file, rather than regenerating the block bytes itself
