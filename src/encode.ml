@@ -228,12 +228,3 @@ module Process = struct
     | Sbx_block.Header.Invalid_uid_length -> Error "Invalid uid length"
   ;;
 end
-
-(* let test_encode () =
-  let open Metadata in
-  match Process.encode_file ~uid:None ~want_meta:true ~in_filename:"dummy_file" ~out_filename:"dummy_file_encoded" with
-  | Ok stats  -> Stats.print_stats stats
-  | Error msg -> Printf.printf "Error : %s\n" msg
-;;
-
-test_encode () *)

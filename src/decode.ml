@@ -315,7 +315,7 @@ module Processor = struct
               let chunk =
                 Processor_helpers.patch_block_bytes_if_needed in_file ~raw_header ~chunk in
               let test_block : Block.t option =
-                Processor_components.bytes_to_block raw_header chunk in
+                Processor_components.bytes_to_block ~raw_header chunk in
               let new_stats =
                 Stats.add_bytes_scanned stats ~num:(Int64.of_int (Bytes.length chunk)) in
               match test_block with
@@ -353,7 +353,7 @@ module Processor = struct
         else
           Header.raw_header_is_data raw_header in
       if want_block then
-        Processor_components.bytes_to_block raw_header chunk
+        Processor_components.bytes_to_block ~raw_header chunk
       else
         None in
     let rec find_first_block_proc_internal (stats:scan_stats) : scan_stats * (Block.t option) =
@@ -408,14 +408,7 @@ module Processor = struct
       match read in_file ~len with
       | None           -> (stats, None)
       | Some { chunk } ->
-        let block =
-          try
-            Some (Block.of_bytes chunk)
-          with
-          | Header.Invalid_bytes
-          | Metadata.Invalid_bytes
-          | Block.Invalid_bytes
-          | Block.Invalid_size     -> None in
+        let block = Processor_components.bytes_to_block chunk in
         match block with
         | None       -> find_valid_data_block_proc_internal (Stats.add_failed_block stats) (* move onto finding next block *)
         | Some block ->
@@ -590,12 +583,3 @@ module Process = struct
   ;;
 
 end
-
-(* let test_decode () =
-  let open Metadata in
-  match Process.decode_file ~in_filename:"dummy_file_encoded" ~out_filename:(Some "dummy_file2") with
-  | Ok stats  -> Stats.print_stats stats
-  | Error msg -> Printf.printf "Error : %s\n" msg
-;;
-
-test_decode () *)
