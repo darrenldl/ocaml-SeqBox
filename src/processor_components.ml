@@ -12,7 +12,7 @@ let bytes_to_block ?(raw_header:Header.raw_header option) (chunk:bytes) : Block.
   | Block.Invalid_size     -> None
 ;;
 
-let patch_block_bytes_if_needed (in_file:Core.In_channel.t) ~(raw_header:Header.raw_header) ~(chunk:bytes) : bytes =
+let patch_block_bytes_if_needed (in_file:Core_kernel.In_channel.t) ~(raw_header:Header.raw_header) ~(chunk:bytes) : bytes =
   let ideal_len   = ver_to_block_size raw_header.version in
   let missing_len = ideal_len - (Bytes.length chunk) in
   if missing_len > 0 then
