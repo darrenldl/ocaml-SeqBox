@@ -285,12 +285,7 @@ module Processor = struct
     let out_filename =
       let uid_hex =
         Conv_utils.bytes_to_hex_string (Block.block_to_file_uid block) in
-      let separator =
-        if String.get out_dirname ((String.length out_dirname) - 1) = '/' then
-          ""
-        else
-          "/" in
-      String.concat separator [out_dirname; uid_hex] in
+      Misc_utils.make_path [out_dirname; uid_hex] in
     let output_proc_internal_processor (out_file:Core.Out_channel.t) : unit =
       let open Write_chunk in
       (* Core.Out_channel.seek out_file (Int64.sub (Core.Out_channel.length out_file) 1L); (* append to file *) *)
@@ -313,8 +308,6 @@ module Processor = struct
      *
      * print a new line before exitting to not print on the same line as the stats
     *)
-    (* report progress *)
-    (* Progress.report_rescue stats in_file; *)
     match scan_proc ~stats ~log_filename in_file with
     | (stats, None)                 -> stats  (* ran out of valid blocks in input file *)
     | (stats, Some block_and_chunk) ->

@@ -42,7 +42,7 @@ let list_find_option (pred:('a -> bool)) (lst:'a list) : 'a option =
   | Not_found -> None
 ;;
 
-let make_dirname (path_parts:string list) : string =
+let make_path (path_parts:string list) : string =
   let strip_slash str =
     if String.get str ((String.length str) - 1) = '/' then
       get_bytes str ~pos:0 ~len:((String.length str) - 1)
