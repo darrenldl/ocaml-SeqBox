@@ -285,14 +285,6 @@ module Processor = struct
   let find_first_both_proc ?(newline_if_unfinished:bool = false) ~(prefer:preference) (in_file:Core.In_channel.t) : find_both_result =
     let open Read_chunk in
     let len = Param.Decode.ref_block_scan_alignment in
-    let bytes_to_block (raw_header:Header.raw_header) (chunk:bytes) : Block.t option =
-      try
-        Some (Block.of_bytes ~raw_header chunk)
-      with
-      | Header.Invalid_bytes
-      | Metadata.Invalid_bytes
-      | Block.Invalid_bytes
-      | Block.Invalid_size     -> None in
     let rec find_first_both_proc_internal (result_so_far:find_both_result) (stats:scan_stats) : scan_stats * find_both_result =
       (* report progress *)
       Progress.report_scan stats in_file;
@@ -323,7 +315,7 @@ module Processor = struct
               let chunk =
                 Processor_helpers.patch_block_bytes_if_needed in_file ~raw_header ~chunk in
               let test_block : Block.t option =
-                bytes_to_block raw_header chunk in
+                Processor_components.bytes_to_block raw_header chunk in
               let new_stats =
                 Stats.add_bytes_scanned stats ~num:(Int64.of_int (Bytes.length chunk)) in
               match test_block with
@@ -361,13 +353,7 @@ module Processor = struct
         else
           Header.raw_header_is_data raw_header in
       if want_block then
-        try
-          Some (Block.of_bytes ~raw_header chunk)
-        with
-        | Header.Invalid_bytes
-        | Metadata.Invalid_bytes
-        | Block.Invalid_bytes
-        | Block.Invalid_size     -> None
+        Processor_components.bytes_to_block raw_header chunk
       else
         None in
     let rec find_first_block_proc_internal (stats:scan_stats) : scan_stats * (Block.t option) =
