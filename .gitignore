@@ -36,3 +36,4 @@ tests/osbx
 /tests/rescue_log
 /tests/rescued_data/*
 /tests/rescue1
+/tests/crc1
