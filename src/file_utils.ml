@@ -23,7 +23,7 @@ let getmtime_uint64 ~(filename:string) : uint64 =
 module Processor = struct
   let file_size_getter : int64 Stream.in_processor =
     (fun in_file ->
-       Core.In_channel.length in_file
+       Core_kernel.In_channel.length in_file
     )
   ;;
 end
