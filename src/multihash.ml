@@ -49,6 +49,15 @@ module Specs = struct
   ;;
 end
 
+let hash_bytes_equal (a:hash_bytes) (b:hash_bytes) : bool =
+  let (hash_type_a, raw_a) = a in
+  let (hash_type_b, raw_b) = b in
+  if hash_type_a = hash_type_b then
+    (Bytes.compare raw_a raw_b) = 0
+  else
+    false
+;;
+
 let hash_type_to_string ~(hash_type:hash_type) : string =
   match hash_type with
   | `SHA1         -> "SHA1"
@@ -80,6 +89,11 @@ let hash_bytes_to_multihash ~(hash_bytes:hash_bytes) : bytes =
   let { Specs.hash_func_type; digest_length } = Specs.hash_type_to_param ~hash_type in
   let len_bytes                               = Conv_utils.uint8_to_bytes (Uint8.of_int digest_length) in
   Bytes.concat "" [hash_func_type; len_bytes; raw]
+;;
+
+let hash_bytes_to_hash_type        ~(hash_bytes:hash_bytes) : hash_type =
+  let (hash_type, _) = hash_bytes in
+  hash_type
 ;;
 
 let hash_bytes_to_hash_type_string ~(hash_bytes:hash_bytes) : bytes =

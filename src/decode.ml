@@ -17,8 +17,8 @@ module Stats = struct
            ; data_blocks_decoded   : int64
            ; blocks_failed         : int64
            ; failed_block_pos_list : int64 list
-           ; recorded_hash         : bytes option
-           ; output_file_hash      : bytes option
+           ; recorded_hash         : Multihash.hash_bytes option
+           ; output_file_hash      : Multihash.hash_bytes option
            ; start_time            : float
            }
 
@@ -86,7 +86,7 @@ module Stats = struct
     }
   ;;
   
-  let add_hashes ~(recorded_hash:bytes option) ~(output_file_hash:bytes option) (stats:t) : t =
+  let add_hashes ~(recorded_hash:Multihash.hash_bytes option) ~(output_file_hash:Multihash.hash_bytes option) (stats:t) : t =
     { block_size            = stats.block_size
     ; blocks_processed      = stats.blocks_processed
     ; meta_blocks_decoded   = stats.meta_blocks_decoded
@@ -151,9 +151,22 @@ module Stats = struct
     let (hour, minute, second) = Progress_report.seconds_to_hms (int_of_float (Sys.time() -. stats.start_time)) in
     Printf.printf "Time elapsed                                   : %02d:%02d:%02d\n" hour minute second;
     Printf.printf "Recorded hash                                  : %s\n"
-      (match stats.recorded_hash    with | Some hsh -> Conv_utils.bytes_to_hex_string hsh | None -> "N/A");
+      (match stats.recorded_hash with
+       | Some hsh ->
+         Printf.sprintf "%s - %s"
+           (Multihash.hash_bytes_to_hash_type_string hsh)
+           (Conv_utils.bytes_to_hex_string (Multihash.hash_bytes_to_raw_hash hsh))
+       | None     ->
+         "N/A"
+      );
     Printf.printf "Hash of the output file                        : %s\n"
-      (match stats.output_file_hash with | Some hsh -> Conv_utils.bytes_to_hex_string hsh | None -> "N/A");
+      (match stats.output_file_hash with
+       | Some hsh ->
+         Printf.sprintf "%s - %s"
+           (Multihash.hash_bytes_to_hash_type_string hsh)
+           (Conv_utils.bytes_to_hex_string (Multihash.hash_bytes_to_raw_hash hsh))
+       | None     ->
+         "N/A - recorded hash type may not be supported by osbx");
     if stats.meta_blocks_decoded = 0L then
       begin
         print_newline ();
@@ -165,7 +178,7 @@ module Stats = struct
     begin
       match (stats.recorded_hash, stats.output_file_hash) with
       | (Some recorded_hash, Some output_file_hash) ->
-        if (Bytes.compare recorded_hash output_file_hash) = 0 then
+        if Multihash.hash_bytes_equal recorded_hash output_file_hash then
           Printf.printf "The output file hash matches the recorded hash\n"
         else
           Printf.printf "The output file hash does NOT match the recorded hash\n"
@@ -509,12 +522,12 @@ module Processor = struct
           | Not_found -> None
         else
           None in
-      let recorded_hash : bytes option =
+      let recorded_hash : Multihash.hash_bytes option =
         let open Metadata in
         let metadata_list      = dedup (Block.block_to_meta ref_block) in
         try
           match List.find (function | HSH _ -> true | _ -> false) metadata_list with
-          | HSH hash_bytes -> Some (Multihash.hash_bytes_to_raw_hash ~hash_bytes)
+          | HSH hash_bytes -> Some hash_bytes
           | _              -> None
         with
         | Not_found -> None in
@@ -571,13 +584,36 @@ module Process = struct
         begin
           try
             Unix.LargeFile.truncate out_filename trunc_size;
-            let output_file_hash = hash_file_w_warning ~in_filename:out_filename in
-            Ok (Stats.add_hashes ~recorded_hash:None ~output_file_hash stats)
+            match stats.recorded_hash with
+            | Some hash_bytes ->
+              begin
+                match Multihash.hash_bytes_to_hash_type ~hash_bytes with
+                | `SHA2_256 | `SHA256 -> 
+                  let output_file_hash =
+                    match hash_file_w_warning ~in_filename:out_filename with
+                    | Some raw ->
+                      Some (Multihash.raw_hash_to_hash_bytes ~hash_type:`SHA256 ~raw)
+                    | None     -> None in
+                  Ok (Stats.add_hashes ~recorded_hash:None ~output_file_hash stats)
+                | _ ->
+                  Ok stats
+              end
+            | None            ->
+              let output_file_hash =
+                match hash_file_w_warning ~in_filename:out_filename with
+                | Some raw ->
+                  Some (Multihash.raw_hash_to_hash_bytes ~hash_type:`SHA256 ~raw)
+                | None     -> None in
+              Ok (Stats.add_hashes ~recorded_hash:None ~output_file_hash stats)
           with
           | _ -> Error "failed to truncate output file"
         end
       | Ok (stats, None)            ->
-        let output_file_hash = hash_file_w_warning ~in_filename:out_filename in
+        let output_file_hash =
+          match hash_file_w_warning ~in_filename:out_filename with
+          | Some raw ->
+            Some (Multihash.raw_hash_to_hash_bytes ~hash_type:`SHA256 ~raw)
+          | None     -> None in
         Ok (Stats.add_hashes ~recorded_hash:None ~output_file_hash stats)
       | Error msg                   -> Error msg
   ;;

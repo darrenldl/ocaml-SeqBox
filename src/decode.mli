@@ -9,8 +9,8 @@ module Stats : sig
            ; data_blocks_decoded   : int64
            ; blocks_failed         : int64
            ; failed_block_pos_list : int64 list
-           ; recorded_hash         : bytes option
-           ; output_file_hash      : bytes option
+           ; recorded_hash         : Multihash.hash_bytes option
+           ; output_file_hash      : Multihash.hash_bytes option
            ; start_time            : float
            }
 
