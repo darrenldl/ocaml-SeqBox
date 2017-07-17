@@ -22,8 +22,3 @@ let patch_block_bytes_if_needed (in_file:Core.In_channel.t) ~(raw_header:Header.
   else
     chunk
 ;;
-
-let patch_and_make_block ~(raw_header:Header.raw_header) ~(chunk:bytes) (in_file:Core.In_channel.t) : Block.t option =
-  let chunk = patch_block_bytes_if_needed in_file ~raw_header ~chunk in
-  bytes_to_block ~raw_header chunk
-;;
