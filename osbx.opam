@@ -16,7 +16,7 @@ depends: [
   "stdint"         {build}
   "nocrypto"       {build}
   "angstrom"       {build}
-  "core"           {build}
+  "core_kernel"    {build}
   "hex"            {build}
   "ctypes"         {build}
   "ctypes-foreign" {build}
