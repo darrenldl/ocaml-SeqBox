@@ -35,3 +35,4 @@ tests/osbx
 /tests/rescue3.sbx
 /tests/rescue_log
 /tests/rescued_data/*
+/tests/rescue1

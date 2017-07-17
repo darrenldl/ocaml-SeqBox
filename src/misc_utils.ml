@@ -41,3 +41,13 @@ let list_find_option (pred:('a -> bool)) (lst:'a list) : 'a option =
   with
   | Not_found -> None
 ;;
+
+let make_dirname (path_parts:string list) : string =
+  let strip_slash str =
+    if String.get str ((String.length str) - 1) = '/' then
+      get_bytes str ~pos:0 ~len:((String.length str) - 1)
+    else
+      str in
+  let lst = List.map strip_slash path_parts in
+  String.concat "/" lst
+;;
