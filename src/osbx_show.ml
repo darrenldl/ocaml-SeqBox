@@ -28,7 +28,8 @@ let print_meta (block:Block.t) : unit =
     assert false
   else
     let open Metadata in
-    let metadata_list           = dedup (Block.block_to_meta block) in
+    let uid : string  = Conv_utils.bytes_to_hex_string (Block.block_to_file_uid block) in
+    let metadata_list = dedup (Block.block_to_meta block) in
     let fnm : string option =
       match Misc_utils.list_find_option (function | FNM _ -> true | _ -> false) metadata_list with
       | Some (FNM v) -> Some v
@@ -59,6 +60,8 @@ let print_meta (block:Block.t) : unit =
       | Some (HSH v) -> Some (Conv_utils.bytes_to_hex_string (Multihash.hash_bytes_to_raw_hash v))
       | None         -> None
       | _            -> assert false in
+    Printf.printf "File UID                     : %s\n"
+      uid;
     Printf.printf "File name                    : %s\n"
       (string_option_to_string fnm);
     Printf.printf "Sbx container name           : %s\n"
