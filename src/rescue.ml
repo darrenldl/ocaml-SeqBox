@@ -227,14 +227,6 @@ module Processor = struct
   let scan_proc ~(stats:stats) ~(log_filename:string option) (in_file:Core.In_channel.t) : stats * ((Block.t * bytes) option) =
     let open Read_chunk in
     let len = Param.Rescue.scan_alignment in
-    let bytes_to_block (raw_header:Header.raw_header) (chunk:bytes) : Block.t option =
-      try
-        Some (Block.of_bytes ~raw_header chunk)
-      with
-        | Header.Invalid_bytes
-        | Metadata.Invalid_bytes
-        | Block.Invalid_bytes
-        | Block.Invalid_size     -> None in
     let rec scan_proc_internal (stats:stats) : stats * ((Block.t * bytes) option) =
       (* report progress *)
       Progress.report_rescue stats in_file;
@@ -267,7 +259,7 @@ module Processor = struct
                 let chunk =
                   Processor_components.patch_block_bytes_if_needed in_file ~raw_header ~chunk in
                 let test_block : Block.t option =
-                  bytes_to_block raw_header chunk in
+                  Processor_components.bytes_to_block ~raw_header chunk in
                 let new_stats =
                   Stats.add_bytes stats ~num:(Int64.of_int (Bytes.length chunk)) in
                 match test_block with
