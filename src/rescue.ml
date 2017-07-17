@@ -280,7 +280,6 @@ module Processor = struct
       Misc_utils.make_path [out_dirname; uid_hex] in
     let output_proc_internal_processor (out_file:Core.Out_channel.t) : unit =
       let open Write_chunk in
-      (* Core.Out_channel.seek out_file (Int64.sub (Core.Out_channel.length out_file) 1L); (* append to file *) *)
       write out_file ~chunk in  (* use the actual bytes in original file rather than generating from scratch *)
     let new_stats =
       if Block.is_meta block then
@@ -297,8 +296,6 @@ module Processor = struct
    *)
   let rec scan_and_output ~(stats:stats) ~(out_dirname:string) ~(log_filename:string option) (in_file:Core.In_channel.t) : stats =
     (* exit if failed to write to log
-     *
-     * print a new line before exitting to not print on the same line as the stats
     *)
     match scan_proc ~stats ~log_filename in_file with
     | (stats, None)                 -> stats  (* ran out of valid blocks in input file *)
