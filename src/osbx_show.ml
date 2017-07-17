@@ -55,9 +55,13 @@ let print_meta (block:Block.t) : unit =
       | Some (SDT v) -> Some v
       | None         -> None
       | _            -> assert false in
-    let hsh : bytes  option =
+    let hsh : string option =
       match Misc_utils.list_find_option (function | HSH _ -> true | _ -> false) metadata_list with
-      | Some (HSH v) -> Some (Conv_utils.bytes_to_hex_string (Multihash.hash_bytes_to_raw_hash v))
+      | Some (HSH v) ->
+        Some (Printf.sprintf "%s - %s"
+                (Multihash.hash_bytes_to_hash_type_string v)
+                (Conv_utils.bytes_to_hex_string (Multihash.hash_bytes_to_raw_hash v))
+             )
       | None         -> None
       | _            -> assert false in
     Printf.printf "File UID                     : %s\n"
