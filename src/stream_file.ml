@@ -44,7 +44,7 @@ module Read_into_buf = struct
   type read_stats  = { read_count : int }
   type read_result = read_stats option
 
-  let read_with_jitter ~(buf:bytes) (in_file:Core.In_channel.t) ~(len:int) : int =
+  let read_with_jitter ~(buf:bytes) (in_file:Core_kernel.In_channel.t) ~(len:int) : int =
     (* jitter = read where read count is smaller than requested but
      * there is still more data available in the channel
      *
@@ -53,7 +53,7 @@ module Read_into_buf = struct
      *)
     let jitter_threshold = 3 in
     let rec read_with_jitter_internal ~(read_so_far:int) ~(tries_left:int) : int =
-      let read_count  : int = Core.In_channel.input in_file ~buf ~pos:read_so_far ~len:(len - read_so_far) in
+      let read_count  : int = Core_kernel.In_channel.input in_file ~buf ~pos:read_so_far ~len:(len - read_so_far) in
       let read_so_far : int = read_so_far + read_count in
       let tries_left  : int = tries_left - 1 in
       if      read_count < 0 then
@@ -68,7 +68,7 @@ module Read_into_buf = struct
     read_with_jitter_internal ~read_so_far:0 ~tries_left:jitter_threshold
   ;;
 
-  let read ?(offset:int = 0) ?(len:int option) (in_file:Core.In_channel.t) ~(buf:bytes) : read_result =
+  let read ?(offset:int = 0) ?(len:int option) (in_file:Core_kernel.In_channel.t) ~(buf:bytes) : read_result =
     let buf_size = Bytes.length buf in
     if offset >= buf_size then
       raise Invalid_offset
@@ -94,7 +94,7 @@ module Read_chunk = struct
   type read_content = { chunk : bytes }
   type read_result  = read_content option
 
-  let read (in_file:Core.In_channel.t) ~(len:int) : read_result =
+  let read (in_file:Core_kernel.In_channel.t) ~(len:int) : read_result =
     try
       let buf = General_helper.make_buffer len in
       match Read_into_buf.read in_file ~buf with
@@ -112,7 +112,7 @@ module Write_from_buf = struct
   exception Invalid_offset
   exception Invalid_length
 
-  let write ?(offset:int = 0) ?(len:int option) (out_file:Core.Out_channel.t) ~(buf:bytes) : unit =
+  let write ?(offset:int = 0) ?(len:int option) (out_file:Core_kernel.Out_channel.t) ~(buf:bytes) : unit =
     let buf_size = Bytes.length buf in
     if offset >= buf_size then
       raise Invalid_offset
@@ -124,12 +124,12 @@ module Write_from_buf = struct
       if len < 0 then
         raise Invalid_length
       else
-        Core.Out_channel.output out_file ~buf ~pos:offset ~len
+        Core_kernel.Out_channel.output out_file ~buf ~pos:offset ~len
   ;;
 end
 
 module Write_chunk = struct
-  let write (out_file:Core.Out_channel.t) ~(chunk:bytes) : unit =
+  let write (out_file:Core_kernel.Out_channel.t) ~(chunk:bytes) : unit =
     try
       Write_from_buf.write out_file ~buf:chunk
     with
@@ -139,29 +139,29 @@ module Write_chunk = struct
 end
 
 module Stream = struct
-  type 'a in_out_processor = Core.In_channel.t  -> Core.Out_channel.t -> 'a
+  type 'a in_out_processor = Core_kernel.In_channel.t  -> Core_kernel.Out_channel.t -> 'a
 
-  type 'a in_processor     = Core.In_channel.t  -> 'a
+  type 'a in_processor     = Core_kernel.In_channel.t  -> 'a
 
-  type 'a out_processor    = Core.Out_channel.t -> 'a
+  type 'a out_processor    = Core_kernel.Out_channel.t -> 'a
 
   let process_in_out ?(pack_break_into_error:bool = true) ~(append:bool) ~(in_filename:string) ~(out_filename:string) (processor:('a in_out_processor)) : ('a, string) result =
     try
-      let in_file  = Core.In_channel.create ~binary:true in_filename  in
+      let in_file  = Core_kernel.In_channel.create ~binary:true in_filename  in
       let res =
-        Core.protect ~f:(fun () ->
-            let out_file = Core.Out_channel.create ~binary:true ~append out_filename in
-            Core.protect ~f:(fun () -> processor in_file out_file)
+        Core_kernel.protect ~f:(fun () ->
+            let out_file = Core_kernel.Out_channel.create ~binary:true ~append out_filename in
+            Core_kernel.protect ~f:(fun () -> processor in_file out_file)
               ~finally:(fun () ->
                   try
-                    Core.Out_channel.close out_file
+                    Core_kernel.Out_channel.close out_file
                   with
                   | _ -> () (* ignore close failures *)
                 )
           )
           ~finally:(fun () ->
               try
-                Core.In_channel.close in_file
+                Core_kernel.In_channel.close in_file
               with
               | _ -> () (* ignore close failures *)
             ) in
@@ -184,12 +184,12 @@ module Stream = struct
 
   let process_in ?(pack_break_into_error:bool = true) ~(in_filename:string) (processor:('a in_processor))   : ('a, string) result =
     try
-      let in_file = Core.In_channel.create ~binary:true in_filename in
+      let in_file = Core_kernel.In_channel.create ~binary:true in_filename in
       let res =
-        Core.protect ~f:(fun () -> processor in_file)
+        Core_kernel.protect ~f:(fun () -> processor in_file)
           ~finally:(fun () ->
               try
-                Core.In_channel.close in_file
+                Core_kernel.In_channel.close in_file
               with
               | _ -> () (* ignore close failures *)
             ) in
@@ -210,12 +210,12 @@ module Stream = struct
 
   let process_out ?(pack_break_into_error:bool = true) ~(append:bool) ~(out_filename:string) (processor:('a out_processor)) : ('a, string) result =
     try
-      let out_file = Core.Out_channel.create ~binary:true ~append out_filename in
+      let out_file = Core_kernel.Out_channel.create ~binary:true ~append out_filename in
       let res =
-        Core.protect ~f:(fun () -> processor out_file)
+        Core_kernel.protect ~f:(fun () -> processor out_file)
           ~finally:(fun () ->
               try
-                Core.Out_channel.close out_file
+                Core_kernel.Out_channel.close out_file
               with
               | _ -> () (* ignore close failures *)
             ) in
