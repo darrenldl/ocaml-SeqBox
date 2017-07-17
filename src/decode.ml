@@ -312,10 +312,8 @@ module Processor = struct
               find_first_both_proc_internal result_so_far new_stats (* go to next block *)
             | Some raw_header ->
               (* possibly grab more bytes depending on version *)
-              let chunk =
-                Processor_helpers.patch_block_bytes_if_needed in_file ~raw_header ~chunk in
               let test_block : Block.t option =
-                Processor_components.bytes_to_block ~raw_header chunk in
+                Processor_components.patch_and_make_block ~raw_header ~chunk in_file in
               let new_stats =
                 Stats.add_bytes_scanned stats ~num:(Int64.of_int (Bytes.length chunk)) in
               match test_block with
@@ -379,7 +377,7 @@ module Processor = struct
           | Some raw_header ->
             (* possibly grab more bytes depending on version *)
             let chunk =
-              Processor_helpers.patch_block_bytes_if_needed in_file ~raw_header ~chunk in
+              Processor_components.patch_block_bytes_if_needed in_file ~raw_header ~chunk in
             let test_block : Block.t option =
               bytes_to_block raw_header chunk in
             let new_stats =

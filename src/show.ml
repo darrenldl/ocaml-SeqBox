@@ -77,14 +77,6 @@ module Processor = struct
   let find_meta_blocks_proc ~(get_at_most:int64) (in_file:Core.In_channel.t) : Block.t list =
     let open Read_chunk in
     let len = Param.Decode.ref_block_scan_alignment in
-    let bytes_to_block (raw_header:Header.raw_header) (chunk:bytes) : Block.t option =
-      try
-        Some (Block.of_bytes ~raw_header chunk)
-      with
-      | Header.Invalid_bytes
-      | Metadata.Invalid_bytes
-      | Block.Invalid_bytes
-      | Block.Invalid_size     -> None in
     let rec find_meta_blocks_proc_internal (stats:stats) (acc:Block.t list) : stats * (Block.t list) =
       (* report progress *)
       Progress.report_scan stats in_file;
@@ -110,10 +102,8 @@ module Processor = struct
             find_meta_blocks_proc_internal new_stats acc (* go to next block *)
           | Some raw_header ->
             (* possibly grab more bytes depending on version *)
-            let chunk =
-              Processor_helpers.patch_block_bytes_if_needed in_file ~raw_header ~chunk in
             let test_block : Block.t option =
-              bytes_to_block raw_header chunk in
+              Processor_components.patch_and_make_block ~raw_header ~chunk in_file in
             let new_stats =
               Stats.add_bytes_scanned stats ~num:(Int64.of_int (Bytes.length chunk)) in
             let (new_stats, new_acc) =

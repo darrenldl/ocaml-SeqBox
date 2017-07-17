@@ -265,7 +265,7 @@ module Processor = struct
               | Some raw_header ->
                 (* possibly grab more bytes depending on version *)
                 let chunk =
-                  Processor_helpers.patch_block_bytes_if_needed in_file ~raw_header ~chunk in
+                  Processor_components.patch_block_bytes_if_needed in_file ~raw_header ~chunk in
                 let test_block : Block.t option =
                   bytes_to_block raw_header chunk in
                 let new_stats =
