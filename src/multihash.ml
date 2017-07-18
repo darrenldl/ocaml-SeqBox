@@ -1,6 +1,7 @@
 open Stdint
 
 exception Length_mismatch
+exception Unsupported_hash
 
 type hash_type  = [ `SHA1
                   | `SHA2_256     | `SHA256
@@ -21,16 +22,14 @@ module Specs = struct
 
   let hash_type_to_param ~(hash_type:hash_type) : param =
     match hash_type with
-    | `SHA1         -> { hash_func_type = "\x11";   digest_length = 0x14 }
-    | `SHA2_256
-    | `SHA256       -> { hash_func_type = "\x12";   digest_length = 0x20 }
-    | `SHA2_512_256 -> { hash_func_type = "\x13";   digest_length = 0x20 }
-    | `SHA2_512_512
-    | `SHA512       -> { hash_func_type = "\x13";   digest_length = 0x40 }
-    | `BLAKE2B_256  -> { hash_func_type = "\xb220"; digest_length = 0x20 }
-    | `BLAKE2B_512  -> { hash_func_type = "\xb240"; digest_length = 0x40 }
-    | `BLAKE2S_128  -> { hash_func_type = "\xb250"; digest_length = 0x10 }
-    | `BLAKE2S_256  -> { hash_func_type = "\xb260"; digest_length = 0x20 }
+    | `SHA1                   -> { hash_func_type = "\x11";   digest_length = 0x14 }
+    | `SHA2_256     | `SHA256 -> { hash_func_type = "\x12";   digest_length = 0x20 }
+    | `SHA2_512_256           -> { hash_func_type = "\x13";   digest_length = 0x20 }
+    | `SHA2_512_512 | `SHA512 -> { hash_func_type = "\x13";   digest_length = 0x40 }
+    | `BLAKE2B_256            -> { hash_func_type = "\xb220"; digest_length = 0x20 }
+    | `BLAKE2B_512            -> { hash_func_type = "\xb240"; digest_length = 0x40 }
+    | `BLAKE2S_128            -> { hash_func_type = "\xb250"; digest_length = 0x10 }
+    | `BLAKE2S_256            -> { hash_func_type = "\xb260"; digest_length = 0x20 }
   ;;
 
   let hash_type_to_hash_func_type ~(hash_type:hash_type) : bytes =
@@ -125,5 +124,54 @@ module Parser = struct
        with
        | Length_mismatch -> assert false
     )
+  ;;
+end
+
+module Hash = struct
+  type ctx = SHA1    of Digestif.SHA1.Bytes.ctx
+           | SHA256  of Digestif.SHA256.Bytes.ctx
+           | SHA512  of Digestif.SHA512.Bytes.ctx
+           | BLAKE2B of Digestif.BLAKE2B.Bytes.ctx
+
+  let ctx_to_hash_type (ctx:ctx) : hash_type =
+    match ctx with
+    | SHA1    _ -> `SHA1
+    | SHA256  _ -> `SHA256
+    | SHA512  _ -> `SHA512
+    | BLAKE2B _ -> `BLAKE2B_512
+  ;;
+
+  let init (hash_type:hash_type) : ctx =
+    match hash_type with
+    | `SHA1                   -> SHA1    (Digestif.SHA1.Bytes.init    ())
+    | `SHA2_256     | `SHA256 -> SHA256  (Digestif.SHA256.Bytes.init  ())
+    | `SHA2_512_256           -> raise Unsupported_hash
+    | `SHA2_512_512 | `SHA512 -> SHA512  (Digestif.SHA512.Bytes.init  ())
+    | `BLAKE2B_256            -> raise Unsupported_hash
+    | `BLAKE2B_512            -> BLAKE2B (Digestif.BLAKE2B.Bytes.init ())
+    | `BLAKE2S_128            -> raise Unsupported_hash
+    | `BLAKE2S_256            -> raise Unsupported_hash
+  ;;
+
+  let feed (ctx:ctx) (data:bytes) : unit =
+    match ctx with
+    | SHA1    ctx -> Digestif.SHA1.Bytes.feed    ctx data
+    | SHA256  ctx -> Digestif.SHA256.Bytes.feed  ctx data
+    | SHA512  ctx -> Digestif.SHA512.Bytes.feed  ctx data
+    | BLAKE2B ctx -> Digestif.BLAKE2B.Bytes.feed ctx data
+  ;;
+
+  let get_raw_hash (ctx:ctx) : bytes =
+    match ctx with
+    | SHA1    ctx -> Digestif.SHA1.Bytes.get     ctx
+    | SHA256  ctx -> Digestif.SHA256.Bytes.get   ctx
+    | SHA512  ctx -> Digestif.SHA512.Bytes.get   ctx
+    | BLAKE2B ctx -> Digestif.BLAKE2B.Bytes.get  ctx
+  ;;
+
+  let get_hash_bytes (ctx:ctx) : hash_bytes =
+    let hash_type = ctx_to_hash_type ctx in
+    let raw       = get_raw_hash ctx in
+    raw_hash_to_hash_bytes ~hash_type ~raw
   ;;
 end

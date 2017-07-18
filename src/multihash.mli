@@ -30,6 +30,20 @@ module Parser : sig
   val gen_parser : hash_type:hash_type -> hash_bytes Angstrom.t
 end
 
+module Hash : sig
+  type ctx
+
+  val ctx_to_hash_type : ctx       -> hash_type
+
+  val init             : hash_type -> ctx
+
+  val feed             : ctx       -> bytes      -> unit
+
+  val get_raw_hash     : ctx       -> bytes
+
+  val get_hash_bytes   : ctx       -> hash_bytes
+end
+
 val hash_bytes_equal : hash_bytes -> hash_bytes -> bool
 
 val hash_type_to_string : hash_type:hash_type -> string

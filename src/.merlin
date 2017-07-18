@@ -12,6 +12,8 @@ PKG cmdliner
 PKG core_kernel
 PKG core_kernel.base_for_tests
 PKG cstruct
+PKG digestif
+PKG digestif.ocaml
 PKG fieldslib
 PKG hex
 PKG jane-street-headers

@@ -1,6 +1,14 @@
 (executable
  ((name           osbx)
   (public_name    osbx)
-  #|(ocamlopt_flags (-cclib -rdynamic crcccitt/crcccitt.o))|#
-  (libraries      (stdint nocrypto nocrypto.unix angstrom core_kernel hex cmdliner))
+  (libraries      (stdint
+                   nocrypto
+                   nocrypto.unix
+                   angstrom
+                   core_kernel
+                   hex
+                   cmdliner
+                   digestif
+                   digestif.ocaml
+                  ))
  ))
