@@ -2,7 +2,7 @@ open Stdint
 open Sbx_specs
 open Sbx_block
 open Stream_file
-open Nocrypto.Hash
+open Multihash
 
 exception File_metadata_get_failed
 
@@ -125,20 +125,20 @@ module Processor = struct
       data_to_block_proc in_file out_file ~data_len ~stats:(Stats.add_written_data_block stats ~data_len:chunk_len) ~common
   ;;
 
-  let rec data_to_block_proc_w_hash ?(hash_state:SHA256.t = SHA256.init()) (in_file:Core_kernel.In_channel.t) (out_file:Core_kernel.Out_channel.t) ~(data_len:int) ~(stats:stats) ~(common:Header.common_fields) : stats * bytes =
+  let rec data_to_block_proc_w_hash ?(hash_state:Hash.ctx = Hash.init `SHA256) (in_file:Core_kernel.In_channel.t) (out_file:Core_kernel.Out_channel.t) ~(data_len:int) ~(stats:stats) ~(common:Header.common_fields) : stats * bytes =
     let open Read_chunk in
     let open Write_chunk in
     (* report progress *)
     Progress.report_encode stats in_file;
     match read in_file ~len:data_len with
-    | None           -> (stats, Conv_utils.sha256_hash_state_to_bytes hash_state)
+    | None           -> (stats, Hash.get_raw_hash hash_state)
     | Some { chunk } ->
       let chunk_len   = Bytes.length chunk in
       let seq_num     = Uint32.of_int64 (stats.data_blocks_written <+> 1L) in (* always off by +1 *)
       let block       = Block.make_data_block ~seq_num common ~data:chunk in
       let block_bytes = Block.to_bytes block in
       (* update hash *)
-      SHA256.feed hash_state (Cstruct.of_bytes chunk);
+      Hash.feed hash_state chunk;
       (* write to file *)
       write out_file ~chunk:block_bytes;
       data_to_block_proc_w_hash ~hash_state in_file out_file ~data_len ~stats:(Stats.add_written_data_block stats ~data_len:chunk_len) ~common

@@ -128,9 +128,9 @@ module Parser = struct
 end
 
 module Hash = struct
-  type ctx = SHA1    of Digestif.SHA1.Bytes.ctx
-           | SHA256  of Digestif.SHA256.Bytes.ctx
-           | SHA512  of Digestif.SHA512.Bytes.ctx
+  type ctx = SHA1    of Nocrypto.Hash.SHA1.t
+           | SHA256  of Nocrypto.Hash.SHA256.t
+           | SHA512  of Nocrypto.Hash.SHA512.t
            | BLAKE2B of Digestif.BLAKE2B.Bytes.ctx
 
   let ctx_to_hash_type (ctx:ctx) : hash_type =
@@ -143,10 +143,10 @@ module Hash = struct
 
   let init (hash_type:hash_type) : ctx =
     match hash_type with
-    | `SHA1                   -> SHA1    (Digestif.SHA1.Bytes.init    ())
-    | `SHA2_256     | `SHA256 -> SHA256  (Digestif.SHA256.Bytes.init  ())
+    | `SHA1                   -> SHA1    (Nocrypto.Hash.SHA1.init     ())
+    | `SHA2_256     | `SHA256 -> SHA256  (Nocrypto.Hash.SHA256.init   ())
     | `SHA2_512_256           -> raise Unsupported_hash
-    | `SHA2_512_512 | `SHA512 -> SHA512  (Digestif.SHA512.Bytes.init  ())
+    | `SHA2_512_512 | `SHA512 -> SHA512  (Nocrypto.Hash.SHA512.init   ())
     | `BLAKE2B_256            -> raise Unsupported_hash
     | `BLAKE2B_512            -> BLAKE2B (Digestif.BLAKE2B.Bytes.init ())
     | `BLAKE2S_128            -> raise Unsupported_hash
@@ -154,19 +154,23 @@ module Hash = struct
   ;;
 
   let feed (ctx:ctx) (data:bytes) : unit =
+    let bytes_to_cstruct (bytes:bytes) : Cstruct.t =
+      Cstruct.of_bytes bytes in
     match ctx with
-    | SHA1    ctx -> Digestif.SHA1.Bytes.feed    ctx data
-    | SHA256  ctx -> Digestif.SHA256.Bytes.feed  ctx data
-    | SHA512  ctx -> Digestif.SHA512.Bytes.feed  ctx data
+    | SHA1    ctx -> Nocrypto.Hash.SHA1.feed     ctx (bytes_to_cstruct data)
+    | SHA256  ctx -> Nocrypto.Hash.SHA256.feed   ctx (bytes_to_cstruct data)
+    | SHA512  ctx -> Nocrypto.Hash.SHA512.feed   ctx (bytes_to_cstruct data)
     | BLAKE2B ctx -> Digestif.BLAKE2B.Bytes.feed ctx data
   ;;
 
   let get_raw_hash (ctx:ctx) : bytes =
+    let cstruct_to_bytes (cstruct:Cstruct.t) : bytes =
+      Cstruct.to_string cstruct in
     match ctx with
-    | SHA1    ctx -> Digestif.SHA1.Bytes.get     ctx
-    | SHA256  ctx -> Digestif.SHA256.Bytes.get   ctx
-    | SHA512  ctx -> Digestif.SHA512.Bytes.get   ctx
-    | BLAKE2B ctx -> Digestif.BLAKE2B.Bytes.get  ctx
+    | SHA1    ctx -> cstruct_to_bytes (Nocrypto.Hash.SHA1.get   ctx)
+    | SHA256  ctx -> cstruct_to_bytes (Nocrypto.Hash.SHA256.get ctx)
+    | SHA512  ctx -> cstruct_to_bytes (Nocrypto.Hash.SHA512.get ctx)
+    | BLAKE2B ctx -> Digestif.BLAKE2B.Bytes.get ctx
   ;;
 
   let get_hash_bytes (ctx:ctx) : hash_bytes =

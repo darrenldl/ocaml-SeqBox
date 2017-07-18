@@ -9,6 +9,6 @@
                    hex
                    cmdliner
                    digestif
-                   digestif.ocaml
+                   digestif.c
                   ))
  ))
