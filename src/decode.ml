@@ -160,13 +160,16 @@ module Stats = struct
          "N/A"
       );
     Printf.printf "Hash of the output file                        : %s\n"
-      (match stats.output_file_hash with
-       | Some hsh ->
+      (match (stats.output_file_hash, stats.recorded_hash) with
+       | (Some hsh, _     )     ->
          Printf.sprintf "%s - %s"
            (Multihash.hash_bytes_to_hash_type_string hsh)
            (Conv_utils.bytes_to_hex_string (Multihash.hash_bytes_to_raw_hash hsh))
-       | None     ->
-         "N/A - recorded hash type may not be supported by osbx");
+       | (None    , Some _)     ->
+         "N/A - recorded hash type is not supported by osbx"
+       | (None    , None  )     ->
+         "N/A"
+      );
     if stats.meta_blocks_decoded = 0L then
       begin
         print_newline ();
@@ -599,22 +602,12 @@ module Process = struct
                   Ok stats
               end
             | None            ->
-              let output_file_hash =
-                match hash_file_w_warning ~in_filename:out_filename with
-                | Some raw ->
-                  Some (Multihash.raw_hash_to_hash_bytes ~hash_type:`SHA256 ~raw)
-                | None     -> None in
-              Ok (Stats.add_hashes ~recorded_hash:None ~output_file_hash stats)
+              Ok stats
           with
           | _ -> Error "failed to truncate output file"
         end
       | Ok (stats, None)            ->
-        let output_file_hash =
-          match hash_file_w_warning ~in_filename:out_filename with
-          | Some raw ->
-            Some (Multihash.raw_hash_to_hash_bytes ~hash_type:`SHA256 ~raw)
-          | None     -> None in
-        Ok (Stats.add_hashes ~recorded_hash:None ~output_file_hash stats)
+        Ok stats
       | Error msg                   -> Error msg
   ;;
 
