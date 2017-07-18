@@ -153,6 +153,14 @@ module Hash = struct
     | `BLAKE2S_256            -> raise Unsupported_hash
   ;;
 
+  let hash_type_is_supported (hash_type:hash_type) : bool =
+    try
+      init hash_type |> ignore;
+      true
+    with
+    | Unsupported_hash -> false
+  ;;
+
   let feed (ctx:ctx) (data:bytes) : unit =
     let bytes_to_cstruct (bytes:bytes) : Cstruct.t =
       Cstruct.of_bytes bytes in

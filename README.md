@@ -61,6 +61,10 @@ CRC-CCITT is currently implemented in pure OCaml and is translated from implemen
 Exact behaviours in non-standard cases are not specified in official SeqBox technical specification
   - See [specification](SPECS.md) of ocaml-SeqBox for details on how ocaml-SeqBox behaves(if you care about undefined behaviour those sort of things)
 
+Hashing
+  - Nocrypto for SHA1, SHA256, SHA512
+  - Digestif for BLAKE2B\_512
+
 Index of soure code
   - See [index](INDEX.md)
 
