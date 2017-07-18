@@ -1,5 +1,0 @@
-(library
- ((name        crcccitt_c)
-  (public_name crcccitt_c)
-  (c_names     (crcccitt))
- ))
