@@ -2,6 +2,8 @@
   - Added "show" command
   - Switched from using Core to Core\_kernel
     - Now osbx can be compiled on Windows
+  - Switched to a pure OCaml implementation of CRC-CCITT
+    - Implementation is translated from libcrc implementation
 
 ## 1.0.1  (submitted to opam repo, waiting for merge approval)
   - Changed rescue mode to use the original bytes of the file, rather than regenerating the block bytes itself
