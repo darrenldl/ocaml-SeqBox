@@ -5,7 +5,7 @@
   - Switched to a pure OCaml implementation of CRC-CCITT
     - Implementation is translated from libcrc implementation
 
-## 1.0.1  (submitted to opam repo, waiting for merge approval)
+## 1.0.1  (version on OPAM)
   - Changed rescue mode to use the original bytes of the file, rather than regenerating the block bytes itself
   - Fixed jbuild file to work on macOS when building
   - Added graceful handling of CTRL-C breaks in rescue mode
@@ -22,5 +22,5 @@
     - Changed File\_utils.getsize to use Core.In\_channel.length instead of Unix.LargeFile.stat
   - Added progress reporting for hash in decode mode
 
-## 1.0.0  (version on opam)
+## 1.0.0
   - Base version
