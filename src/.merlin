@@ -12,13 +12,8 @@ PKG cmdliner
 PKG core_kernel
 PKG core_kernel.base_for_tests
 PKG cstruct
-PKG ctypes
-PKG ctypes.foreign
-PKG ctypes.foreign.base
-PKG ctypes.foreign.threaded
 PKG fieldslib
 PKG hex
-PKG integers
 PKG jane-street-headers
 PKG nocrypto
 PKG nocrypto.unix
@@ -40,8 +35,6 @@ PKG sexplib
 PKG sexplib.0
 PKG stdint
 PKG stdio
-PKG threads
-PKG threads.posix
 PKG typerep
 PKG unix
 PKG variantslib
