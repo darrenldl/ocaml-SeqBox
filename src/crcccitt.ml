@@ -1,4 +1,4 @@
-(* This file is translated from implementation of libcrc
+(* This file is translated from implementation of libcrc (https://github.com/lammertb/libcrc)
  *
  * The translation is done by Darren Ldl as part of the ocaml-SeqBox project
  *
