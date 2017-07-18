@@ -12,6 +12,10 @@ let mask_to_uint16 (x:fuint16) =
   x & bit_mask
 ;;
 
+let (or) (x:fuint16) (y:fuint16) =
+  mask_to_uint16 (Int64.logor x y)
+;;
+
 let (^) (x:fuint16) (y:fuint16) =
   mask_to_uint16 (Int64.logxor x y)
 ;;
@@ -26,6 +30,10 @@ let (>>) (x:fuint16) (y:int) =
 
 let add1 (x:fuint16 ref) : unit =
   x := mask_to_uint16 (Int64.succ !x)
+;;
+
+let sub1 (x:fuint16 ref) : unit =
+  x := mask_to_uint16 (Int64.pred !x)
 ;;
 
 let to_int (x:fuint16) =
