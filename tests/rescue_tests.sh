@@ -5,7 +5,7 @@ VERSIONS=(1 2 3)
 # Encode in all 3 versions
 for ver in ${VERSIONS[*]}; do
   echo "Encoding in version $ver"
-  ./osbx encode --sbx_version $ver -f dummy rescue$ver.sbx
+  ./osbx encode --sbx-version $ver -f dummy rescue$ver.sbx
   echo ""
 done
 
@@ -48,5 +48,11 @@ echo ""
 echo "Comparing decoded data to original"
 FILES=rescued_data/*.decoded
 for f in $FILES; do
+  echo "Comparing decoded version $ver container data to original"
   cmp dummy $f
+  if [[ $? == 0 ]]; then
+    echo "No mismatches detected"
+  else
+    echo "Mismatch detected"
+  fi
 done

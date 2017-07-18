@@ -63,32 +63,37 @@ module Stats = struct
     Printf.printf "Time elapsed                      : %02d:%02d:%02d\n" hour minute second
   ;;
 
-  let print_progress_helper =
+end
+
+type stats = Stats.t
+
+module Progress : sig
+  val report_encode : stats -> Core_kernel.In_channel.t -> unit
+
+end = struct
+
+  let print_encode_progress_helper =
     let header         = "Data encoding progress" in
     let unit           = "chunks" in
     let print_interval = Param.Encode.progress_report_interval in
     Progress_report.gen_print_generic ~header ~unit ~print_interval
   ;;
 
-  let print_progress ~(stats:t) ~(total_chunks:int64) =
-    print_progress_helper
+  let print_encode_progress ~(stats:stats) ~(total_chunks:int64) =
+    print_encode_progress_helper
       ~start_time:stats.start_time
       ~units_so_far:stats.blocks_written
       ~total_units:total_chunks
   ;;
-end
 
-type stats = Stats.t
-
-module Progress = struct
-  let report : stats -> Core.In_channel.t -> unit  =
+  let report_encode : stats -> Core_kernel.In_channel.t -> unit  =
     let first_time    = ref true in
     (fun stats in_file ->
        let data_size    : int64 =
          Int64.of_int stats.data_size in
        let total_chunks : int64 =
          Int64.div
-           (Int64.add (Core.In_channel.length in_file) (Int64.sub data_size 1L))
+           (Int64.add (Core_kernel.In_channel.length in_file) (Int64.sub data_size 1L))
            data_size (* use of data_size is correct here *) in
        if !first_time then
          begin
@@ -96,18 +101,18 @@ module Progress = struct
            Printf.printf "Only data blocks are reported in the progress reporting below\n";
            first_time := false
          end;
-       Stats.print_progress ~stats ~total_chunks;
+       print_encode_progress ~stats ~total_chunks;
     )
   ;;
 end
 
 module Processor = struct
   (* Converts data to data blocks *)
-  let rec data_to_block_proc (in_file:Core.In_channel.t) (out_file:Core.Out_channel.t) ~(data_len:int) ~(stats:stats) ~(common:Header.common_fields) : stats =
+  let rec data_to_block_proc (in_file:Core_kernel.In_channel.t) (out_file:Core_kernel.Out_channel.t) ~(data_len:int) ~(stats:stats) ~(common:Header.common_fields) : stats =
     let open Read_chunk in
     let open Write_chunk in
     (* report progress *)
-    Progress.report stats in_file;
+    Progress.report_encode stats in_file;
     match read in_file ~len:data_len with
     | None           -> stats
     | Some { chunk } ->
@@ -120,11 +125,11 @@ module Processor = struct
       data_to_block_proc in_file out_file ~data_len ~stats:(Stats.add_written_data_block stats ~data_len:chunk_len) ~common
   ;;
 
-  let rec data_to_block_proc_w_hash ?(hash_state:SHA256.t = SHA256.init()) (in_file:Core.In_channel.t) (out_file:Core.Out_channel.t) ~(data_len:int) ~(stats:stats) ~(common:Header.common_fields) : stats * bytes =
+  let rec data_to_block_proc_w_hash ?(hash_state:SHA256.t = SHA256.init()) (in_file:Core_kernel.In_channel.t) (out_file:Core_kernel.Out_channel.t) ~(data_len:int) ~(stats:stats) ~(common:Header.common_fields) : stats * bytes =
     let open Read_chunk in
     let open Write_chunk in
     (* report progress *)
-    Progress.report stats in_file;
+    Progress.report_encode stats in_file;
     match read in_file ~len:data_len with
     | None           -> (stats, Conv_utils.sha256_hash_state_to_bytes hash_state)
     | Some { chunk } ->
@@ -172,7 +177,7 @@ module Processor = struct
            let metadata_block             = Block.make_metadata_block common ~fields in
            let metadata_block_bytes       = Block.to_bytes metadata_block in
            (* go back and write metadata block *)
-           Core.Out_channel.seek out_file 0L;
+           Core_kernel.Out_channel.seek out_file 0L;
            write out_file ~chunk:metadata_block_bytes;
            (* update stats *)
            Stats.add_written_meta_block stats
@@ -201,27 +206,25 @@ module Process = struct
 
   let encode_file ~(uid:bytes option) ~(want_meta:bool) ~(ver:version) ~(in_filename:string) ~(out_filename:string) : (stats, string) result =
     try
-      let common   =
-        match uid with
-        | Some uid -> Header.make_common_fields ~uid ver
-        | None     -> Header.make_common_fields      ver in
-      let metadata =
-        match want_meta with
-        | true  -> Some (get_file_metadata ~in_filename ~out_filename)
-        | false -> None in
-      let encoder  = Processor.make_in_out_encoder ~common ~metadata in
-      Stream.process_in_out ~append:false ~in_filename ~out_filename encoder
+      (* check file size first *)
+      let max_file_size = ver_to_max_file_size ver in
+      let file_size     = File_utils.getsize ~filename:in_filename in
+      if file_size > max_file_size then
+        Error (Printf.sprintf "File size (%Ld bytes) exceeds upper limit (%Ld bytes)" file_size max_file_size)
+      else
+        let common   =
+          match uid with
+          | Some uid -> Header.make_common_fields ~uid ver
+          | None     -> Header.make_common_fields      ver in
+        let metadata =
+          match want_meta with
+          | true  -> Some (get_file_metadata ~in_filename ~out_filename)
+          | false -> None in
+        let encoder  = Processor.make_in_out_encoder ~common ~metadata in
+        Stream.process_in_out ~append:false ~in_filename ~out_filename encoder
     with
+    | File_utils.File_access_error        -> Error "Failed to access file"
     | File_metadata_get_failed            -> Error "Failed to get file metadata"
     | Sbx_block.Header.Invalid_uid_length -> Error "Invalid uid length"
   ;;
 end
-
-(* let test_encode () =
-  let open Metadata in
-  match Process.encode_file ~uid:None ~want_meta:true ~in_filename:"dummy_file" ~out_filename:"dummy_file_encoded" with
-  | Ok stats  -> Stats.print_stats stats
-  | Error msg -> Printf.printf "Error : %s\n" msg
-;;
-
-test_encode () *)

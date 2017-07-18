@@ -4,6 +4,8 @@ let help_secs = [ `S Manpage.s_common_options
                 ; `P "These options are common to all comamnds."
                 ; `S "MORE HELP"
                 ; `P "Use `$(mname) $(i,COMMAND) --help' for help on a single command."
+                ; `S Manpage.s_authors
+                ; `P "Darren Ldl <darrenldldev@gmail.com>"
                 ; `S Manpage.s_bugs
                 ; `P "Report bugs at ocaml-SeqBox github page via issues (https://github.com/darrenldl/ocaml-SeqBox)"
                 ]
@@ -11,7 +13,7 @@ let help_secs = [ `S Manpage.s_common_options
 
 let sbx_version =
   let doc = "Sbx container version" in
-  Arg.(value & opt (some string) None & info ["sbx_version"] ~docv:"SBX_VERSION" ~doc)
+  Arg.(value & opt (some string) None & info ["sbx-version"] ~docv:"SBX_VERSION" ~doc)
 ;;
 
 let force =
@@ -52,8 +54,16 @@ let rescue_cmd =
   )
 ;;
 
+let show_cmd =
+  let open Osbx_show in
+  let doc = "search for and print metadata in sbx container (or file)" in
+  (Term.(const show $ find_all $ in_file),
+   Term.info "show" ~doc
+  )
+;;
+
 let () =
   (* catch CTRL-C breaks *)
   Sys.catch_break true;
-  Term.exit @@ Term.eval_choice default_cmd [encode_cmd; decode_cmd; rescue_cmd]
+  Term.exit @@ Term.eval_choice default_cmd [encode_cmd; decode_cmd; rescue_cmd; show_cmd]
 ;;

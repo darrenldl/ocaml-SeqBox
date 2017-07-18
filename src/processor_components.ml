@@ -1,8 +1,18 @@
 open Sbx_block
-open Sbx_specs
 open Stream_file
+open Sbx_specs
 
-let patch_block_bytes_if_needed (in_file:Core.In_channel.t) ~(raw_header:Header.raw_header) ~(chunk:bytes) : bytes =
+let bytes_to_block ?(raw_header:Header.raw_header option) (chunk:bytes) : Block.t option =
+  try
+    Some (Block.of_bytes ?raw_header chunk)
+  with
+  | Header.Invalid_bytes
+  | Metadata.Invalid_bytes
+  | Block.Invalid_bytes
+  | Block.Invalid_size     -> None
+;;
+
+let patch_block_bytes_if_needed (in_file:Core_kernel.In_channel.t) ~(raw_header:Header.raw_header) ~(chunk:bytes) : bytes =
   let ideal_len   = ver_to_block_size raw_header.version in
   let missing_len = ideal_len - (Bytes.length chunk) in
   if missing_len > 0 then
@@ -12,4 +22,3 @@ let patch_block_bytes_if_needed (in_file:Core.In_channel.t) ~(raw_header:Header.
   else
     chunk
 ;;
-

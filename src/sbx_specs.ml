@@ -4,9 +4,10 @@ open Misc_utils
 type version = [ `V1 | `V2 | `V3 ]
 
 module Common_param = struct
-  let file_uid_len : int   = 6
-  let signature    : bytes = "SBx"
-  let header_size  : int   = 16
+  let file_uid_len   : int   = 6
+  let signature      : bytes = "SBx"
+  let header_size    : int   = 16
+  let max_blocks_num : int64 = Int64.of_float ((2. ** 32.) -. 1.)
 end
 
 module Param_for_v1 = struct
@@ -84,6 +85,11 @@ let ver_to_data_size    (ver:version) : int =
   | `V1 -> Param_for_v1.data_size
   | `V2 -> Param_for_v2.data_size
   | `V3 -> Param_for_v3.data_size
+;;
+
+let ver_to_max_file_size (ver:version) : int64 =
+  let open Int64 in
+  mul (of_int (ver_to_data_size ver)) Common_param.max_blocks_num
 ;;
 
 let string_to_ver       (str:string)  : (version, string) result =

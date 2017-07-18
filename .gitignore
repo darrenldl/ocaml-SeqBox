@@ -3,6 +3,8 @@
 */*.sbx
 *.sbx
 _build
+*.install
+*/*.install
 /src/dummy
 /src/dummy1
 /src/dummy1.sbx
@@ -33,3 +35,5 @@ tests/osbx
 /tests/rescue3.sbx
 /tests/rescue_log
 /tests/rescued_data/*
+/tests/rescue1
+/tests/crc1

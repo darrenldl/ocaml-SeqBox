@@ -6,11 +6,12 @@ This is mainly to address the different licenses being used(SeqBox was using AGP
 
 Official SeqBox Repo - https://github.com/MarcoPon/SeqBox
 
-Table of Contents                                                                                                                     
-=================                                                                                                                     
-                                                                                                                                      
-   * [ocaml-SeqBox](#ocaml-seqbox)                                                                                                    
+Table of Contents
+=================
+
+   * [ocaml-SeqBox](#ocaml-seqbox)
       * [Acknowledgement](#acknowledgement)
+      * [Getting started](#getting-started)
       * [Notes](#notes)
       * [Possibly useful additional features of ocaml-SeqBox(possibly not yet in official SeqBox)](#possibly-useful-additional-features-of-ocaml-seqboxpossibly-not-yet-in-official-seqbox)
       * [Technical Specification](#technical-specification)
@@ -32,10 +33,30 @@ I would like to thank [Marco](https://github.com/MarcoPon) (author of the offici
 
 I would like to thank [Ming](https://github.com/mdchia/) for his feedback on the documentation, UX design, and several other general aspects of this project. And also his help on testing the building and installation of osbx on macOS.
 
+## Getting started
+Osbx 1.0.1 is currently on OPAM, 1.1.0 (dev version) will be published shortly
+```
+opam install osbx
+```
+There are three modes/commands for osbx currently : encode, decode, rescue
+
+You can consult the man pages of osbx itself and all the three commands via
+```
+osbx        --help
+osbx encode --help
+osbx decode --help
+osbx rescue --help
+```
+
 ## Notes
-CRC-CCITT is currently implemented via FFI and links to the static object files compiled from libcrc (https://github.com/lammertb/libcrc)
-  - See crcccitt_wrap.ml, crcccitt_wrap.mli for the FFI bindings
-  - See crcccitt.c, checksum.h for libcrc source used(crcccitt.c is slightly modified, modification is under same license used by libcrc)
+~~CRC-CCITT is currently implemented via FFI and links to the static object files compiled from [libcrc](https://github.com/lammertb/libcrc)~~
+  - ~~See crcccitt\_wrap.ml, crcccitt\_wrap.mli for the FFI bindings~~
+  - ~~See crcccitt.c, checksum.h for libcrc source used(crcccitt.c is slightly modified, modification is under same license used by libcrc)~~
+
+CRC-CCITT is currently implemented in pure OCaml and is translated from implementation in [libcrc](https://github.com/lammertb/libcrc)
+  - See src/crcccitt.ml, src/crcccitt.mli for the OCaml implementation
+    - The translated source code is under the same MIT license used by and stated in libcrc source code
+  - See libcrc\_crcccitt/crcccitt.c, libcrc\_crcccitt/checksum.h for the source code from libcrc used for the translation
 
 Exact behaviours in non-standard cases are not specified in official SeqBox technical specification
   - See [specification](SPECS.md) of ocaml-SeqBox for details on how ocaml-SeqBox behaves(if you care about undefined behaviour those sort of things)
@@ -45,6 +66,9 @@ Index of soure code
 
 Changelog
   - See [changelog](CHANGELOG.md)
+
+Todo/wishlist
+  - See [todo](TODO.md)
 
 ## Possibly useful additional features of ocaml-SeqBox(possibly not yet in official SeqBox)
   - Allows random ordering in sbx container
@@ -154,8 +178,12 @@ All versions are implemented in ocaml-SeqBox
     - Available through OPAM - opam install osbx
 
 ## License
-The following files directly from libcrc(with slight modification) are under the same MIT license used by libcrc
-  - crcccitt.c
-  - checksum.h
+The following files directly from [libcrc](https://github.com/lammertb/libcrc) are under the MIT License(see license text in each of the code files)
+  - libcrc\_crcccitt/crcccitt.c
+  - libcrc\_crcccitt/checksum.h
+
+The following files translated from libcrc source code are under the same MIT License as used by libcrc and as stated in libcrc source code, the license text of the crcccitt.c is copied over to src/crcccitt.ml as well
+  - src/crcccitt.ml
+  - src/crcccitt.mli
 
 All remaining files are distributed under the 3-Clause BSD license as stated in the LICENSE file

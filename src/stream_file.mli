@@ -1,11 +1,11 @@
 exception Packaged_exn of string
 
 module Stream : sig
-  type 'a in_out_processor = Core.In_channel.t  -> Core.Out_channel.t -> 'a
+  type 'a in_out_processor = Core_kernel.In_channel.t  -> Core_kernel.Out_channel.t -> 'a
 
-  type 'a in_processor     = Core.In_channel.t  -> 'a
+  type 'a in_processor     = Core_kernel.In_channel.t  -> 'a
 
-  type 'a out_processor    = Core.Out_channel.t -> 'a
+  type 'a out_processor    = Core_kernel.Out_channel.t -> 'a
 
   val process_in_out :
     ?pack_break_into_error:bool -> append:bool -> in_filename:string -> out_filename:string -> ('a in_out_processor)
@@ -43,7 +43,7 @@ module Read_into_buf : sig
   type read_stats  = { read_count : int }
   type read_result = read_stats option
 
-  val read : ?offset:int -> ?len:int -> Core.In_channel.t -> buf:bytes -> read_result
+  val read : ?offset:int -> ?len:int -> Core_kernel.In_channel.t -> buf:bytes -> read_result
 end
 
 (* Helpers for reading and returning data as value *)
@@ -51,7 +51,7 @@ module Read_chunk : sig
   type read_content = { chunk : bytes }
   type read_result  = read_content option
 
-  val read : Core.In_channel.t -> len:int -> read_result
+  val read : Core_kernel.In_channel.t -> len:int -> read_result
 end
 
 (* Helpers for writing from buffer *)
@@ -59,9 +59,9 @@ module Write_from_buf : sig
   exception Invalid_offset
   exception Invalid_length
 
-  val write : ?offset:int -> ?len:int -> Core.Out_channel.t -> buf:bytes -> unit
+  val write : ?offset:int -> ?len:int -> Core_kernel.Out_channel.t -> buf:bytes -> unit
 end
 
 module Write_chunk : sig
-  val write : Core.Out_channel.t -> chunk:bytes -> unit
+  val write : Core_kernel.Out_channel.t -> chunk:bytes -> unit
 end

@@ -1,8 +1,3 @@
-/* This source file has been modified by Darren Ldl in part of the ocaml-SeqBox project
- * Please see notice below for original license and original author
- * All modifications are under the same MIT license used by libcrc as stated below
- */
-
 /*
  * Library: libcrc
  * File:    src/crcccitt.c
@@ -40,7 +35,7 @@
 #include <stdlib.h>
 #include "checksum.h"
 
-uint16_t		crc_ccitt_generic( const unsigned char *input_str, size_t num_bytes, uint16_t start_value );
+static uint16_t		crc_ccitt_generic( const unsigned char *input_str, size_t num_bytes, uint16_t start_value );
 static void             init_crcccitt_tab( void );
 
 static bool             crc_tabccitt_init       = false;
@@ -95,7 +90,7 @@ uint16_t crc_ccitt_ffff( const unsigned char *input_str, size_t num_bytes ) {
  * function accepts an initial start value for the crc.
  */
 
-uint16_t crc_ccitt_generic( const unsigned char *input_str, size_t num_bytes, uint16_t start_value ) {
+static uint16_t crc_ccitt_generic( const unsigned char *input_str, size_t num_bytes, uint16_t start_value ) {
 
 	uint16_t crc;
 	const unsigned char *ptr;

@@ -1,4 +1,3 @@
-B ../_build/default/crcccitt
 B ../_build/default/src
 FLG -w -40
 PKG angstrom
@@ -10,17 +9,11 @@ PKG bin_prot
 PKG bin_prot.shape
 PKG bytes
 PKG cmdliner
-PKG core
 PKG core_kernel
 PKG core_kernel.base_for_tests
 PKG cstruct
-PKG ctypes
-PKG ctypes.foreign
-PKG ctypes.foreign.base
-PKG ctypes.foreign.threaded
 PKG fieldslib
 PKG hex
-PKG integers
 PKG jane-street-headers
 PKG nocrypto
 PKG nocrypto.unix
@@ -40,14 +33,9 @@ PKG ppx_inline_test.runtime-lib
 PKG result
 PKG sexplib
 PKG sexplib.0
-PKG sexplib.unix
-PKG spawn
 PKG stdint
 PKG stdio
-PKG threads
-PKG threads.posix
 PKG typerep
 PKG unix
 PKG variantslib
 PKG zarith
-S ../crcccitt

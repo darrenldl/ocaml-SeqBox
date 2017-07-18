@@ -1,8 +1,8 @@
 opam-version: "1.2"
 name: "osbx"
-version: "1.0.1"
-maintainer: "Darren Ldl <dldldev@yahoo.com>"
-authors: "Darren Ldl <dldldev@yahoo.com>"
+version: "1.1.0"
+maintainer: "Darren Ldl <darrenldldev@gmail.com>"
+authors: "Darren Ldl <darrenldldev@gmail.com>"
 homepage: "https://github.com/darrenldl/ocaml-SeqBox"
 bug-reports: "https://github.com/darrenldl/ocaml-SeqBox/issues"
 license: "BSD-3-Clause"
@@ -16,7 +16,7 @@ depends: [
   "stdint"         {build}
   "nocrypto"       {build}
   "angstrom"       {build}
-  "core"           {build}
+  "core_kernel"    {build}
   "hex"            {build}
   "ctypes"         {build}
   "ctypes-foreign" {build}

@@ -1,39 +1,43 @@
-**Sbx_block (sbx_block.ml, sbx_block.mli)**
+**Sbx\_block (sbx\_block.ml, sbx\_block.mli)**
   - Single SBX block construction/access, encoding to bytes and decoding from bytes
   - Submodules
     - Header
     - Metadata
     - Block
     
-**Stream_file (stream_file.ml, stream_file.mli)**
+**Stream\_file (stream\_file.ml, stream\_file.mli)**
   - Provides framework for streamed processing of files
   - Abstracts away low-level file interaction, allows other modules to only construct "processor" to be run by the framework
     - Processor is a function that only deals with input and/or output channel
     
 **Encode (encode.ml, encode.mli)**
   - Encode file (and directly output into another file)
-  - Relies on processor framework in Stream_file
+  - Relies on processor framework in Stream\_file
   
 **Decode (decode.ml, decode.mli)**
   - Decode file (and directly output into another file)
-  - Relies on processor framework in Stream_file
+  - Relies on processor framework in Stream\_file
   
-**Crcccitt_wrap (crcccitt_wrap.ml, crccitt.mli)**
-  - FFI binding to crcccitt.c
+**~~Crcccitt\_wrap (crcccitt\_wrap.ml, crccitt.mli)~~**
+  - ~~FFI binding to crcccitt.c~~
 
-**Conv_utils (conv_utils.ml, conv_utils.mli)**
+**Crcccitt (crcccitt.ml, crcccitt.mli)**
+  - Pure OCaml implementation of CRC-CCITT
+    - Translated from libcrc
+
+**Conv\_utils (conv\_utils.ml, conv\_utils.mli)**
   - Utility functions for converting between different data types/format
 
-**File_utils (file_utils.ml, file_utils.mli)**
+**File\_utils (file\_utils.ml, file\_utils.mli)**
   - Utility functions for file access(namely for getting metadata)
 
-**Misc_utils (misc_utils.ml, misc_utils.mli)**
+**Misc\_utils (misc\_utils.ml, misc\_utils.mli)**
   - Small utility functions used across different modules
 
-**Random_utils (random_utils.ml, random_utils.mli)**
+**Random\_utils (random\_utils.ml, random\_utils.mli)**
   - Utility functions for generating random bytes etc
 
-**Time_utils (time_utils.ml, time_utils.mli)**
+**Time\_utils (time\_utils.ml, time\_utils.mli)**
   - Utilitiy functions to get time, etc
 
 **Multihash (multihash.ml, multihash.mli)**
@@ -42,11 +46,14 @@
 **Osbx (osbx.ml)**
   - Main program file/entry point
 
-**Osbx_encode (osbx_encode.ml)**
+**Osbx\_encode (osbx\_encode.ml)**
   - Functions for encode command
 
-**Osbx_decode (osbx_decode.ml)**
+**Osbx\_decode (osbx\_decode.ml)**
   - Functions for decode command
+
+**Osbx\_show (osbx\_show.ml)**
+  - Functions for show command
 
 **Param (param.ml, param.mli)**
   - Central place to configure parameters for other modules

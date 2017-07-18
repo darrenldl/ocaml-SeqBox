@@ -1,5 +1,5 @@
 open Stdint
-open Crcccitt_wrap
+open Crcccitt
 open Sbx_specs
 
 module Helper : sig
@@ -14,7 +14,7 @@ end = struct
   ;;
 
   let crc_ccitt_sbx ~(ver:version) ~(input:bytes) : bytes =
-    let res = crc_ccitt_generic ~input ~start_val:(ver_to_uint16 ver) in
+    let res = crc_ccitt_generic_uint16 ~input ~start_val:(ver_to_uint16 ver) in
     Conv_utils.uint16_to_bytes res
   ;;
 end
@@ -380,8 +380,16 @@ end = struct
       string "SDT" *> uint64_data_p
       >>| (fun x -> SDT x)
     ;;
+
+    let gen_hash_parser ~(hash_type:Multihash.hash_type) =
+      let open Multihash in
+      let total_len = Specs.hash_type_to_total_length ~hash_type in
+      let len_bytes = Conv_utils.uint8_to_bytes (Uint8.of_int total_len) in
+      string "HSH" *> string len_bytes *> Parser.gen_parser ~hash_type
+    ;;
+
     let hsh_p : metadata Angstrom.t =
-      string "HSH" *> Multihash.Parser.sha256_p
+      choice [gen_hash_parser `SHA256]
       >>| (fun x -> HSH x)
     ;;
     (*let pid_p : metadata Angstrom.t =
