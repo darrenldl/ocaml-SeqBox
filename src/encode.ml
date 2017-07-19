@@ -125,14 +125,14 @@ module Processor = struct
       data_to_block_proc in_file out_file ~data_len ~stats:(Stats.add_written_data_block stats ~data_len:chunk_len) ~common
   ;;
 
-  let data_to_block_proc_w_hash (hash_type:hash_type) (in_file:Core_kernel.In_channel.t) (out_file:Core_kernel.Out_channel.t) ~(data_len:int) ~(stats: stats) ~(common:Header.common_fields) : stats * bytes =
-    let rec data_to_block_proc_w_hash_internal (hash_state:Hash.ctx) (in_file:Core_kernel.In_channel.t) (out_file:Core_kernel.Out_channel.t) ~(data_len:int) ~(stats:stats) ~(common:Header.common_fields) : stats * bytes =
+  let data_to_block_proc_w_hash (hash_type:hash_type) (in_file:Core_kernel.In_channel.t) (out_file:Core_kernel.Out_channel.t) ~(data_len:int) ~(stats: stats) ~(common:Header.common_fields) : stats * hash_bytes =
+    let rec data_to_block_proc_w_hash_internal (hash_state:Hash.ctx) (in_file:Core_kernel.In_channel.t) (out_file:Core_kernel.Out_channel.t) ~(data_len:int) ~(stats:stats) ~(common:Header.common_fields) : stats * hash_bytes =
       let open Read_chunk in
       let open Write_chunk in
       (* report progress *)
       Progress.report_encode stats in_file;
       match read in_file ~len:data_len with
-      | None           -> (stats, Hash.get_raw_hash hash_state)
+      | None           -> (stats, Hash.get_hash_bytes hash_state)
       | Some { chunk } ->
         let chunk_len   = Bytes.length chunk in
         let seq_num     = Uint32.of_int64 (stats.data_blocks_written <+> 1L) in (* always off by +1 *)
@@ -172,10 +172,10 @@ module Processor = struct
            let dummy_metadata_block_bytes = Block.to_bytes dummy_metadata_block in
            write out_file ~chunk:dummy_metadata_block_bytes;
            (* write data blocks *)
-           let (stats, hash)              =
+           let (stats, hash_bytes)        =
              data_to_block_proc_w_hash hash_type in_file out_file ~data_len ~stats:(Stats.make_blank_stats ~ver) ~common in
            let fields                     =
-             (HSH (Multihash.raw_hash_to_hash_bytes ~hash_type ~raw:hash)) :: fields_except_hash in
+             (HSH hash_bytes) :: fields_except_hash in
            let metadata_block             = Block.make_metadata_block common ~fields in
            let metadata_block_bytes       = Block.to_bytes metadata_block in
            (* go back and write metadata block *)
