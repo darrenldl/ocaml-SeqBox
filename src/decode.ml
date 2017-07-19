@@ -590,15 +590,15 @@ module Process = struct
             match stats.recorded_hash with
             | Some hash_bytes ->
               begin
-                match Multihash.hash_bytes_to_hash_type ~hash_bytes with
-                | `SHA2_256 | `SHA256 -> 
+                let hash_type = Multihash.hash_bytes_to_hash_type ~hash_bytes in
+                if Multihash.Hash.hash_type_is_supported hash_type then
                   let output_file_hash =
                     match hash_file_w_warning ~in_filename:out_filename with
                     | Some raw ->
-                      Some (Multihash.raw_hash_to_hash_bytes ~hash_type:`SHA256 ~raw)
+                      Some (Multihash.raw_hash_to_hash_bytes ~hash_type ~raw)
                     | None     -> None in
                   Ok (Stats.add_hashes ~recorded_hash:None ~output_file_hash stats)
-                | _ ->
+                else
                   Ok stats
               end
             | None            ->

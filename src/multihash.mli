@@ -29,7 +29,9 @@ module Specs : sig
 end
 
 module Parser : sig
-  val gen_parser : hash_type:hash_type -> hash_bytes Angstrom.t
+  val gen_parser  : hash_type:hash_type -> hash_bytes Angstrom.t
+
+  val all_parsers : hash_bytes Angstrom.t list
 end
 
 module Hash : sig
@@ -47,6 +49,8 @@ module Hash : sig
 
   val get_hash_bytes         : ctx       -> hash_bytes
 end
+
+val all_hash_types   : hash_type list
 
 val hash_bytes_equal : hash_bytes -> hash_bytes -> bool
 

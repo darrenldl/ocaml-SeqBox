@@ -389,7 +389,7 @@ end = struct
     ;;
 
     let hsh_p : metadata Angstrom.t =
-      choice [gen_hash_parser `SHA256]
+      choice (List.map (fun hash_type -> gen_hash_parser ~hash_type) Multihash.all_hash_types)
       >>| (fun x -> HSH x)
     ;;
     (*let pid_p : metadata Angstrom.t =

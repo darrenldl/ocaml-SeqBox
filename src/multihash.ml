@@ -14,6 +14,16 @@ type hash_type  = [ `SHA1
                   | `BLAKE2S_256
                   ]
 
+let all_hash_types = [ `SHA1
+                     ; `SHA2_256     ; `SHA256
+                     ; `SHA2_512_256
+                     ; `SHA2_512_512 ; `SHA512
+                     ; `BLAKE2B_256
+                     ; `BLAKE2B_512
+                     ; `BLAKE2S_128
+                     ; `BLAKE2S_256
+                     ]
+
 type hash_bytes = hash_type * bytes
 
 module Specs = struct
@@ -145,6 +155,10 @@ module Parser = struct
        with
        | Length_mismatch -> assert false
     )
+  ;;
+
+  let all_parsers : hash_bytes Angstrom.t list =
+    List.map (fun hash_type -> gen_parser ~hash_type) all_hash_types
   ;;
 end
 
