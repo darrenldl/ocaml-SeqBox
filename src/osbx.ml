@@ -7,7 +7,7 @@ let help_secs = [ `S Manpage.s_common_options
                 ; `S Manpage.s_authors
                 ; `P "Darren Ldl <darrenldldev@gmail.com>"
                 ; `S Manpage.s_bugs
-                ; `P "Report bugs at ocaml-SeqBox github page via issues (https://github.com/darrenldl/ocaml-SeqBox)"
+                ; `P "Report bugs at ocaml-SeqBox GitHub page via issues (https://github.com/darrenldl/ocaml-SeqBox)"
                 ]
 ;;
 
