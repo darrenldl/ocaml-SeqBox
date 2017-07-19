@@ -4,6 +4,9 @@
     - Now osbx can be compiled on Windows
   - Switched to a pure OCaml implementation of CRC-CCITT
     - Implementation is translated from libcrc implementation
+  - Added support for multiple hash functions
+    - added support for sha1 sha256 sha512 and blake2b-512
+    - in prior versions, only sha256 was supported
 
 ## 1.0.1  (version on OPAM)
   - Changed rescue mode to use the original bytes of the file, rather than regenerating the block bytes itself

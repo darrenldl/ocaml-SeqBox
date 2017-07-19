@@ -17,14 +17,14 @@ let sbx_version =
 ;;
 
 let force =
-  let doc = "Force overwrites even if OUTFILE exists" in
-  Arg.(value & flag & info ["f"; "force"] ~doc)
+  let doc = "Force overwrites even if $(docv) exists" in
+  Arg.(value & flag & info ["f"; "force"] ~docv:"OUTFILE" ~doc)
 ;;
 
 let hash =
   let open Multihash in
   let doc =
-    "Hash function to use, one of : sha1 sha256 sha512 blake2b_512" in
+    "Hash function to use, one of (case-insensitive) : sha1 sha256(default) sha512 blake2b-512" in
   Arg.(value & opt (some string) None & info ["hash"] ~docv:"HASH_TYPE" ~doc)
 ;;
 
