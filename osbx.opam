@@ -15,6 +15,7 @@ depends: [
   "jbuilder"       {build}
   "stdint"         {build}
   "nocrypto"       {build}
+  "digestif"       {build}
   "angstrom"       {build}
   "core_kernel"    {build}
   "hex"            {build}
