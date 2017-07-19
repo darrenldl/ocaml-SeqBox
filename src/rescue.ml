@@ -91,7 +91,9 @@ type stats = Stats.t
 
 module Progress : sig
   val report_rescue : stats -> Core_kernel.In_channel.t -> unit
+
 end = struct
+
   let print_rescue_progress_helper =
     let header         = "Data rescue progress" in
     let unit           = "bytes" in
@@ -107,9 +109,16 @@ end = struct
   ;;
 
   let report_rescue : stats -> Core_kernel.In_channel.t -> unit =
+    let first_time = ref true in
     (fun stats in_file ->
        let total_bytes =
          (Core_kernel.In_channel.length in_file) in
+       if !first_time then
+         begin
+           (* print a notice *)
+           Printf.printf "Press CTRL-C to interrupt\n";
+           first_time := false
+         end;
        print_rescue_progress ~stats ~total_bytes
     )
   ;;
