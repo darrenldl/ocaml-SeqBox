@@ -1,5 +1,4 @@
 open Stdint
-open Nocrypto.Hash
 open Sbx_specs
 open Sbx_block
 open Stream_file
@@ -538,21 +537,23 @@ module Processor = struct
       (stats, truncate)
   ;;
 
-  let rec hash_proc ?(stats:hash_stats = Stats.make_blank_hash_stats ()) ?(hash_state:SHA256.t = SHA256.init()) (in_file:Core_kernel.In_channel.t) : bytes =
-    let open Read_chunk in
-    let read_len = 1024 * 1024 (* 1 MiB *) in
-    Progress.report_hash stats in_file;
-    match read in_file ~len:read_len with
-    | None           -> Conv_utils.sha256_hash_state_to_bytes hash_state
-    | Some { chunk } ->
-      SHA256.feed hash_state (Cstruct.of_bytes chunk);
-      let new_stats =
-        Stats.add_bytes_hashed stats ~num:(Int64.of_int (Bytes.length chunk)) in
-      hash_proc ~stats:new_stats ~hash_state in_file
-  ;;
-
-  let hasher (in_file:Core_kernel.In_channel.t) : bytes =
-    hash_proc in_file
+  let make_hasher ~(hash_type:Multihash.hash_type) : bytes Stream.in_processor =
+    (fun in_file ->
+       let rec hash_proc (stats:hash_stats) (hash_state:Multihash.Hash.ctx) (in_file:Core_kernel.In_channel.t) : bytes =
+         let open Read_chunk in
+         let read_len = 1024 * 1024 (* 1 MiB *) in
+         Progress.report_hash stats in_file;
+         match read in_file ~len:read_len with
+         | None           -> Multihash.Hash.get_raw_hash hash_state
+         | Some { chunk } ->
+           Multihash.Hash.feed hash_state chunk;
+           let new_stats =
+             Stats.add_bytes_hashed stats ~num:(Int64.of_int (Bytes.length chunk)) in
+           hash_proc new_stats hash_state in_file in
+       let stats      = Stats.make_blank_hash_stats () in
+       let hash_state = Multihash.Hash.init hash_type in
+       hash_proc stats hash_state in_file
+    )
   ;;
 end
 
@@ -566,12 +567,13 @@ module Process = struct
       | Error msg -> Error msg
   ;;
 
-  let hash_file ~(in_filename:string) : (bytes, string) result =
-    Stream.process_in ~in_filename Processor.hasher
+  let hash_file ~(hash_type:Multihash.hash_type) ~(in_filename:string) : (bytes, string) result =
+    let processor = Processor.make_hasher ~hash_type in
+    Stream.process_in ~in_filename processor
   ;;
 
-  let hash_file_w_warning ~(in_filename:string) : bytes option =
-    match hash_file ~in_filename with
+  let hash_file_w_warning ~(hash_type:Multihash.hash_type) ~(in_filename:string) : bytes option =
+    match hash_file ~hash_type ~in_filename with
     | Ok hash   -> Some hash
     | Error msg -> Printf.printf "Warning : %s\n" msg; None
   ;;
@@ -593,7 +595,7 @@ module Process = struct
                 let hash_type = Multihash.hash_bytes_to_hash_type ~hash_bytes in
                 if Multihash.Hash.hash_type_is_supported hash_type then
                   let output_file_hash =
-                    match hash_file_w_warning ~in_filename:out_filename with
+                    match hash_file_w_warning ~hash_type ~in_filename:out_filename with
                     | Some raw ->
                       Some (Multihash.raw_hash_to_hash_bytes ~hash_type ~raw)
                     | None     -> None in
@@ -604,11 +606,11 @@ module Process = struct
             | None            ->
               Ok stats
           with
-          | _ -> Error "failed to truncate output file"
+          | Multihash.Length_mismatch -> assert false
+          | _                         -> Error "Failed to truncate output file"
         end
       | Ok (stats, None)            ->
         Ok stats
       | Error msg                   -> Error msg
   ;;
-
 end
