@@ -33,6 +33,14 @@ echo "========================================"
 
 echo ""
 
+# hash test
+echo "Starting hash tests"
+echo "========================================"
+./hash_tests.sh
+echo "========================================"
+
+echo ""
+
 # rescue tests
 echo "Starting rescue tests"
 echo "========================================"
