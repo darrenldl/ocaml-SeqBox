@@ -297,7 +297,7 @@ module Processor = struct
 
   type preference = [ `Meta | `Data ]
 
-  let find_first_both_proc ?(newline_if_unfinished:bool = false) ~(prefer:preference) (in_file:Core_kernel.In_channel.t) : find_both_result =
+  let find_first_both_proc (* ?(newline_if_unfinished:bool = false) *) ~(prefer:preference) (in_file:Core_kernel.In_channel.t) : find_both_result =
     let open Read_chunk in
     let len = Param.Decode.ref_block_scan_alignment in
     let rec find_first_both_proc_internal (result_so_far:find_both_result) (stats:scan_stats) : scan_stats * find_both_result =
@@ -353,12 +353,13 @@ module Processor = struct
                 find_first_both_proc_internal new_result_so_far new_stats in
     let (stats, res) = find_first_both_proc_internal { meta = None; data = None } (Stats.make_blank_scan_stats ()) in
     Core_kernel.In_channel.seek in_file 0L;  (* reset seek position *)
-    if newline_if_unfinished then
-      Progress.print_newline_possibly_scan stats in_file;
+    (* if newline_if_unfinished then
+      Progress.print_newline_possibly_scan stats in_file; *)
+    Progress.print_newline_possibly_scan stats in_file;
     res
   ;;
 
-  let find_first_block_proc ?(newline_if_unfinished:bool = false) ~(want_meta:bool) (in_file:Core_kernel.In_channel.t) : Block.t option =
+  let find_first_block_proc (* ?(newline_if_unfinished:bool = false) *) ~(want_meta:bool) (in_file:Core_kernel.In_channel.t) : Block.t option =
     let open Read_chunk in
     let len = Param.Decode.ref_block_scan_alignment in 
     let bytes_to_block (raw_header:Header.raw_header) (chunk:bytes) : Block.t option =
@@ -404,8 +405,9 @@ module Processor = struct
             | Some block -> (new_stats, Some block)  (* found a valid block *) in
     let (stats, res) = find_first_block_proc_internal (Stats.make_blank_scan_stats ()) in
     Core_kernel.In_channel.seek in_file 0L;  (* reset seek position *)
-    if newline_if_unfinished then
-      Progress.print_newline_possibly_scan stats in_file;
+    (* if newline_if_unfinished then
+      Progress.print_newline_possibly_scan stats in_file; *)
+    Progress.print_newline_possibly_scan stats in_file;
     res
   ;;
 
@@ -474,7 +476,7 @@ module Processor = struct
   let out_filename_fetcher (in_file:Core_kernel.In_channel.t) : string option =
     Printf.printf "Scanning for metadata block to get output file name\n";
     let metadata_block : Block.t option =
-      find_first_block_proc ~newline_if_unfinished:true ~want_meta:true in_file in
+      find_first_block_proc (* ~newline_if_unfinished:true *) ~want_meta:true in_file in
     match metadata_block with
     | Some block ->
       begin
@@ -494,7 +496,7 @@ module Processor = struct
     let ref_block : Block.t option =
       (* try to find a metadata block first *)
       Printf.printf "Scanning for a reference block\n";
-      match find_first_both_proc ~newline_if_unfinished:true ~prefer:`Meta in_file with
+      match find_first_both_proc (* ~newline_if_unfinished:true *) ~prefer:`Meta in_file with
       | { meta = Some block; data = _ }          ->
         begin
           Printf.printf "Metadata block found\n";
