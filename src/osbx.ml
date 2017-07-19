@@ -21,6 +21,13 @@ let force =
   Arg.(value & flag & info ["f"; "force"] ~doc)
 ;;
 
+let hash =
+  let open Multihash in
+  let doc =
+    "Hash function to use, one of : sha1 sha256 sha512 blake2b_512" in
+  Arg.(value & opt (some string) None & info ["hash"] ~docv:"HASH_TYPE" ~doc)
+;;
+
 let default_cmd =
   let doc = "a SeqBox implementation written in OCaml" in
   let sdocs = Manpage.s_common_options in
@@ -33,7 +40,7 @@ let default_cmd =
 let encode_cmd =
   let open Osbx_encode in
   let doc = "encode file" in
-  (Term.(const encode $ force $ no_meta $ sbx_version $ uid $ in_file $ out_file),
+  (Term.(const encode $ force $ no_meta $ sbx_version $ uid $ hash $ in_file $ out_file),
    Term.info "encode" ~doc
   )
 ;;

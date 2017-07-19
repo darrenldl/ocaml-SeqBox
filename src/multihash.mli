@@ -1,5 +1,6 @@
 exception Length_mismatch
 exception Unsupported_hash
+exception Invalid_hash_type_string
 
 type hash_type  = [ `SHA1
                   | `SHA2_256     | `SHA256
@@ -47,10 +48,13 @@ module Hash : sig
   val get_hash_bytes         : ctx       -> hash_bytes
 end
 
-
 val hash_bytes_equal : hash_bytes -> hash_bytes -> bool
 
-val hash_type_to_string : hash_type:hash_type -> string
+val hash_type_to_string : hash_type -> string
+
+val string_to_hash_type : string    -> (hash_type, string) result
+
+val string_to_hash_type_exn : string -> hash_type
 
 val raw_hash_to_hash_bytes  : hash_type:hash_type   -> raw:bytes -> hash_bytes
 

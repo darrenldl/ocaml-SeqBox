@@ -2,6 +2,7 @@ open Stdint
 
 exception Length_mismatch
 exception Unsupported_hash
+exception Invalid_hash_type_string
 
 type hash_type  = [ `SHA1
                   | `SHA2_256     | `SHA256
@@ -57,18 +58,38 @@ let hash_bytes_equal (a:hash_bytes) (b:hash_bytes) : bool =
     false
 ;;
 
-let hash_type_to_string ~(hash_type:hash_type) : string =
+let hash_type_to_string (hash_type:hash_type) : string =
   match hash_type with
-  | `SHA1         -> "SHA1"
-  | `SHA2_256
-  | `SHA256       -> "SHA256"
-  | `SHA2_512_256 -> "SHA2-512"
-  | `SHA2_512_512
-  | `SHA512       -> "SHA512"
-  | `BLAKE2B_256  -> "BLAKE2B-256"
-  | `BLAKE2B_512  -> "BLAKE2B-512"
-  | `BLAKE2S_128  -> "BLAKE2S-128"
-  | `BLAKE2S_256  -> "BLAKE2S-256"
+  | `SHA1                   -> "SHA1"
+  | `SHA2_256     | `SHA256 -> "SHA256"
+  | `SHA2_512_256           -> "SHA2-512"
+  | `SHA2_512_512 | `SHA512 -> "SHA512"
+  | `BLAKE2B_256            -> "BLAKE2B-256"
+  | `BLAKE2B_512            -> "BLAKE2B-512"
+  | `BLAKE2S_128            -> "BLAKE2S-128"
+  | `BLAKE2S_256            -> "BLAKE2S-256"
+;;
+
+let string_to_hash_type_exn (str:string) : hash_type =
+  match String.uppercase_ascii str with
+  | "SHA1"         -> `SHA1
+  | "SHA2-256"     -> `SHA2_256
+  | "SHA256"       -> `SHA256
+  | "SHA2-512-256" -> `SHA2_512_256
+  | "SHA2-512-512" -> `SHA2_512_512
+  | "SHA512"       -> `SHA512
+  | "BLAKE2B-256"  -> `BLAKE2B_256
+  | "BLAKE2B-512"  -> `BLAKE2B_512
+  | "BLAKE2S-128"  -> `BLAKE2S_128
+  | "BLAKE2S-256"  -> `BLAKE2S_256
+  | _              -> raise Invalid_hash_type_string
+;;
+
+let string_to_hash_type (str:string) : (hash_type, string) result =
+  try
+    Ok (string_to_hash_type_exn str)
+  with
+  | Invalid_hash_type_string -> Error "Unrecognized hash type string"
 ;;
 
 let raw_hash_to_hash_bytes ~(hash_type:hash_type) ~(raw:bytes) : hash_bytes =
@@ -97,7 +118,7 @@ let hash_bytes_to_hash_type        ~(hash_bytes:hash_bytes) : hash_type =
 
 let hash_bytes_to_hash_type_string ~(hash_bytes:hash_bytes) : bytes =
   let (hash_type, _) = hash_bytes in
-  hash_type_to_string ~hash_type
+  hash_type_to_string hash_type
 ;;
 
 let raw_hash_to_multihash ~(hash_type:hash_type) ~(raw:bytes) : bytes =

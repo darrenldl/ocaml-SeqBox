@@ -144,7 +144,7 @@ module Processor = struct
       data_to_block_proc_w_hash ~hash_state in_file out_file ~data_len ~stats:(Stats.add_written_data_block stats ~data_len:chunk_len) ~common
   ;;
 
-  let make_in_out_encoder ~(common:Header.common_fields) ~(metadata:(Metadata.t list) option) : stats Stream.in_out_processor =
+  let make_in_out_encoder ~(hash_type:hash_type) ~(common:Header.common_fields) ~(metadata:(Metadata.t list) option) : stats Stream.in_out_processor =
     let ver      = Header.common_fields_to_ver common in
     let data_len = ver_to_data_size ver in
     let open Read_chunk in
@@ -204,7 +204,7 @@ module Process = struct
     | _ -> raise File_metadata_get_failed
   ;;
 
-  let encode_file ~(uid:bytes option) ~(want_meta:bool) ~(ver:version) ~(in_filename:string) ~(out_filename:string) : (stats, string) result =
+  let encode_file ~(uid:bytes option) ~(want_meta:bool) ~(ver:version) ~(hash:string) ~(in_filename:string) ~(out_filename:string) : (stats, string) result =
     try
       (* check file size first *)
       let max_file_size = ver_to_max_file_size ver in
@@ -212,16 +212,25 @@ module Process = struct
       if file_size > max_file_size then
         Error (Printf.sprintf "File size (%Ld bytes) exceeds upper limit (%Ld bytes)" file_size max_file_size)
       else
-        let common   =
-          match uid with
-          | Some uid -> Header.make_common_fields ~uid ver
-          | None     -> Header.make_common_fields      ver in
-        let metadata =
-          match want_meta with
-          | true  -> Some (get_file_metadata ~in_filename ~out_filename)
-          | false -> None in
-        let encoder  = Processor.make_in_out_encoder ~common ~metadata in
-        Stream.process_in_out ~append:false ~in_filename ~out_filename encoder
+        (* check hash *)
+        match string_to_hash_type hash with
+        | Error msg    -> Error msg
+        | Ok hash_type ->
+          if not (Hash.hash_type_is_supported hash_type) then
+            Error "Hash type is not supported"
+          else
+            begin
+              let common   =
+                match uid with
+                | Some uid -> Header.make_common_fields ~uid ver
+                | None     -> Header.make_common_fields      ver in
+              let metadata =
+                match want_meta with
+                | true  -> Some (get_file_metadata ~in_filename ~out_filename)
+                | false -> None in
+              let encoder  = Processor.make_in_out_encoder ~hash_type ~common ~metadata in
+              Stream.process_in_out ~append:false ~in_filename ~out_filename encoder
+            end
     with
     | File_utils.File_access_error        -> Error "Failed to access file"
     | File_metadata_get_failed            -> Error "Failed to get file metadata"
