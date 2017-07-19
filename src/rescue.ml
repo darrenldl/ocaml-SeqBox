@@ -116,7 +116,7 @@ end = struct
        if !first_time then
          begin
            (* print a notice *)
-           Printf.printf "Press CTRL-C to interrupt\n";
+           Printf.printf "Press Ctrl-C to interrupt\n";
            first_time := false
          end;
        print_rescue_progress ~stats ~total_bytes
@@ -145,9 +145,9 @@ module Logger = struct
       match Stream.process_out                              ~append:false ~out_filename:log_filename processor with
       | Ok _      -> Ok ()
       | Error msg -> Error msg in
-    (* This is to make sure log writing is still done even when CTRL-C is entered
+    (* This is to make sure log writing is still done even when Ctrl-C is entered
      *
-     * This probably will not stop extremely frequent CTRL-C presses where Break
+     * This probably will not stop extremely frequent Ctrl-C presses where Break
      * exception is raised during the exception handling bit (maybe? Not sure about this really)
      *
      * But should be good enough for normal actual human uses

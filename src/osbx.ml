@@ -70,7 +70,7 @@ let show_cmd =
 ;;
 
 let () =
-  (* catch CTRL-C breaks *)
+  (* catch Ctrl-C breaks *)
   Sys.catch_break true;
   Term.exit @@ Term.eval_choice default_cmd [encode_cmd; decode_cmd; rescue_cmd; show_cmd]
 ;;
