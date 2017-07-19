@@ -19,17 +19,17 @@ module Specs : sig
                ; digest_length  : int
                }
 
-  val hash_type_to_param          : hash_type:hash_type -> param
+  val hash_type_to_param          : hash_type -> param
 
-  val hash_type_to_hash_func_type : hash_type:hash_type -> bytes
+  val hash_type_to_hash_func_type : hash_type -> bytes
 
-  val hash_type_to_digest_length  : hash_type:hash_type -> int
+  val hash_type_to_digest_length  : hash_type -> int
 
-  val hash_type_to_total_length   : hash_type:hash_type -> int
+  val hash_type_to_total_length   : hash_type -> int
 end
 
 module Parser : sig
-  val gen_parser  : hash_type:hash_type -> hash_bytes Angstrom.t
+  val gen_parser  : hash_type -> hash_bytes Angstrom.t
 
   val all_parsers : hash_bytes Angstrom.t list
 end
@@ -60,16 +60,16 @@ val string_to_hash_type : string    -> (hash_type, string) result
 
 val string_to_hash_type_exn : string -> hash_type
 
-val raw_hash_to_hash_bytes  : hash_type:hash_type   -> raw:bytes -> hash_bytes
+val raw_hash_to_hash_bytes  : hash_type   -> bytes -> hash_bytes
 
-val hash_bytes_to_raw_hash  : hash_bytes:hash_bytes -> bytes
+val hash_bytes_to_raw_hash  : hash_bytes -> bytes
 
-val hash_bytes_to_multihash : hash_bytes:hash_bytes -> bytes
+val hash_bytes_to_multihash : hash_bytes -> bytes
 
-val hash_bytes_to_hash_type : hash_bytes:hash_bytes -> hash_type
+val hash_bytes_to_hash_type : hash_bytes -> hash_type
 
-val hash_bytes_to_hash_type_string : hash_bytes:hash_bytes -> bytes
+val hash_bytes_to_hash_type_string : hash_bytes -> bytes
 
-val raw_hash_to_multihash   : hash_type:hash_type   -> raw:bytes -> bytes
+val raw_hash_to_multihash   : hash_type   -> bytes -> bytes
 
-val make_dummy_hash_bytes   : hash_type:hash_type   -> hash_bytes
+val make_dummy_hash_bytes   : hash_type   -> hash_bytes

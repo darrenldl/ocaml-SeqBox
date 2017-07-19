@@ -31,7 +31,7 @@ module Specs = struct
                ; digest_length  : int
                }
 
-  let hash_type_to_param ~(hash_type:hash_type) : param =
+  let hash_type_to_param (hash_type:hash_type) : param =
     match hash_type with
     | `SHA1                   -> { hash_func_type = "\x11";   digest_length = 0x14 }
     | `SHA2_256     | `SHA256 -> { hash_func_type = "\x12";   digest_length = 0x20 }
@@ -43,18 +43,18 @@ module Specs = struct
     | `BLAKE2S_256            -> { hash_func_type = "\xb260"; digest_length = 0x20 }
   ;;
 
-  let hash_type_to_hash_func_type ~(hash_type:hash_type) : bytes =
-    let { hash_func_type; _ } = hash_type_to_param ~hash_type in
+  let hash_type_to_hash_func_type (hash_type:hash_type) : bytes =
+    let { hash_func_type; _ } = hash_type_to_param hash_type in
     hash_func_type
   ;;
 
-  let hash_type_to_digest_length  ~(hash_type:hash_type) : int =
-    let { digest_length; _ } = hash_type_to_param ~hash_type in
+  let hash_type_to_digest_length  (hash_type:hash_type) : int =
+    let { digest_length; _ } = hash_type_to_param hash_type in
     digest_length
   ;;
 
-  let hash_type_to_total_length   ~(hash_type:hash_type) : int =
-    let { hash_func_type; digest_length } = hash_type_to_param ~hash_type in
+  let hash_type_to_total_length   (hash_type:hash_type) : int =
+    let { hash_func_type; digest_length } = hash_type_to_param hash_type in
     (Bytes.length hash_func_type) + 1 + digest_length
   ;;
 end
@@ -102,48 +102,48 @@ let string_to_hash_type (str:string) : (hash_type, string) result =
   | Invalid_hash_type_string -> Error "Unrecognized hash type string"
 ;;
 
-let raw_hash_to_hash_bytes ~(hash_type:hash_type) ~(raw:bytes) : hash_bytes =
-  if Specs.hash_type_to_digest_length ~hash_type = Bytes.length raw then
+let raw_hash_to_hash_bytes (hash_type:hash_type) (raw:bytes) : hash_bytes =
+  if Specs.hash_type_to_digest_length hash_type = Bytes.length raw then
     (hash_type, raw)
   else
     raise Length_mismatch
 ;;
 
-let hash_bytes_to_raw_hash ~(hash_bytes:hash_bytes) : bytes =
+let hash_bytes_to_raw_hash (hash_bytes:hash_bytes) : bytes =
   let (_, raw) = hash_bytes in
   raw
 ;;
 
-let hash_bytes_to_multihash ~(hash_bytes:hash_bytes) : bytes =
+let hash_bytes_to_multihash (hash_bytes:hash_bytes) : bytes =
   let (hash_type, raw)                        = hash_bytes in
-  let { Specs.hash_func_type; digest_length } = Specs.hash_type_to_param ~hash_type in
+  let { Specs.hash_func_type; digest_length } = Specs.hash_type_to_param hash_type in
   let len_bytes                               = Conv_utils.uint8_to_bytes (Uint8.of_int digest_length) in
   Bytes.concat "" [hash_func_type; len_bytes; raw]
 ;;
 
-let hash_bytes_to_hash_type        ~(hash_bytes:hash_bytes) : hash_type =
+let hash_bytes_to_hash_type        (hash_bytes:hash_bytes) : hash_type =
   let (hash_type, _) = hash_bytes in
   hash_type
 ;;
 
-let hash_bytes_to_hash_type_string ~(hash_bytes:hash_bytes) : bytes =
+let hash_bytes_to_hash_type_string (hash_bytes:hash_bytes) : bytes =
   let (hash_type, _) = hash_bytes in
   hash_type_to_string hash_type
 ;;
 
-let raw_hash_to_multihash ~(hash_type:hash_type) ~(raw:bytes) : bytes =
-  let hash_bytes = raw_hash_to_hash_bytes ~hash_type ~raw in
-  hash_bytes_to_multihash ~hash_bytes
+let raw_hash_to_multihash (hash_type:hash_type) (raw:bytes) : bytes =
+  let hash_bytes = raw_hash_to_hash_bytes hash_type raw in
+  hash_bytes_to_multihash hash_bytes
 ;;
 
-let make_dummy_hash_bytes ~(hash_type:hash_type) : hash_bytes =
+let make_dummy_hash_bytes (hash_type:hash_type) : hash_bytes =
   (hash_type, Bytes.make (Specs.hash_type_to_digest_length hash_type) '\x00')
 ;;
 
 module Parser = struct
   open Angstrom
 
-  let gen_parser ~(hash_type:hash_type) : hash_bytes Angstrom.t =
+  let gen_parser (hash_type:hash_type) : hash_bytes Angstrom.t =
     let { Specs.hash_func_type; digest_length } = Specs.hash_type_to_param hash_type in
     let len_bytes                               = Conv_utils.uint8_to_bytes (Uint8.of_int digest_length) in
     let header_bytes                            = Bytes.concat "" [hash_func_type; len_bytes] in
@@ -151,14 +151,14 @@ module Parser = struct
     >>|
     (fun raw ->
        try
-         raw_hash_to_hash_bytes ~hash_type ~raw
+         raw_hash_to_hash_bytes hash_type raw
        with
        | Length_mismatch -> assert false
     )
   ;;
 
   let all_parsers : hash_bytes Angstrom.t list =
-    List.map (fun hash_type -> gen_parser ~hash_type) all_hash_types
+    List.map (fun hash_type -> gen_parser hash_type) all_hash_types
   ;;
 end
 
@@ -219,6 +219,6 @@ module Hash = struct
   let get_hash_bytes (ctx:ctx) : hash_bytes =
     let hash_type = ctx_to_hash_type ctx in
     let raw       = get_raw_hash ctx in
-    raw_hash_to_hash_bytes ~hash_type ~raw
+    raw_hash_to_hash_bytes hash_type raw
   ;;
 end

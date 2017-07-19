@@ -312,7 +312,7 @@ end = struct
     match entry with
     | FNM v | SNM v         -> Conv_utils.string_to_bytes v
     | FSZ v | FDT v | SDT v -> Conv_utils.uint64_to_bytes v
-    | HSH hash_bytes        -> Multihash.hash_bytes_to_multihash ~hash_bytes
+    | HSH hash_bytes        -> Multihash.hash_bytes_to_multihash hash_bytes
     | PID v                 -> v
   ;;
 
@@ -381,15 +381,15 @@ end = struct
       >>| (fun x -> SDT x)
     ;;
 
-    let gen_hash_parser ~(hash_type:Multihash.hash_type) =
+    let gen_hash_parser (hash_type:Multihash.hash_type) =
       let open Multihash in
-      let total_len = Specs.hash_type_to_total_length ~hash_type in
+      let total_len = Specs.hash_type_to_total_length hash_type in
       let len_bytes = Conv_utils.uint8_to_bytes (Uint8.of_int total_len) in
-      string "HSH" *> string len_bytes *> Parser.gen_parser ~hash_type
+      string "HSH" *> string len_bytes *> Parser.gen_parser hash_type
     ;;
 
     let hsh_p : metadata Angstrom.t =
-      choice (List.map (fun hash_type -> gen_hash_parser ~hash_type) Multihash.all_hash_types)
+      choice (List.map (fun hash_type -> gen_hash_parser hash_type) Multihash.all_hash_types)
       >>| (fun x -> HSH x)
     ;;
     (*let pid_p : metadata Angstrom.t =

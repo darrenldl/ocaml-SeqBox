@@ -166,7 +166,7 @@ module Processor = struct
            (* a dummy multihash is added to make sure there is actually enough space
             * in the metadata block before the encoding starts
             *)
-           let dummy_hash_bytes           = (Multihash.make_dummy_hash_bytes ~hash_type) in
+           let dummy_hash_bytes           = Multihash.make_dummy_hash_bytes hash_type in
            let dummy_fields               = (HSH dummy_hash_bytes) :: fields_except_hash in
            let dummy_metadata_block       = Block.make_metadata_block common ~fields:dummy_fields in
            let dummy_metadata_block_bytes = Block.to_bytes dummy_metadata_block in

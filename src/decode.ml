@@ -594,12 +594,12 @@ module Process = struct
             match stats.recorded_hash with
             | Some hash_bytes ->
               begin
-                let hash_type = Multihash.hash_bytes_to_hash_type ~hash_bytes in
+                let hash_type = Multihash.hash_bytes_to_hash_type hash_bytes in
                 if Multihash.Hash.hash_type_is_supported hash_type then
                   let output_file_hash =
                     match hash_file_w_warning ~hash_type ~in_filename:out_filename with
                     | Some raw ->
-                      Some (Multihash.raw_hash_to_hash_bytes ~hash_type ~raw)
+                      Some (Multihash.raw_hash_to_hash_bytes hash_type raw)
                     | None     -> None in
                   Ok (Stats.add_hashes ~recorded_hash:None ~output_file_hash stats)
                 else
