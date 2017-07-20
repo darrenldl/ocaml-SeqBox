@@ -51,6 +51,9 @@ let in_file =
 ;;
 
 let out_file =
-  let doc = "Decoded file name (defaults to name stored in sbx container if present)" in
-  Arg.(value & pos 1 (some string) None & info [] ~docv:"OUTFILE" ~doc)
+  let doc = "Decoded file name.
+  If $(docv) is not provided, then name stored in sbx container is used if present.
+  If $(docv) is provided and is a directory(DIR) then output file is stored as DIR/STORED_NAME.
+  If $(docv) is provided and is not a directory, then it is used directly." in
+  Arg.(value & pos 1 (some string) None & info [] ~docv:"OUT" ~doc)
 ;;
