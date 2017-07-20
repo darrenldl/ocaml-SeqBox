@@ -46,3 +46,11 @@ echo "Starting rescue tests"
 echo "========================================"
 ./rescue_tests.sh
 echo "========================================"
+
+echo ""
+
+# output file tests
+echo "Starting output file path logic tests"
+echo "========================================"
+./out_file_logic_tests.sh
+echo "========================================"
