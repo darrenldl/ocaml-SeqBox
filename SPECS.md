@@ -26,7 +26,8 @@ Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 ## Decoding workflow
 Metadata block is valid if and only if
   - Header can be parsed
-  - All metadata fields(duplicated or not) can be parsed successfully
+  - All metadata fields(duplicate or not) can be parsed successfully
+    - Duplicate refers to metadata fields with the same ID
   - All remaining space is filled with 0x1A pattern
   - Version(specifically alignment/block size) matches reference block(see below)
   - CRC-CCITT is correct
