@@ -19,9 +19,9 @@ Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
   1. If metadata is enabled, the following file metadata are gathered from file or retrieved from user input : file name, sbx file name, file size, file last modification time, encoding start time
   2. If metadata is enabled, then a partial metadata block is written into the output file as filler
     - The written metadata block is valid, but does not contain the actual file hash, a filler pattern of 0x00 is used in place of the hash part of the multihash(the header and length indicator of multihash are still valid)
-  3. Load version specific data sized chunk one at a time from input file to encode and output(and if metadata is enabled, SHA256 hash state is updated as well)
+  3. Load version specific data sized chunk one at a time from input file to encode and output(and if metadata is enabled, Multihash hash state/ctx is updated as well(the actual hash state/ctx used depends on hash type, defaults to SHA256)
     - data size = block size - header size (e.g. version 1 has data size of 512 - 16 = 496)
-  4. If metadata is enabled, the encoder seeks back to starting position of output file and overwrites the metadata block with one that contains the SHA256 hash
+  4. If metadata is enabled, the encoder seeks back to starting position of output file and overwrites the metadata block with one that contains the actual hash
 
 ## Decoding workflow
 Metadata block is valid if and only if
@@ -47,7 +47,7 @@ Data block is valid if and only if
   3. If possible, truncate output file to remove data padding done for the last block during encoding
     - if reference block is a metadata block, and contains file size field, then the output file will be truncated to that file size
     - otherwise nothing is done
-  4. If possible, report/record if the SHA256 hash of decoded file matches the recorded hash during encoding
+  4. If possible, report/record if the hash of decoded file matches the recorded hash during encoding
     - if reference block is a metadata block, and contains the hash field, then the output file will be hashed to check against the recorded hash
       - output file will not be deleted even if hash does not match
     - otherwise nothing is done
