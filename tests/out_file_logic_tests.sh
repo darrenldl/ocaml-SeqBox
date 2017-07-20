@@ -9,6 +9,7 @@ mkdir out_test
 rm out_test/*
 
 echo "Testing encode output with no provided path"
+rm dummy.sbx
 echo ""
 ./osbx encode dummy
 
@@ -129,5 +130,3 @@ if [ ! -f "out_test/dummy" ]; then
 else
   echo "==> NOT okay"
 fi
-
-echo ""
