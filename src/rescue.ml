@@ -244,7 +244,13 @@ module Processor = struct
         | None              -> true
         | Some log_filename -> Logger.write ~stats ~log_filename ~in_file in
       if not log_okay then
-        (stats, None)
+        begin
+          (* just print and quit if cannot write log *)
+          print_newline ();
+          Printf.printf "Failed to write to log file";
+          print_newline ();
+          (stats, None)
+        end
       else
         begin
           match read in_file ~len with
@@ -304,8 +310,6 @@ module Processor = struct
    * this should be very rare however, if happening at all
    *)
   let rec scan_and_output ~(stats:stats) ~(out_dirname:string) ~(log_filename:string option) (in_file:Core_kernel.In_channel.t) : stats =
-    (* exit if failed to write to log
-    *)
     match scan_proc ~stats ~log_filename in_file with
     | (stats, None)                 -> stats  (* ran out of valid blocks in input file *)
     | (stats, Some block_and_chunk) ->
