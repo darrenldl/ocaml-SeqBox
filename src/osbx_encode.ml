@@ -21,20 +21,40 @@ let encode (force_out:bool) (no_meta:bool) (ver:string option) (uid:string optio
         | Ok uid  -> Some uid
         | Error _ -> raise (Packaged_exn (Printf.sprintf "Uid %s is not a valid hex string" str)) in
     let out_filename : string =
-      match out_filename with
-      | None     -> Bytes.concat "" [in_filename; ".sbx"]
-      | Some str -> str in
-    let out_file_exists = Sys.file_exists out_filename in
-    if out_file_exists && not force_out then
-      raise (Packaged_exn (Printf.sprintf "File %s already exists" out_filename))
-    else
-      let hash =
-        match hash_type with
+      let supposed_out_filename =
+        match out_filename with
         | Some str -> str
-        | None     -> "SHA256" in
-      match Process.encode_file ~uid ~want_meta:(not no_meta) ~ver ~hash ~in_filename ~out_filename with
-      | Ok stats  -> Stats.print_stats stats
-      | Error msg -> raise (Packaged_exn msg)
+        | None     -> String.concat "" [in_filename; ".sbx"] in
+      let out_file_exists = Sys.file_exists supposed_out_filename in
+      if out_file_exists then
+        begin
+          if Sys.is_directory supposed_out_filename then
+            (* if a directory is given, then try DIR/INFILE.sbx *)
+            let in_filename_no_path       = Misc_utils.path_to_file in_filename in
+            let inferred_filename         = String.concat "" [in_filename_no_path; ".sbx"] in
+            let inferred_full_path        = Misc_utils.make_path [supposed_out_filename; inferred_filename] in
+            let inferred_full_path_exists = Sys.file_exists inferred_full_path in
+            match (inferred_full_path_exists, force_out) with
+            | (true , false) -> raise (Packaged_exn (Printf.sprintf "File %s already exists" inferred_full_path))
+            | (_    , true )
+            | (false, _    ) -> inferred_full_path
+          else
+            begin
+              if force_out then
+                supposed_out_filename
+              else
+                raise (Packaged_exn (Printf.sprintf "File %s already exists" supposed_out_filename))
+            end
+        end
+      else
+        supposed_out_filename in
+    let hash =
+      match hash_type with
+      | Some str -> str
+      | None     -> "SHA256" in
+    match Process.encode_file ~uid ~want_meta:(not no_meta) ~ver ~hash ~in_filename ~out_filename with
+    | Ok stats  -> Stats.print_stats stats
+    | Error msg -> raise (Packaged_exn msg)
   with 
   | Packaged_exn str -> Printf.printf "%s\n" str
 ;;
@@ -55,6 +75,6 @@ let in_file =
 ;;
 
 let out_file =
-  let doc = "Sbx container name (defaults to INFILE.sbx)" in
+  let doc = "Sbx container name (defaults to INFILE.sbx) If $(docv) is a directory(DIR), then the final file will be stored as DIR/INFILE.sbx" in
   Arg.(value & pos 1 (some string) None & info [] ~docv:"OUTFILE" ~doc)
 ;;
