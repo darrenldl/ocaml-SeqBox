@@ -7,6 +7,7 @@
   - Added support for multiple hash functions
     - added support for sha1 sha256 sha512 and blake2b-512
     - in prior versions, only sha256 was supported
+  - Encoding now reduces file path to file name when creating metadata
 
 ## 1.0.1  (version on OPAM)
   - Changed rescue mode to use the original bytes of the file, rather than regenerating the block bytes itself
