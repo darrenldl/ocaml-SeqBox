@@ -1,5 +1,4 @@
 exception Length_mismatch
-exception Unsupported_hash
 exception Invalid_hash_type_string
 
 type hash_type  = [ `SHA1
@@ -35,6 +34,8 @@ module Parser : sig
 end
 
 module Hash : sig
+  exception Unsupported_hash
+
   type ctx
 
   val ctx_to_hash_type       : ctx       -> hash_type

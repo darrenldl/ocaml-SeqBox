@@ -1,7 +1,6 @@
 open Stdint
 
 exception Length_mismatch
-exception Unsupported_hash
 exception Invalid_hash_type_string
 
 type hash_type  = [ `SHA1
@@ -163,6 +162,8 @@ module Parser = struct
 end
 
 module Hash = struct
+  exception Unsupported_hash
+
   type ctx = SHA1    of Nocrypto.Hash.SHA1.t
            | SHA256  of Nocrypto.Hash.SHA256.t
            | SHA512  of Nocrypto.Hash.SHA512.t
