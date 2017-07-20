@@ -75,6 +75,7 @@ let in_file =
 ;;
 
 let out_file =
-  let doc = "Sbx container name (defaults to INFILE.sbx) If $(docv) is a directory(DIR), then the final file will be stored as DIR/INFILE.sbx" in
+  let doc = "Sbx container name (defaults to INFILE.sbx).
+  If $(docv) is a directory(DIR), then the final file will be stored as DIR/INFILE.sbx." in
   Arg.(value & pos 1 (some string) None & info [] ~docv:"OUT" ~doc)
 ;;
