@@ -560,13 +560,10 @@ module Processor = struct
 end
 
 module Process = struct
-  let fetch_out_filename ~(in_filename:string) ~(out_filename:string option) : (string option, string) result =
-    match out_filename with
-    | Some str -> Ok (Some str)
-    | None     ->
-      match Stream.process_in ~in_filename Processor.out_filename_fetcher with
-      | Ok result -> Ok result
-      | Error msg -> Error msg
+  let fetch_out_filename ~(in_filename:string) : (string option, string) result =
+    match Stream.process_in ~in_filename Processor.out_filename_fetcher with
+    | Ok result -> Ok result
+    | Error msg -> Error msg
   ;;
 
   let hash_file ~(hash_type:Multihash.hash_type) ~(in_filename:string) : (bytes, string) result =
@@ -581,10 +578,17 @@ module Process = struct
   ;;
 
   let decode_file ~(in_filename:string) ~(out_filename:string option) : (stats, string) result =
-    match fetch_out_filename ~in_filename ~out_filename with
+    let final_out_filename : (string option, string) result =
+      match out_filename with
+      | Some str -> Ok (Some str)
+      | None     ->
+        match fetch_out_filename ~in_filename with
+        | Error msg -> Error msg
+        | Ok v      -> Ok v in
+    match final_out_filename with
     | Error msg -> Error msg
     | Ok None   ->
-      Error (Printf.sprintf "failed to obtain a filename for output(none is provided and no valid metadata block with filename field is found in %s)" in_filename)
+      Error (Printf.sprintf "Failed to obtain a filename for output(none is provided and no valid metadata block with filename field is found in %s)" in_filename)
     | Ok (Some out_filename) ->
       match Stream.process_in_out ~append:false ~in_filename ~out_filename Processor.decoder with
       | Ok (stats, Some trunc_size) ->

@@ -4,7 +4,7 @@ open Sbx_specs
 
 exception Packaged_exn of string
 
-let encode (force_out:bool) (no_meta:bool) (ver:string option) (uid:string option) (hash_type:string option) (in_filename:string) (out_filename:string option) : unit =
+let encode (force_out:bool) (no_meta:bool) (ver:string option) (uid:string option) (hash_type:string option) (in_filename:string) (provided_out_filename:string option) : unit =
   try
     let ver : version =
       match ver with
@@ -22,7 +22,7 @@ let encode (force_out:bool) (no_meta:bool) (ver:string option) (uid:string optio
         | Error _ -> raise (Packaged_exn (Printf.sprintf "Uid %s is not a valid hex string" str)) in
     let out_filename : string =
       let supposed_out_filename =
-        match out_filename with
+        match provided_out_filename with
         | Some str -> str
         | None     -> String.concat "" [in_filename; ".sbx"] in
       let out_file_exists = Sys.file_exists supposed_out_filename in
@@ -76,5 +76,5 @@ let in_file =
 
 let out_file =
   let doc = "Sbx container name (defaults to INFILE.sbx) If $(docv) is a directory(DIR), then the final file will be stored as DIR/INFILE.sbx" in
-  Arg.(value & pos 1 (some string) None & info [] ~docv:"OUTFILE" ~doc)
+  Arg.(value & pos 1 (some string) None & info [] ~docv:"OUT" ~doc)
 ;;

@@ -16,3 +16,4 @@ tests/osbx
 /tests/*.sbx
 /tests/rescue_log
 /tests/rescued_data/*
+/tests/out_test/*
