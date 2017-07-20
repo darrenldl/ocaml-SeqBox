@@ -196,8 +196,8 @@ module Process = struct
       let open Metadata in
       let open File_utils in
       let open Time_utils in
-      [ FNM in_filename
-      ; SNM out_filename
+      [ FNM (Misc_utils.path_to_file in_filename)
+      ; SNM (Misc_utils.path_to_file out_filename)
       ; FSZ (getsize_uint64  ~filename:in_filename)
       ; FDT (getmtime_uint64 ~filename:in_filename)
       ; SDT (gettime_uint64 ())
