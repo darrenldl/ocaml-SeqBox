@@ -44,10 +44,51 @@ let list_find_option (pred:('a -> bool)) (lst:'a list) : 'a option =
 
 let make_path (path_parts:string list) : string =
   let strip_slash str =
-    if String.get str ((String.length str) - 1) = '/' then
-      get_bytes str ~pos:0 ~len:((String.length str) - 1)
-    else
-      str in
+    match String.length str with
+    | 0 -> str
+    | 1 ->
+      begin
+        if (String.get str 0) = '/' then "" else str
+      end
+    | _ ->
+      begin
+        let char_last     = String.get str ((String.length str) - 1) in
+        let char_2nd_last = String.get str ((String.length str) - 2) in
+        if char_last = '/' && char_2nd_last != '\\' then
+          get_bytes str ~pos:0 ~len:((String.length str) - 1)
+        else
+          str
+      end in
   let lst = List.map strip_slash path_parts in
   String.concat "/" lst
+;;
+
+let char_list_to_string (lst:char list) : string =
+  String.concat "" (List.map (fun c -> String.make 1 c) lst)
+;;
+
+let path_to_list (path:string) : string list =
+  let open Angstrom in
+  let sep           : unit Angstrom.t =
+    string "/" *> return () in
+  let escaped_sep   : char list Angstrom.t =
+    string "\\/" *> return ['\\'; '/'] in
+  let not_sep       : char list Angstrom.t =
+    not_char '/' >>| (fun c -> [c]) in
+  let single_parser : string Angstrom.t =
+    many (choice [ escaped_sep
+                 ; not_sep
+                 ])
+    >>| List.concat
+    >>| char_list_to_string
+  in
+  let path_parser   : string list Angstrom.t =
+    sep_by sep single_parser in
+  match Angstrom.parse_only path_parser (`String path) with
+  | Ok lst  -> lst
+  | Error _ -> assert false
+;;
+
+let path_to_file (path:string) : string =
+  List.hd (List.rev (path_to_list path))
 ;;
