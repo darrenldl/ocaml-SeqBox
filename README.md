@@ -144,8 +144,14 @@ All versions are implemented in ocaml-SeqBox
 | FSZ | filesize (8 bytes) |
 | FDT | date & time (8 bytes, seconds since epoch) |
 | SDT | sbx date & time (8 bytes) |
-| HSH | crypto hash (SHA256, using [Multihash](http://multiformats.io) protocol) |
+| HSH | crypto hash (using [Multihash](http://multiformats.io) protocol) |
 | PID | parent UID (*not used at the moment*)|
+
+Supported crypto hashes in 1.1.0 are
+  - SHA1
+  - SHA256
+  - SHA512
+  - BLAKE2B_512
 
 #### Features currently NOT planned to be implemented
   - Data hiding (XOR encoding/decoding in official seqbox)
