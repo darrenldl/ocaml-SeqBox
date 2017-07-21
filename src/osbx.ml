@@ -39,7 +39,7 @@ let default_cmd =
 
 let encode_cmd =
   let open Osbx_encode in
-  let doc = "encode file" in
+  let doc = "Encode file" in
   (Term.(const encode $ force $ no_meta $ sbx_version $ uid $ hash $ in_file $ out_file),
    Term.info "encode" ~doc
   )
@@ -47,7 +47,7 @@ let encode_cmd =
 
 let decode_cmd =
   let open Osbx_decode in
-  let doc = "decode sbx container" in
+  let doc = "Decode sbx container" in
   (Term.(const decode $ force $ in_file $ out_file),
    Term.info "decode" ~doc
   )
@@ -55,7 +55,7 @@ let decode_cmd =
 
 let rescue_cmd =
   let open Osbx_rescue in
-  let doc = "rescue sbx data from file" in
+  let doc = "Rescue sbx data from file" in
   (Term.(const rescue $ in_file $ out_dir $ log_file),
    Term.info "rescue" ~doc
   )
@@ -63,7 +63,7 @@ let rescue_cmd =
 
 let show_cmd =
   let open Osbx_show in
-  let doc = "search for and print metadata in sbx container (or file)" in
+  let doc = "Search for and print metadata in sbx container (or file)" in
   (Term.(const show $ find_all $ in_file),
    Term.info "show" ~doc
   )
