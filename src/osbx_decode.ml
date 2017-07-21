@@ -27,7 +27,6 @@ let decode (force_out:bool) (in_filename:string) (provided_out_filename:string o
             -> provided_path
           |     (true                , true                , Some str           )
             -> let stored_out_filename_no_path = Misc_utils.path_to_file str in
-            Printf.printf "provided_path : %s, stored : %s\n" provided_path stored_out_filename_no_path;
             Misc_utils.make_path [provided_path; stored_out_filename_no_path]
           |     (true                , true                , None               )
             -> raise (Packaged_exn "No original filename was found in sbx container and output file name is a directory")
