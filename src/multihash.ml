@@ -31,15 +31,19 @@ module Specs = struct
                }
 
   let hash_type_to_param (hash_type:hash_type) : param =
+    let of_hex_str (hex_str:string) : bytes =
+      match Conv_utils.hex_string_to_bytes hex_str with
+      | Ok bytes -> bytes
+      | Error _  -> assert false in
     match hash_type with
-    | `SHA1                   -> { hash_func_type = "\x11";   digest_length = 0x14 }
-    | `SHA2_256     | `SHA256 -> { hash_func_type = "\x12";   digest_length = 0x20 }
-    | `SHA2_512_256           -> { hash_func_type = "\x13";   digest_length = 0x20 }
-    | `SHA2_512_512 | `SHA512 -> { hash_func_type = "\x13";   digest_length = 0x40 }
-    | `BLAKE2B_256            -> { hash_func_type = "\xb220"; digest_length = 0x20 }
-    | `BLAKE2B_512            -> { hash_func_type = "\xb240"; digest_length = 0x40 }
-    | `BLAKE2S_128            -> { hash_func_type = "\xb250"; digest_length = 0x10 }
-    | `BLAKE2S_256            -> { hash_func_type = "\xb260"; digest_length = 0x20 }
+    | `SHA1                   -> { hash_func_type = (of_hex_str "11");   digest_length = 0x14 }
+    | `SHA2_256     | `SHA256 -> { hash_func_type = (of_hex_str "12");   digest_length = 0x20 }
+    | `SHA2_512_256           -> { hash_func_type = (of_hex_str "13");   digest_length = 0x20 }
+    | `SHA2_512_512 | `SHA512 -> { hash_func_type = (of_hex_str "13");   digest_length = 0x40 }
+    | `BLAKE2B_256            -> { hash_func_type = (of_hex_str "b220"); digest_length = 0x20 }
+    | `BLAKE2B_512            -> { hash_func_type = (of_hex_str "b240"); digest_length = 0x40 }
+    | `BLAKE2S_128            -> { hash_func_type = (of_hex_str "b250"); digest_length = 0x10 }
+    | `BLAKE2S_256            -> { hash_func_type = (of_hex_str "b260"); digest_length = 0x20 }
   ;;
 
   let hash_type_to_hash_func_type (hash_type:hash_type) : bytes =
