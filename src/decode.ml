@@ -203,13 +203,13 @@ type scan_stats = Stats.scan_stats
 type hash_stats = Stats.hash_stats
 
 module Progress : sig
-  val report_scan                 : scan_stats -> Core_kernel.In_channel.t -> unit
+  val report_scan                 : scan_stats -> in_channel -> unit
 
-  val report_decode               : stats      -> Core_kernel.In_channel.t -> unit
+  val report_decode               : stats      -> in_channel -> unit
 
-  val report_hash                 : hash_stats -> Core_kernel.In_channel.t -> unit
+  val report_hash                 : hash_stats -> in_channel -> unit
 
-  val print_newline_possibly_scan : scan_stats -> Core_kernel.In_channel.t -> unit
+  val print_newline_possibly_scan : scan_stats -> in_channel -> unit
 
 end = struct
 
@@ -227,10 +227,10 @@ end = struct
       ~total_units:total_bytes
   ;;
 
-  let report_scan : scan_stats -> Core_kernel.In_channel.t -> unit =
+  let report_scan : scan_stats -> in_channel -> unit =
     (fun stats in_file ->
        let total_bytes =
-         Core_kernel.In_channel.length in_file in
+         LargeFile.in_channel_length in_file in
        print_scan_progress ~stats ~total_bytes
     )
   ;;
@@ -249,13 +249,13 @@ end = struct
       ~total_units:total_blocks
   ;;
 
-  let report_decode : stats -> Core_kernel.In_channel.t -> unit  =
+  let report_decode : stats -> in_channel -> unit  =
     (fun stats in_file ->
        let block_size   : int64 =
          Int64.of_int stats.block_size in
        let total_blocks : int64 =
          Int64.div
-           (Int64.add (Core_kernel.In_channel.length in_file) (Int64.sub block_size 1L))
+           (Int64.add (LargeFile.in_channel_length in_file) (Int64.sub block_size 1L))
            block_size in
        print_decode_progress ~stats ~total_blocks
     )
@@ -275,18 +275,18 @@ end = struct
       ~total_units:total_bytes
   ;;
 
-  let report_hash : hash_stats -> Core_kernel.In_channel.t -> unit =
+  let report_hash : hash_stats -> in_channel -> unit =
     (fun stats in_file ->
        let total_bytes =
-         Core_kernel.In_channel.length in_file in
+         LargeFile.in_channel_length in_file in
        print_hash_progress ~stats ~total_bytes
     )
   ;;
 
-  let print_newline_possibly_scan (stats:scan_stats) (in_file:Core_kernel.In_channel.t) : unit =
+  let print_newline_possibly_scan (stats:scan_stats) (in_file:in_channel) : unit =
     Progress_report.print_newline_if_not_done
       ~units_so_far:stats.bytes_processed
-      ~total_units:(Core_kernel.In_channel.length in_file)
+      ~total_units:(LargeFile.in_channel_length in_file)
   ;;
 end
 
@@ -297,7 +297,7 @@ module Processor = struct
 
   type preference = [ `Meta | `Data ]
 
-  let find_first_both_proc (* ?(newline_if_unfinished:bool = false) *) ~(prefer:preference) (in_file:Core_kernel.In_channel.t) : find_both_result =
+  let find_first_both_proc (* ?(newline_if_unfinished:bool = false) *) ~(prefer:preference) (in_file:in_channel) : find_both_result =
     let open Read_chunk in
     let len = Param.Decode.ref_block_scan_alignment in
     let rec find_first_both_proc_internal (result_so_far:find_both_result) (stats:scan_stats) : scan_stats * find_both_result =
@@ -352,14 +352,14 @@ module Processor = struct
                   } in
                 find_first_both_proc_internal new_result_so_far new_stats in
     let (stats, res) = find_first_both_proc_internal { meta = None; data = None } (Stats.make_blank_scan_stats ()) in
-    Core_kernel.In_channel.seek in_file 0L;  (* reset seek position *)
+    LargeFile.seek_in in_file 0L;  (* reset seek position *)
     (* if newline_if_unfinished then
       Progress.print_newline_possibly_scan stats in_file; *)
     Progress.print_newline_possibly_scan stats in_file;
     res
   ;;
 
-  let find_first_block_proc (* ?(newline_if_unfinished:bool = false) *) ~(want_meta:bool) (in_file:Core_kernel.In_channel.t) : Block.t option =
+  let find_first_block_proc (* ?(newline_if_unfinished:bool = false) *) ~(want_meta:bool) (in_file:in_channel) : Block.t option =
     let open Read_chunk in
     let len = Param.Decode.ref_block_scan_alignment in 
     let bytes_to_block (raw_header:Header.raw_header) (chunk:bytes) : Block.t option =
@@ -404,7 +404,7 @@ module Processor = struct
             | None       -> find_first_block_proc_internal new_stats (* go to next block *)
             | Some block -> (new_stats, Some block)  (* found a valid block *) in
     let (stats, res) = find_first_block_proc_internal (Stats.make_blank_scan_stats ()) in
-    Core_kernel.In_channel.seek in_file 0L;  (* reset seek position *)
+    LargeFile.seek_in in_file 0L;  (* reset seek position *)
     (* if newline_if_unfinished then
       Progress.print_newline_possibly_scan stats in_file; *)
     Progress.print_newline_possibly_scan stats in_file;
@@ -414,7 +414,7 @@ module Processor = struct
   (* ref_block will be used as reference for version and uid
    *  block must match those two parameters to be accepted
    *)
-  let find_valid_data_block_proc ~(ref_block:Block.t) (in_file:Core_kernel.In_channel.t) ~(stats:stats) : stats * (Block.t option) =
+  let find_valid_data_block_proc ~(ref_block:Block.t) (in_file:in_channel) ~(stats:stats) : stats * (Block.t option) =
     let open Read_chunk in
     let ref_ver      = Block.block_to_ver ref_block in
     let len          = ver_to_block_size ref_ver in
@@ -445,7 +445,7 @@ module Processor = struct
     find_valid_data_block_proc_internal stats
   ;;
 
-  let output_decoded_data_proc ~(ref_block:Block.t) ~(block:Block.t) (out_file:Core_kernel.Out_channel.t) : unit =
+  let output_decoded_data_proc ~(ref_block:Block.t) ~(block:Block.t) (out_file:out_channel) : unit =
     let open Write_chunk in
     if Block.is_meta block then
       ()  (* ignore attempts to write metadata block *)
@@ -459,11 +459,11 @@ module Processor = struct
         let seq_num   : int64 = Uint32.to_int64 seq_num in
         let write_pos : int64 = (seq_num <-> 1L) <*> data_len in  (* seq_num is guaranteed to be > 0 due to above check of is_meta *)
         (* seek to the proper position then write *)
-        Core_kernel.Out_channel.seek out_file write_pos;
+        LargeFile.seek_out out_file write_pos;
         write out_file ~chunk:(Block.block_to_data block)
   ;;
 
-  let decode_and_output_proc ~(ref_block:Block.t) (in_file:Core_kernel.In_channel.t) (out_file:Core_kernel.Out_channel.t) : stats =
+  let decode_and_output_proc ~(ref_block:Block.t) (in_file:in_channel) (out_file:out_channel) : stats =
     let rec decode_and_output_proc_internal (stats:stats) : stats =
       match find_valid_data_block_proc ~ref_block in_file ~stats with
       | (stats, None)       -> stats
@@ -473,7 +473,7 @@ module Processor = struct
     decode_and_output_proc_internal (Stats.make_blank_stats ~ver:(Block.block_to_ver ref_block))
   ;;
 
-  let out_filename_fetcher (in_file:Core_kernel.In_channel.t) : string option =
+  let out_filename_fetcher (in_file:in_channel) : string option =
     Printf.printf "Scanning for metadata block to get output file name\n";
     let metadata_block : Block.t option =
       find_first_block_proc (* ~newline_if_unfinished:true *) ~want_meta:true in_file in
@@ -491,7 +491,7 @@ module Processor = struct
     | None       -> None
   ;;
 
-  let decoder (in_file:Core_kernel.In_channel.t) (out_file:Core_kernel.Out_channel.t) : stats * (int64 option) =
+  let decoder (in_file:in_channel) (out_file:out_channel) : stats * (int64 option) =
     (* find a block to use as reference *)
     let ref_block : Block.t option =
       (* try to find a metadata block first *)
@@ -541,7 +541,7 @@ module Processor = struct
 
   let make_hasher ~(hash_type:Multihash.hash_type) : bytes Stream.in_processor =
     (fun in_file ->
-       let rec hash_proc (stats:hash_stats) (hash_state:Multihash.Hash.ctx) (in_file:Core_kernel.In_channel.t) : bytes =
+       let rec hash_proc (stats:hash_stats) (hash_state:Multihash.Hash.ctx) (in_file:in_channel) : bytes =
          let open Read_chunk in
          let read_len = 1024 * 1024 (* 1 MiB *) in
          Progress.report_hash stats in_file;

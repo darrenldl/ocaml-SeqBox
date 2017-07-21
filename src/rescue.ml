@@ -90,7 +90,7 @@ end
 type stats = Stats.t
 
 module Progress : sig
-  val report_rescue : stats -> Core_kernel.In_channel.t -> unit
+  val report_rescue : stats -> in_channel -> unit
 
 end = struct
 
@@ -108,11 +108,11 @@ end = struct
       ~total_units:total_bytes
   ;;
 
-  let report_rescue : stats -> Core_kernel.In_channel.t -> unit =
+  let report_rescue : stats -> in_channel -> unit =
     let first_time = ref true in
     (fun stats in_file ->
        let total_bytes =
-         (Core_kernel.In_channel.length in_file) in
+         (LargeFile.in_channel_length in_file) in
        if !first_time then
          begin
            (* print a notice *)
@@ -165,10 +165,10 @@ module Logger = struct
   let write =
     let write_interval  : float     = Param.Rescue.log_write_interval in
     let last_write_time : float ref = ref 0. in
-    (fun ~(stats:stats) ~(log_filename:string) ~(in_file:Core_kernel.In_channel.t) : bool ->
+    (fun ~(stats:stats) ~(log_filename:string) ~(in_file:in_channel) : bool ->
        let cur_time : float = Sys.time () in
        let time_since_last_write : float = cur_time -. !last_write_time in
-       let total_bytes = Core_kernel.In_channel.length in_file in
+       let total_bytes = LargeFile.in_channel_length in_file in
        if time_since_last_write > write_interval || stats.bytes_processed = total_bytes (* always write when 100% done *) then
          begin
            last_write_time := cur_time;
@@ -233,7 +233,7 @@ end
 
 module Processor = struct
   (* scan for valid block *)
-  let scan_proc ~(stats:stats) ~(log_filename:string option) (in_file:Core_kernel.In_channel.t) : stats * ((Block.t * bytes) option) =
+  let scan_proc ~(stats:stats) ~(log_filename:string option) (in_file:in_channel) : stats * ((Block.t * bytes) option) =
     let open Read_chunk in
     let len = Param.Rescue.scan_alignment in
     let rec scan_proc_internal (stats:stats) : stats * ((Block.t * bytes) option) =
@@ -293,7 +293,7 @@ module Processor = struct
       let uid_hex =
         Conv_utils.bytes_to_hex_string (Block.block_to_file_uid block) in
       Misc_utils.make_path [out_dirname; uid_hex] in
-    let output_proc_internal_processor (out_file:Core_kernel.Out_channel.t) : unit =
+    let output_proc_internal_processor (out_file:out_channel) : unit =
       let open Write_chunk in
       write out_file ~chunk in  (* use the actual bytes in original file rather than generating from scratch *)
     let new_stats =
@@ -309,7 +309,7 @@ module Processor = struct
   (* if there is any error with outputting, just print directly and return stats
    * this should be very rare however, if happening at all
    *)
-  let rec scan_and_output ~(stats:stats) ~(out_dirname:string) ~(log_filename:string option) (in_file:Core_kernel.In_channel.t) : stats =
+  let rec scan_and_output ~(stats:stats) ~(out_dirname:string) ~(log_filename:string option) (in_file:in_channel) : stats =
     match scan_proc ~stats ~log_filename in_file with
     | (stats, None)                 -> stats  (* ran out of valid blocks in input file *)
     | (stats, Some block_and_chunk) ->
@@ -335,7 +335,7 @@ module Processor = struct
        | Error msg -> Error msg (* just exit due to error *)
        | Ok stats  ->
          (* seek to last position read *)
-         Core_kernel.In_channel.seek in_file stats.bytes_processed;
+         LargeFile.seek_in in_file stats.bytes_processed;
          (* start scan and output process *)
          Ok (scan_and_output in_file ~stats ~out_dirname ~log_filename)
     )

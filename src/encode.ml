@@ -68,7 +68,7 @@ end
 type stats = Stats.t
 
 module Progress : sig
-  val report_encode : stats -> Core_kernel.In_channel.t -> unit
+  val report_encode : stats -> in_channel -> unit
 
 end = struct
 
@@ -86,14 +86,14 @@ end = struct
       ~total_units:total_chunks
   ;;
 
-  let report_encode : stats -> Core_kernel.In_channel.t -> unit  =
+  let report_encode : stats -> in_channel -> unit  =
     let first_time    = ref true in
     (fun stats in_file ->
        let data_size    : int64 =
          Int64.of_int stats.data_size in
        let total_chunks : int64 =
          Int64.div
-           (Int64.add (Core_kernel.In_channel.length in_file) (Int64.sub data_size 1L))
+           (Int64.add (LargeFile.in_channel_length in_file) (Int64.sub data_size 1L))
            data_size (* use of data_size is correct here *) in
        if !first_time then
          begin
@@ -108,7 +108,7 @@ end
 
 module Processor = struct
   (* Converts data to data blocks *)
-  let rec data_to_block_proc (in_file:Core_kernel.In_channel.t) (out_file:Core_kernel.Out_channel.t) ~(data_len:int) ~(stats:stats) ~(common:Header.common_fields) : stats =
+  let rec data_to_block_proc (in_file:in_channel) (out_file:out_channel) ~(data_len:int) ~(stats:stats) ~(common:Header.common_fields) : stats =
     let open Read_chunk in
     let open Write_chunk in
     (* report progress *)
@@ -125,8 +125,8 @@ module Processor = struct
       data_to_block_proc in_file out_file ~data_len ~stats:(Stats.add_written_data_block stats ~data_len:chunk_len) ~common
   ;;
 
-  let data_to_block_proc_w_hash (hash_type:hash_type) (in_file:Core_kernel.In_channel.t) (out_file:Core_kernel.Out_channel.t) ~(data_len:int) ~(stats: stats) ~(common:Header.common_fields) : stats * hash_bytes =
-    let rec data_to_block_proc_w_hash_internal (hash_state:Hash.ctx) (in_file:Core_kernel.In_channel.t) (out_file:Core_kernel.Out_channel.t) ~(data_len:int) ~(stats:stats) ~(common:Header.common_fields) : stats * hash_bytes =
+  let data_to_block_proc_w_hash (hash_type:hash_type) (in_file:in_channel) (out_file:out_channel) ~(data_len:int) ~(stats: stats) ~(common:Header.common_fields) : stats * hash_bytes =
+    let rec data_to_block_proc_w_hash_internal (hash_state:Hash.ctx) (in_file:in_channel) (out_file:out_channel) ~(data_len:int) ~(stats:stats) ~(common:Header.common_fields) : stats * hash_bytes =
       let open Read_chunk in
       let open Write_chunk in
       (* report progress *)
@@ -179,7 +179,7 @@ module Processor = struct
            let metadata_block             = Block.make_metadata_block common ~fields in
            let metadata_block_bytes       = Block.to_bytes metadata_block in
            (* go back and write metadata block *)
-           Core_kernel.Out_channel.seek out_file 0L;
+           LargeFile.seek_out out_file 0L;
            write out_file ~chunk:metadata_block_bytes;
            (* update stats *)
            Stats.add_written_meta_block stats
