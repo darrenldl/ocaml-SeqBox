@@ -149,7 +149,7 @@ module Stream = struct
     try
       let in_file  = Core_kernel.In_channel.create ~binary:true in_filename  in
       let res =
-        Core_kernel.protect ~f:(fun () ->
+        Protect.protect ~f:(fun () ->
             let out_file = Core_kernel.Out_channel.create ~binary:true ~append out_filename in
             Core_kernel.protect ~f:(fun () -> processor in_file out_file)
               ~finally:(fun () ->
@@ -186,7 +186,7 @@ module Stream = struct
     try
       let in_file = Core_kernel.In_channel.create ~binary:true in_filename in
       let res =
-        Core_kernel.protect ~f:(fun () -> processor in_file)
+        Protect.protect ~f:(fun () -> processor in_file)
           ~finally:(fun () ->
               try
                 Core_kernel.In_channel.close in_file
@@ -212,7 +212,7 @@ module Stream = struct
     try
       let out_file = Core_kernel.Out_channel.create ~binary:true ~append out_filename in
       let res =
-        Core_kernel.protect ~f:(fun () -> processor out_file)
+        Protect.protect ~f:(fun () -> processor out_file)
           ~finally:(fun () ->
               try
                 Core_kernel.Out_channel.close out_file
