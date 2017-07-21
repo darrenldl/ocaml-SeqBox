@@ -19,7 +19,5 @@ depends: [
   "angstrom"       {build}
   "core_kernel"    {build}
   "hex"            {build}
-  "ctypes"         {build}
-  "ctypes-foreign" {build}
   "cmdliner"       {build}
 ]
