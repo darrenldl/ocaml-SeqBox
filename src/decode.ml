@@ -372,41 +372,42 @@ module Processor = struct
         Processor_components.bytes_to_block ~raw_header chunk
       else
         None in
-    let rec find_first_block_proc_internal (stats:scan_stats) : scan_stats * (Block.t option) =
+    let rec find_first_block_proc_internal (stats:scan_stats) (block:Block.t option) : scan_stats * (Block.t option) =
       (* report progress *)
       Progress.report_scan stats in_file;
-      match read in_file ~len with
-      | None           -> (stats, None)
-      | Some { chunk } ->
-        if Bytes.length chunk < 16 then
-          (stats, None)  (* no more bytes left in file *)
-        else
-          let test_header_bytes = Misc_utils.get_bytes chunk ~pos:0 ~len:16 in
-          let test_header : Header.raw_header option =
-            try
-              Some (Header.of_bytes test_header_bytes)
-            with
-            | Header.Invalid_bytes -> None in
-          match test_header with
-          | None            -> 
-            let new_stats =
-              Stats.add_bytes_scanned stats ~num:(Int64.of_int (Bytes.length chunk)) in
-            find_first_block_proc_internal new_stats (* go to next block *)
-          | Some raw_header ->
-            (* possibly grab more bytes depending on version *)
-            let chunk =
-              Processor_components.patch_block_bytes_if_needed in_file ~raw_header ~chunk in
-            let test_block : Block.t option =
-              bytes_to_block raw_header chunk in
-            let new_stats =
-              Stats.add_bytes_scanned stats ~num:(Int64.of_int (Bytes.length chunk)) in
-            match test_block with
-            | None       -> find_first_block_proc_internal new_stats (* go to next block *)
-            | Some block -> (new_stats, Some block)  (* found a valid block *) in
-    let (stats, res) = find_first_block_proc_internal (Stats.make_blank_scan_stats ()) in
+      match block with
+      | Some block -> (stats, Some block)
+      | None       ->
+        match read in_file ~len with
+        | None           -> (stats, None)
+        | Some { chunk } ->
+          if Bytes.length chunk < 16 then
+            (stats, None)  (* no more bytes left in file *)
+          else
+            let test_header_bytes = Misc_utils.get_bytes chunk ~pos:0 ~len:16 in
+            let test_header : Header.raw_header option =
+              try
+                Some (Header.of_bytes test_header_bytes)
+              with
+              | Header.Invalid_bytes -> None in
+            match test_header with
+            | None            -> 
+              let new_stats =
+                Stats.add_bytes_scanned stats ~num:(Int64.of_int (Bytes.length chunk)) in
+              find_first_block_proc_internal new_stats None (* go to next block *)
+            | Some raw_header ->
+              (* possibly grab more bytes depending on version *)
+              let chunk =
+                Processor_components.patch_block_bytes_if_needed in_file ~raw_header ~chunk in
+              let test_block : Block.t option =
+                bytes_to_block raw_header chunk in
+              let new_stats =
+                Stats.add_bytes_scanned stats ~num:(Int64.of_int (Bytes.length chunk)) in
+              find_first_block_proc_internal new_stats test_block in
+    let (stats, res) = find_first_block_proc_internal (Stats.make_blank_scan_stats ()) None in
     LargeFile.seek_in in_file 0L;  (* reset seek position *)
     (* if newline_if_unfinished then
-      Progress.print_newline_possibly_scan stats in_file; *)
+       Progress.print_newline_possibly_scan stats in_file; *)
     Progress.print_newline_possibly_scan stats in_file;
     res
   ;;
