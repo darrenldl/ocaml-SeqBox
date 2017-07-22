@@ -1,8 +1,12 @@
 let protect ~(f:unit -> 'a) ~(finally:unit -> unit) : 'a =
-  try
-    let res = f () in
-    finally ();
+  let finally_executed : bool ref = ref false in
+  let res : 'a =
+    try
+      f ()
+    with
+    | exn -> finally_executed := true; finally (); raise exn in
+  if !finally_executed then
     res
-  with
-  | exn -> finally (); raise exn
+  else
+    (finally (); res)
 ;;

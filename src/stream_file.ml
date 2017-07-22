@@ -1,16 +1,16 @@
 exception Packaged_exn of string
 
 module Sprintf_helper = struct
-  let sprintf_failed_to_rw    ~(in_filename:string) ~(out_filename:string) : string =
-    Printf.sprintf "Failed to read %s and/or failed to write %s" in_filename out_filename
+  let sprintf_failed_to_rw    ~(in_filename:string) ~(out_filename:string) ~(msg:string) : string =
+    Printf.sprintf "Failed to read %s and/or failed to write %s  Error : %s" in_filename out_filename msg
   ;;
 
-  let sprintf_failed_to_read  ~(in_filename:string)  : string =
-    Printf.sprintf "Failed to read %s"  in_filename
+  let sprintf_failed_to_read  ~(in_filename:string) ~(msg:string) : string =
+    Printf.sprintf "Failed to read %s  Error : %s"  in_filename msg
   ;;
 
-  let sprintf_failed_to_write ~(out_filename:string) : string =
-    Printf.sprintf "Failed to write %s" out_filename
+  let sprintf_failed_to_write ~(out_filename:string) ~(msg:string) : string =
+    Printf.sprintf "Failed to write %s  Error : %s" out_filename msg
   ;;
 end
 
@@ -193,7 +193,7 @@ module Stream = struct
     | Read_into_buf.Invalid_length    -> Error "Invalid length provided to Read_into_buf.read"
     | Write_from_buf.Invalid_offset   -> Error "Invalid offset provided to Write_from_buf.write"
     | Write_from_buf.Invalid_length   -> Error "Invalid length provided to Write_from_buf.write"
-    | Sys_error msg                   -> Error msg (* Error (Sprintf_helper.sprintf_failed_to_rw ~in_filename ~out_filename) *)
+    | Sys_error msg                   -> Error (Sprintf_helper.sprintf_failed_to_rw ~in_filename ~out_filename ~msg)
     | _                               -> Error "Unknown failure"
   ;;
 
@@ -219,7 +219,7 @@ module Stream = struct
     | Assert_failure (loc, line, col) -> Error (Printf.sprintf "Assert failure at %s %d %d" loc line col)
     | Read_into_buf.Invalid_offset    -> Error "Invalid offset provided to Read_into_buf.read"
     | Read_into_buf.Invalid_length    -> Error "Invalid length provided to Read_into_buf.read"
-    | Sys_error msg                   -> Error msg (* Error (Sprintf_helper.sprintf_failed_to_read ~in_filename) *)
+    | Sys_error msg                   -> Error (Sprintf_helper.sprintf_failed_to_read ~in_filename ~msg)
     | _                               -> Error "Unknown failure"
   ;;
 
@@ -245,31 +245,7 @@ module Stream = struct
     | Assert_failure (loc, line, col) -> Error (Printf.sprintf "Assert failure at %s %d %d" loc line col)
     | Write_from_buf.Invalid_offset   -> Error "Invalid offset provided to Write_from_buf.write"
     | Write_from_buf.Invalid_length   -> Error "Invalid length provided to Write_from_buf.write"
-    | Sys_error msg                   -> Error msg (* (Sprintf_helper.sprintf_failed_to_write ~out_filename) *)
+    | Sys_error msg                   -> Error (Sprintf_helper.sprintf_failed_to_write ~out_filename ~msg)
     | _                               -> Error "Unknown failure"
   ;;
 end
-
-(*
-let test_copy () : unit =
-  let open Core in
-  let copy_processor (in_file:In_channel.t) (out_file:Out_channel.t) : (unit, string) result =
-    let read_block_size : int = 100 in
-    let buf                   = General_helper.make_buffer read_block_size in
-    let rec copy_processor_helper () =
-      let open Read_into_buf in
-      let open Write_from_buf in
-      let {no_more_bytes; read_count} = read in_file ~buf in
-      write out_file ~buf ~len:read_count;
-      if no_more_bytes then
-        Ok ()
-      else
-        copy_processor_helper () in
-    copy_processor_helper () in
-  match Stream.process_in_out ~in_filename:"dummy_file" ~out_filename:"dummy_file_copy" ~processor:copy_processor with
-  | Ok _      -> Printf.printf "Okay\n"
-  | Error msg -> Printf.printf "Error : %s\n" msg
-;;
-
-test_copy ()
-   *)
