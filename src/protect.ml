@@ -4,7 +4,7 @@ let protect ~(f:unit -> 'a) ~(finally:unit -> unit) : 'a =
     try
       f ()
     with
-    | exn -> finally_executed := true; finally (); raise exn in
+    | e -> finally_executed := true; finally (); raise e in
   if !finally_executed then
     res
   else
