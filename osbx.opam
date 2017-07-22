@@ -11,13 +11,12 @@ build: [
   ["jbuilder" "build" "@install"]
 ]
 depends: [
-  "ocamlfind"      {build}
-  "jbuilder"       {build}
-  "stdint"         {build}
-  "nocrypto"       {build}
-  "digestif"       {build}
-  "angstrom"       {build}
-  "core_kernel"    {build}
-  "hex"            {build}
-  "cmdliner"       {build}
+  "ocamlfind" {build}
+  "jbuilder"  {build}
+  "stdint"    {build}
+  "nocrypto"  {build}
+  "digestif"  {build}
+  "angstrom"  {build}
+  "hex"       {build}
+  "cmdliner"  {build}
 ]

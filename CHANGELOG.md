@@ -1,4 +1,8 @@
-## 1.1.0  (development version, not published yet)
+## 1.1.1  (development version, not published yet)
+  - Removed dependency on Core\_kernel
+    - 1.1.1 uses a custom replacement of Core\_kernel.protect and OCaml Pervasives channels
+
+## 1.1.0  (superseded by 1.1.1, not published on OPAM)
   - Added "show" command
   - Switched from using Core to Core\_kernel
     - Now osbx can be compiled on Windows
