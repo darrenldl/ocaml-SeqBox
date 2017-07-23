@@ -216,8 +216,8 @@ module Process = struct
       else
         (* check hash *)
         match string_to_hash_type hash with
-        | Error msg    -> Error msg
-        | Ok hash_type ->
+        | Error msg as em -> em
+        | Ok hash_type    ->
           if not (Hash.hash_type_is_supported hash_type) then
             Error "Hash type is not supported"
           else

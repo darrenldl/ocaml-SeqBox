@@ -138,13 +138,9 @@ module Logger = struct
   let write_helper ~(stats:stats) ~(log_filename:string) : (unit, string) result =
     let processor = make_write_proc ~stats in
     let write_helper_internal_w_exn () =
-      match Stream.process_out ~pack_break_into_error:false ~append:false ~out_filename:log_filename processor with
-      | Ok _      -> Ok ()
-      | Error msg -> Error msg in
+      Stream.process_out ~pack_break_into_error:false ~append:false ~out_filename:log_filename processor in
     let write_helper_internal_no_exn () =
-      match Stream.process_out                              ~append:false ~out_filename:log_filename processor with
-      | Ok _      -> Ok ()
-      | Error msg -> Error msg in
+      Stream.process_out                              ~append:false ~out_filename:log_filename processor in
     (* This is to make sure log writing is still done even when Ctrl-C is entered
      *
      * This probably will not stop extremely frequent Ctrl-C presses where Break
@@ -223,9 +219,7 @@ module Logger = struct
   let read ~(log_filename:string) : (stats option, string) result =
     let processor = make_read_proc () in
     if Sys.file_exists log_filename then
-      match Stream.process_in ~in_filename:log_filename processor with
-      | Ok v      -> Ok v
-      | Error msg -> Error msg
+      Stream.process_in ~in_filename:log_filename processor
     else
       Ok (Some (Stats.make_blank_stats ()))
   ;;
@@ -301,9 +295,8 @@ module Processor = struct
         Stats.add_meta_block stats
       else
         Stats.add_data_block stats in
-    match Stream.process_out ~append:true ~out_filename output_proc_internal_processor with
-    | Ok _      -> (new_stats, Ok ())
-    | Error msg -> (new_stats, Error msg)
+    let res = Stream.process_out ~append:true ~out_filename output_proc_internal_processor in
+    (new_stats, res)
   ;;
 
   (* if there is any error with outputting, just print directly and return stats
@@ -340,14 +333,13 @@ module Processor = struct
          Ok (scan_and_output in_file ~stats ~out_dirname ~log_filename)
     )
   ;;
-
 end
 
 module Process = struct
   let rescue_from_file ~(in_filename:string) ~(out_dirname:string) ~(log_filename:string option) : (stats, string) result =
     let processor = Processor.make_rescuer ~out_dirname ~log_filename in
     match Stream.process_in ~in_filename processor with
-    | Ok stats  -> stats
+    | Ok res    -> res
     | Error msg -> Error msg
   ;;
 end
