@@ -504,7 +504,16 @@ end = struct
             else
               (header, data)
         end
-      | Meta { header; data; _ } -> (header, data) in
+      | Meta { header; data; _ } ->
+        begin
+          match alt_seq_num with
+          | None   -> (header, data)
+          | Some n ->
+            if (Uint32.to_int n) != 0 then
+              raise Invalid_seq_num
+            else
+              (header, data)
+        end in
     let header_bytes = Header.to_bytes ~alt_seq_num ~header ~data in
     Bytes.concat "" [header_bytes; data]
   ;;
