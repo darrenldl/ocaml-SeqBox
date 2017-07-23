@@ -1,4 +1,7 @@
-## 1.1.1  (development version, not published yet)
+## 1.1.2  (development version, will be published on OPAM at some point)
+  - Fixed slightly off progress counting in Decode
+
+## 1.1.1  (in process of publishing)
   - Removed dependency on Core\_kernel
     - 1.1.1 uses a custom replacement of Core\_kernel.protect and OCaml Pervasives channels
 
