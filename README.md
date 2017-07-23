@@ -23,7 +23,6 @@ Table of Contents
          * [Metadata encoding:](#metadata-encoding)
             * [IDs](#ids)
             * [Features currently NOT planned to be implemented](#features-currently-not-planned-to-be-implemented)
-      * [Progress Report](#progress-report)
       * [License](#license)
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
@@ -34,7 +33,7 @@ I would like to thank [Marco](https://github.com/MarcoPon) (author of the offici
 I would like to thank [Ming](https://github.com/mdchia/) for his feedback on the documentation, UX design, and several other general aspects of this project. And also his help on testing the building and installation of osbx on macOS.
 
 ## Getting started
-Osbx 1.0.1 is currently on OPAM, 1.1.0 (dev version) will be published shortly
+Osbx 1.0.1 is currently on OPAM, 1.1.1 will be published shortly
 ```
 opam install osbx
 ```
@@ -151,41 +150,12 @@ Supported crypto hashes in 1.1.0 are
   - SHA1
   - SHA256
   - SHA512
-  - BLAKE2B_512
+  - BLAKE2B\_512
 
 #### Features currently NOT planned to be implemented
   - Data hiding (XOR encoding/decoding in official seqbox)
     - Provides neither sufficiently strong encryption nor sufficient stealth for any serious attempt to hide/secure data
     - You should use the appropriate tools for encryption
-
-## Progress Report
-  - Single SBX block encoding - done (Sbx_block module)
-  - Single SBX block decoding - done (Sbx_block module)
-  - Streamed processing framework - done (Streamed_file module)
-  - Streamed file encoding - done (Encode module)
-  - Streamed file decoding - done (Decode module)
-  - Profiling and optimization of encoding - done
-    - Result : CRC-CCITT implementation causes major slowdown
-  - Profiling and optimization of decoding - done
-    - Result : CRC-CCITT implementation causes major slowdown
-  - Replace CRC-CCITT implementation with a more efficient one(or create FFI to libcrc) - done
-    - CRC-CCITT is implemented via FFI to libcrc
-  - Commandline interface for encoding and decoding - done
-  - Further profiling and optimization of encoding - skipped for now
-  - Further profiling and optimization of decoding - skipped for now
-  - ~~Scan mode - not started~~
-    - Replaced by rescue mode
-  - ~~Recovery mode - not started~~
-    - Replaced by rescue mode
-  - Rescue mode - done
-  - ~~Commandline options for scanning and recovery - not started~~
-    - Replaced by rescue mode
-  - Commandline interface for rescue mode - done
-  - Packaging preparation - done
-  - Final testing - done
-    - See tests/ folder for test scripts
-  - Publish - done
-    - Available through OPAM - opam install osbx
 
 ## License
 The following files directly from [libcrc](https://github.com/lammertb/libcrc) are under the MIT License(see license text in each of the code files)
