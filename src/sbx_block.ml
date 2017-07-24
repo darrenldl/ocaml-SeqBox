@@ -518,11 +518,6 @@ end = struct
     Bytes.concat "" [header_bytes; data]
   ;;
 
-  (*module Parser = struct
-    open Angstrom
-
-  end*)
-
   type raw_block =
     { header : Header.raw_header
     ; data   : bytes
@@ -617,34 +612,3 @@ end = struct
     not (is_meta block)
   ;;
 end
-
-(*
-let test_metadata_block () : unit =
-  let open Metadata in
-  let fields : t list = [ FNM (String.make 10000 'a')
-                        ; SNM "filename.sbx"
-                        ; FSZ (Uint64.of_int 100)
-                        ; FDT (Uint64.of_int 100000)
-                        ; SDT (Uint64.of_int 100001)
-                        ; HSH "1220edeaaff3f1774ad2888673770c6d64097e391bc362d7d6fb34982ddf0efd18cb"
-                        ] in
-  try
-    let common = Header.make_common_fields `V1 in
-    let metadata_block = Block.make_metadata_block ~common ~fields in
-    let bytes = Block.to_bytes metadata_block in
-    Printf.printf "Okay :\n%s\n" (Hex.hexdump_s (Hex.of_string bytes))
-  with
-  | Metadata.Too_much_data str -> print_endline str
-;;
-
-let test_data_block () : unit =
-  let data = (Bytes.make 496 '\x00') in
-  let common = Header.make_common_fields `V1 in
-  let data_block = Block.make_data_block ~common ~data in
-  let bytes = Block.to_bytes ~alt_seq_num:(Uint32.of_int 0) data_block in
-  Printf.printf "Okay :\n%s\n" (Hex.hexdump_s (Hex.of_string bytes))
-;;
-
-test_metadata_block ();
-test_data_block ()
-   *)
