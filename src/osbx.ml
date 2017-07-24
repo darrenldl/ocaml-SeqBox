@@ -12,20 +12,20 @@ let help_secs = [ `S Manpage.s_common_options
 ;;
 
 let sbx_version =
-  let doc = "Sbx container version" in
-  Arg.(value & opt (some string) None & info ["sbx-version"] ~docv:"SBX_VERSION" ~doc)
+  let doc = "Sbx container version, one of : 1(bs=512 bytes, default) 2(bs=128 bytes) 3(bs=4096 bytes) where bs=sbx block size" in
+  Arg.(value & opt (some string) None & info ["sbx-version"] ~docv:"SBX-VERSION" ~doc)
 ;;
 
 let force =
   let doc = "Force overwrites even if $(docv) exists" in
-  Arg.(value & flag & info ["f"; "force"] ~docv:"OUTFILE" ~doc)
+  Arg.(value & flag & info ["f"; "force"] ~docv:"OUT" ~doc)
 ;;
 
 let hash =
   let open Multihash in
   let doc =
     "Hash function to use, one of (case-insensitive) : sha1 sha256(default) sha512 blake2b-512" in
-  Arg.(value & opt (some string) None & info ["hash"] ~docv:"HASH_TYPE" ~doc)
+  Arg.(value & opt (some string) None & info ["hash"] ~docv:"HASH-TYPE" ~doc)
 ;;
 
 let default_cmd =

@@ -1,7 +1,7 @@
 ## 1.1.2  (development version, will be published on OPAM at some point)
   - Fixed slightly off progress counting in Decode
 
-## 1.1.1  (in process of publishing)
+## 1.1.1  (newest version on OPAM)
   - Removed dependency on Core\_kernel
     - 1.1.1 uses a custom replacement of Core\_kernel.protect and OCaml Pervasives channels
 
@@ -17,7 +17,7 @@
   - Encoding, decoding now try to be "smart" (see their man pages)
   - Fixed Multihash encoding, decoding of BLAKE2 hashes
 
-## 1.0.1  (version on OPAM)
+## 1.0.1  (published on OPAM)
   - Changed rescue mode to use the original bytes of the file, rather than regenerating the block bytes itself
   - Fixed jbuild file to work on macOS when building
   - Added graceful handling of Ctrl-C breaks in rescue mode
@@ -34,5 +34,5 @@
     - Changed File\_utils.getsize to use Core.In\_channel.length instead of Unix.LargeFile.stat
   - Added progress reporting for hash in decode mode
 
-## 1.0.0
+## 1.0.0  (published on OPAM)
   - Base version

@@ -60,8 +60,8 @@ let encode (force_out:bool) (no_meta:bool) (ver:string option) (uid:string optio
 ;;
 
 let uid =
-  let doc = "Alternative file uid (by default uid is randomly generated)" in
-  Arg.(value & opt (some string) None & info ["uid"] ~doc)
+  let doc = "Alternative file uid in hex (by default uid is randomly generated). Uid must be exactly 6 bytes(12 hex digits) in length." in
+  Arg.(value & opt (some string) None & info ["uid"] ~docv:"UID-HEX" ~doc)
 ;;
 
 let no_meta =

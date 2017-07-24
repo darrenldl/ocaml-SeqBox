@@ -127,7 +127,7 @@ let show (find_all:bool) (in_filename:string) : unit =
 ;;
 
 let find_all =
-  let doc = "Try to find all metadata blocks" in
+  let doc = "Find first up to 100 metadata blocks" in
   Arg.(value & flag & info ["find-all"] ~doc)
 ;;
 
