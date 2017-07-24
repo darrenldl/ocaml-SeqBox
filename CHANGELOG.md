@@ -15,6 +15,7 @@
     - added support for sha1 sha256 sha512 and blake2b-512
     - in prior versions, only sha256 was supported
   - Encoding, decoding now try to be "smart" (see their man pages)
+  - Fixed Multihash encoding, decoding of BLAKE2 hashes
 
 ## 1.0.1  (version on OPAM)
   - Changed rescue mode to use the original bytes of the file, rather than regenerating the block bytes itself
