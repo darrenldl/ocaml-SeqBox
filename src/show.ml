@@ -129,7 +129,6 @@ module Processor = struct
     | hd :: tl -> assert false
   ;;
 
-  (* return up to 100 metadata blocks found *)
   let multi_meta_fetcher (in_file:in_channel) : Block.t list =
     List.rev (find_meta_blocks_proc ~get_at_most:Param.Show.meta_list_max_length in_file)
   ;;

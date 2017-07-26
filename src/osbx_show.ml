@@ -127,7 +127,7 @@ let show (find_all:bool) (in_filename:string) : unit =
 ;;
 
 let find_all =
-  let doc = "Find first up to 100 metadata blocks" in
+  let doc = Printf.sprintf "Find first up to %Ld metadata blocks" Param.Show.meta_list_max_length in
   Arg.(value & flag & info ["find-all"] ~doc)
 ;;
 
