@@ -297,7 +297,7 @@ module Processor = struct
 
   type preference = [ `Meta | `Data ]
 
-  let find_first_both_proc (* ?(newline_if_unfinished:bool = false) *) ~(prefer:preference) (in_file:in_channel) : find_both_result =
+  let find_first_both_proc ~(prefer:preference) (in_file:in_channel) : find_both_result =
     let open Read_chunk in
     let len = Param.Decode.ref_block_scan_alignment in
     let rec find_first_both_proc_internal (result_so_far:find_both_result) (stats:scan_stats) : scan_stats * find_both_result =
@@ -359,7 +359,7 @@ module Processor = struct
     res
   ;;
 
-  let find_first_block_proc (* ?(newline_if_unfinished:bool = false) *) ~(want_meta:bool) (in_file:in_channel) : Block.t option =
+  let find_first_block_proc ~(want_meta:bool) (in_file:in_channel) : Block.t option =
     let open Read_chunk in
     let len = Param.Decode.ref_block_scan_alignment in 
     let bytes_to_block (raw_header:Header.raw_header) (chunk:bytes) : Block.t option =
@@ -474,70 +474,76 @@ module Processor = struct
     decode_and_output_proc_internal (Stats.make_blank_stats ~ver:(Block.block_to_ver ref_block))
   ;;
 
-  let out_filename_fetcher (in_file:in_channel) : string option =
+  let out_filename_fetcher (in_file:in_channel) : (string option) * (Block.t option) =
     Printf.printf "Scanning for metadata block to get output file name\n";
     let metadata_block : Block.t option =
-      find_first_block_proc (* ~newline_if_unfinished:true *) ~want_meta:true in_file in
+      find_first_block_proc ~want_meta:true in_file in
     match metadata_block with
     | Some block ->
       begin
         Printf.printf "Metadata block found\n";
         let metadata_list  = Metadata.dedup (Block.block_to_meta block) in
         match List.filter (function | Metadata.FNM _ -> true | _ -> false) metadata_list with
-        | [ ]       -> None
-        | [FNM str] -> Some str
+        | [ ]       -> (None    , Some block)
+        | [FNM str] -> (Some str, Some block)
         | [_]       -> assert false
         | _ :: _    -> assert false
       end
-    | None       -> None
+    | None       -> (None, None)
   ;;
 
-  let decoder (in_file:in_channel) (out_file:out_channel) : stats * (int64 option) =
-    (* find a block to use as reference *)
-    let ref_block : Block.t option =
-      (* try to find a metadata block first *)
-      Printf.printf "Scanning for a reference block\n";
-      match find_first_both_proc (* ~newline_if_unfinished:true *) ~prefer:`Meta in_file with
-      | { meta = Some block; data = _ }          ->
-        begin
-          Printf.printf "Metadata block found\n";
-          Some block
-        end
-      | { meta = None;       data = Some block } ->
-        begin
-          Printf.printf "No metadata blocks were found, resorting to data block\n";
-          Some block
-        end
-      | { meta = None;       data = None }       -> None in
-    match ref_block with
-    | None           -> raise (Packaged_exn "No usable blocks in file")
-    | Some ref_block ->
-      (* got a reference block, decode all data blocks *)
-      let stats = decode_and_output_proc ~ref_block in_file out_file in
-      (* if reference block is a metadata block, then use the recorded file size to indicate truncatation *)
-      let truncate : int64 option =
-        if Block.is_meta ref_block then
-          let metadata_list   = Block.block_to_meta ref_block in
-          try
-            let open Metadata in
-            match List.find (function | FSZ _ -> true | _ -> false) metadata_list with
-            | FSZ file_size -> Some (Uint64.to_int64 file_size)
-            | _             -> None
-          with
-          | Not_found -> None
-        else
-          None in
-      let recorded_hash : Multihash.hash_bytes option =
-        let open Metadata in
-        let metadata_list      = dedup (Block.block_to_meta ref_block) in
-        try
-          match List.find (function | HSH _ -> true | _ -> false) metadata_list with
-          | HSH hash_bytes -> Some hash_bytes
-          | _              -> None
-        with
-        | Not_found -> None in
-      let stats = Stats.add_hashes ~recorded_hash ~output_file_hash:None stats in
-      (stats, truncate)
+  let make_decoder ~(ref_block:Block.t option) : (stats * (int64 option)) Stream.in_out_processor =
+    (fun in_file out_file ->
+       let ref_block : Block.t option =
+         match ref_block with
+         | Some block as sb ->
+           Printf.printf "Using reference block which provided the file name\n";
+           sb
+         | None             -> (* no block provided, find a block to use as reference *)
+           (* try to find a metadata block first *)
+           Printf.printf "Scanning for a reference block\n";
+           match find_first_both_proc ~prefer:`Meta in_file with
+           | { meta = Some block; data = _ }          ->
+             begin
+               Printf.printf "Metadata block found\n";
+               Some block
+             end
+           | { meta = None;       data = Some block } ->
+             begin
+               Printf.printf "No metadata blocks were found, resorting to data block\n";
+               Some block
+             end
+           | { meta = None;       data = None }       -> None in
+       match ref_block with
+       | None           -> raise (Packaged_exn "No usable blocks in file")
+       | Some ref_block ->
+         (* got a reference block, decode all data blocks *)
+         let stats = decode_and_output_proc ~ref_block in_file out_file in
+         (* if reference block is a metadata block, then use the recorded file size to indicate truncatation *)
+         let truncate : int64 option =
+           if Block.is_meta ref_block then
+             let metadata_list   = Block.block_to_meta ref_block in
+             try
+               let open Metadata in
+               match List.find (function | FSZ _ -> true | _ -> false) metadata_list with
+               | FSZ file_size -> Some (Uint64.to_int64 file_size)
+               | _             -> None
+             with
+             | Not_found -> None
+           else
+             None in
+         let recorded_hash : Multihash.hash_bytes option =
+           let open Metadata in
+           let metadata_list      = dedup (Block.block_to_meta ref_block) in
+           try
+             match List.find (function | HSH _ -> true | _ -> false) metadata_list with
+             | HSH hash_bytes -> Some hash_bytes
+             | _              -> None
+           with
+           | Not_found -> None in
+         let stats = Stats.add_hashes ~recorded_hash ~output_file_hash:None stats in
+         (stats, truncate)
+    )
   ;;
 
   let make_hasher ~(hash_type:Multihash.hash_type) : bytes Stream.in_processor =
@@ -561,7 +567,7 @@ module Processor = struct
 end
 
 module Process = struct
-  let fetch_out_filename ~(in_filename:string) : (string option, string) result =
+  let fetch_out_filename ~(in_filename:string) : ((string option) * (Block.t option), string) result =
     Stream.process_in ~in_filename Processor.out_filename_fetcher
   ;;
 
@@ -576,17 +582,18 @@ module Process = struct
     | Error msg -> Printf.printf "Warning : %s\n" msg; None
   ;;
 
-  let decode_file ~(in_filename:string) ~(out_filename:string option) : (stats, string) result =
-    let final_out_filename : (string option, string) result =
+  let decode_file ~(ref_block:Block.t option) ~(in_filename:string) ~(out_filename:string option) : (stats, string) result =
+    let final_out_filename_and_block : ((string option) * (Block.t option), string) result =
       match out_filename with
-      | Some str -> Ok (Some str)
+      | Some str -> Ok (Some str, None)
       | None     -> fetch_out_filename ~in_filename in
-    match final_out_filename with
-    | Error msg as em -> em
-    | Ok None         ->
+    match final_out_filename_and_block with
+    | Error msg as em                   -> em
+    | Ok (None, _)                   ->
       Error (Printf.sprintf "Failed to obtain a filename for output(none is provided and no valid metadata block with filename field is found in %s)" in_filename)
-    | Ok (Some out_filename) ->
-      match Stream.process_in_out ~append:false ~in_filename ~out_filename Processor.decoder with
+    | Ok (Some out_filename, ref_block) ->
+      let decoder = Processor.make_decoder ~ref_block in
+      match Stream.process_in_out ~append:false ~in_filename ~out_filename decoder with
       | Ok (stats, Some trunc_size) ->
         begin
           try

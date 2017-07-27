@@ -5,16 +5,16 @@ exception Packaged_exn of string
 
 let decode (force_out:bool) (in_filename:string) (provided_out_filename:string option) : unit =
   try
-    let stored_out_filename : string option =
+    let (stored_out_filename, ref_block) : (string option) * (Sbx_block.Block.t option) =
       match Process.fetch_out_filename ~in_filename with
-      | Ok name   -> name
+      | Ok res    -> res
       | Error msg -> raise (Packaged_exn msg) in
     let final_out_path : string =
       match provided_out_filename with
       | None     -> (
           match stored_out_filename with
           | None     ->
-            raise (Packaged_exn "No original filename was found in sbx container and no output file name is provided")
+            raise (Packaged_exn "No original filename was found in sbx container and no output file name was provided")
           | Some str ->
             str
         )
@@ -37,7 +37,7 @@ let decode (force_out:bool) (in_filename:string) (provided_out_filename:string o
     else
       begin
         Printf.printf "Output file name                               : %s\n" final_out_path;
-        match Process.decode_file ~in_filename ~out_filename:(Some final_out_path) with
+        match Process.decode_file ~ref_block ~in_filename ~out_filename:(Some final_out_path) with
         | Ok stats  -> Stats.print_stats stats
         | Error msg -> raise (Packaged_exn msg)
       end
