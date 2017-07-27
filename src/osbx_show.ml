@@ -101,9 +101,9 @@ let show (find_max:int64 option) (in_filename:string) : unit =
   Param.Show.set_meta_list_max_length_possibly find_max;
   try
     match find_max with
-    | Some 0L        ->
+    | Some 0L ->
       ()
-    | None ->
+    | None    ->
       begin
         match Process.fetch_single_meta ~in_filename with
         | Ok res    ->
@@ -114,7 +114,7 @@ let show (find_max:int64 option) (in_filename:string) : unit =
           end
         | Error str -> raise (Packaged_exn str)
       end
-    | _             ->
+    | _       ->
       match Process.fetch_multi_meta ~in_filename with
       | Ok res    ->
         begin
