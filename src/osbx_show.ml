@@ -103,7 +103,7 @@ let show (find_max:int64 option) (in_filename:string) : unit =
     match find_max with
     | Some 0L        ->
       ()
-    | None | Some 1L ->
+    | None ->
       begin
         match Process.fetch_single_meta ~in_filename with
         | Ok res    ->
