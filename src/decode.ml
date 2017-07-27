@@ -494,7 +494,7 @@ module Processor = struct
        let ref_block : Block.t option =
          match ref_block with
          | Some block as sb ->
-           Printf.printf "Using reference block which provided the file name\n";
+           Printf.printf "Using the reference block which provided the file name\n";
            sb
          | None             -> (* no block provided, find a block to use as reference *)
            (* try to find a metadata block first *)
@@ -582,7 +582,7 @@ module Process = struct
   let decode_file ~(ref_block:Block.t option) ~(in_filename:string) ~(out_filename:string option) : (stats, string) result =
     let final_out_filename_and_block : ((string option) * (Block.t option), string) result =
       match out_filename with
-      | Some str -> Ok (Some str, None)
+      | Some str -> Ok (Some str, ref_block)
       | None     -> fetch_out_filename ~in_filename in
     match final_out_filename_and_block with
     | Error msg as em                   -> em
