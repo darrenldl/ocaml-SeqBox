@@ -295,9 +295,7 @@ module Processor = struct
                           ; data : Block.t option
                           }
 
-  type preference = [ `Meta | `Data ]
-
-  let find_first_both_proc ~(prefer:preference) (in_file:in_channel) : find_both_result =
+  let find_first_both_proc ~(prefer:Block.block_type) (in_file:in_channel) : find_both_result =
     let open Read_chunk in
     let len = Param.Decode.ref_block_scan_alignment in
     let rec find_first_both_proc_internal (result_so_far:find_both_result) (stats:scan_stats) : scan_stats * find_both_result =
@@ -359,15 +357,14 @@ module Processor = struct
     res
   ;;
 
-  let find_first_block_proc ~(want_meta:bool) (in_file:in_channel) : Block.t option =
+  let find_first_block_proc ~(want:Block.block_type) (in_file:in_channel) : Block.t option =
     let open Read_chunk in
     let len = Param.Decode.ref_block_scan_alignment in 
     let bytes_to_block (raw_header:Header.raw_header) (chunk:bytes) : Block.t option =
       let want_block =
-        if want_meta then
-          Header.raw_header_is_meta raw_header
-        else
-          Header.raw_header_is_data raw_header in
+        match want with
+        | `Meta -> Header.raw_header_is_meta raw_header
+        | `Data -> Header.raw_header_is_data raw_header in
       if want_block then
         Processor_components.bytes_to_block ~raw_header chunk
       else
@@ -477,7 +474,7 @@ module Processor = struct
   let out_filename_fetcher (in_file:in_channel) : (string option) * (Block.t option) =
     Printf.printf "Scanning for metadata block to get output file name\n";
     let metadata_block : Block.t option =
-      find_first_block_proc ~want_meta:true in_file in
+      find_first_block_proc ~want:`Meta in_file in
     match metadata_block with
     | Some block ->
       begin

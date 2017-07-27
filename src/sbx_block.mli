@@ -53,6 +53,8 @@ module Block : sig
 
   type t
 
+  type block_type = [ `Meta | `Data ]
+
   val make_metadata_block : Header.common_fields          -> fields:Metadata.t list -> t
 
   val make_data_block     : ?seq_num:uint32               -> Header.common_fields   -> data:bytes -> t
