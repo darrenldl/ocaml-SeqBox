@@ -50,7 +50,7 @@ let decode (force_out:bool) (show_max:int64 option) (in_filename:string) (provid
 
 let show_max =
   let doc = Printf.sprintf "Show up to $(docv)(defaults to %Ld) failing positions" !Param.Decode.failure_list_max_length in
-  Arg.(value & opt (some int64) None & info ["show-max"] ~docv:"SHOW-MAX" ~doc)
+  Arg.(value & opt (some int64) None & info ["show-fail-max"] ~docv:"SHOW-FAIL-MAX" ~doc)
 ;;
 
 let in_file =

@@ -138,7 +138,7 @@ module Stats = struct
 
   let print_failed_pos (block_size:int) (pos_list:int64 list) : unit =
     let block_size = Int64.of_int block_size in
-    List.iter (fun x -> Printf.printf "Failed to decode block %Ld, at %Ld bytes\n" x (block_size <*> x)) (List.rev pos_list)
+    List.iter (fun x -> Printf.printf "Failed to decode block %Ld, at byte %Ld\n" x (block_size <*> x)) (List.rev pos_list)
   ;;
 
   let print_stats (stats:t) : unit =
