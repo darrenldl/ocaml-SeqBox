@@ -42,8 +42,8 @@ echo "Decoding all rescued data"
 FILES=rescued_data/*
 for f in $FILES; do
   ./osbx decode $f $f.decoded
+  echo ""
 done
-echo ""
 
 echo "Comparing decoded data to original"
 FILES=rescued_data/*.decoded
