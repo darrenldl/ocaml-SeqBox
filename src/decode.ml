@@ -472,7 +472,7 @@ module Processor = struct
   ;;
 
   let out_filename_fetcher (in_file:in_channel) : (string option) * (Block.t option) =
-    Printf.printf "Scanning for metadata block to get output file name\n";
+    Printf.printf "Scanning for metadata block for stored file name\n";
     let metadata_block : Block.t option =
       find_first_block_proc ~want:`Meta in_file in
     match metadata_block with
