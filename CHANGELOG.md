@@ -1,5 +1,6 @@
 ## 1.1.2  (development version, will be published on OPAM at some point)
   - Fixed slightly off progress counting in Decode
+  - Optimized decoding code to avoid searching for a reference block twice
 
 ## 1.1.1  (newest version on OPAM)
   - Removed dependency on Core\_kernel
