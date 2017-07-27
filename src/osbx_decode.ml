@@ -5,10 +5,12 @@ exception Packaged_exn of string
 
 let decode (force_out:bool) (in_filename:string) (provided_out_filename:string option) : unit =
   try
-    let (stored_out_filename, ref_block) : (string option) * (Sbx_block.Block.t option) =
-      match Process.fetch_out_filename ~in_filename with
+    let ref_block =
+      match Process.fetch_ref_block in_filename with
       | Ok res    -> res
       | Error msg -> raise (Packaged_exn msg) in
+    let stored_out_filename =
+      Sbx_block_helpers.try_block_to_filename ref_block in
     let final_out_path : string =
       match provided_out_filename with
       | None     -> (

@@ -351,8 +351,6 @@ module Processor = struct
                 find_first_both_proc_internal new_result_so_far new_stats in
     let (stats, res) = find_first_both_proc_internal { meta = None; data = None } (Stats.make_blank_scan_stats ()) in
     LargeFile.seek_in in_file 0L;  (* reset seek position *)
-    (* if newline_if_unfinished then
-      Progress.print_newline_possibly_scan stats in_file; *)
     Progress.print_newline_possibly_scan stats in_file;
     res
   ;;
@@ -403,8 +401,6 @@ module Processor = struct
               find_first_block_proc_internal new_stats test_block in
     let (stats, res) = find_first_block_proc_internal (Stats.make_blank_scan_stats ()) None in
     LargeFile.seek_in in_file 0L;  (* reset seek position *)
-    (* if newline_if_unfinished then
-       Progress.print_newline_possibly_scan stats in_file; *)
     Progress.print_newline_possibly_scan stats in_file;
     res
   ;;
@@ -471,46 +467,28 @@ module Processor = struct
     decode_and_output_proc_internal (Stats.make_blank_stats ~ver:(Block.block_to_ver ref_block))
   ;;
 
-  let out_filename_fetcher (in_file:in_channel) : (string option) * (Block.t option) =
-    Printf.printf "Scanning for metadata block for stored file name\n";
-    let metadata_block : Block.t option =
-      find_first_block_proc ~want:`Meta in_file in
-    match metadata_block with
-    | Some block ->
+  let ref_block_fetcher (in_file:in_channel) : Block.t option =
+    Printf.printf "Scanning for reference block\n";
+    match find_first_both_proc ~prefer:`Meta in_file with
+    | { meta = Some block; data = _          } ->
       begin
         Printf.printf "Metadata block found\n";
-        let metadata_list  = Metadata.dedup (Block.block_to_meta block) in
-        match List.filter (function | Metadata.FNM _ -> true | _ -> false) metadata_list with
-        | [ ]       -> (None    , Some block)
-        | [FNM str] -> (Some str, Some block)
-        | [_]       -> assert false
-        | _ :: _    -> assert false
+        Some block
       end
-    | None       -> (None, None)
+    | { meta = None      ; data = Some block } ->
+      begin
+        Printf.printf "No metadata blocks were found, resorting to data block\n";
+        Some block
+      end
+    | { meta = None      ; data = None       } -> None
   ;;
 
   let make_decoder ~(ref_block:Block.t option) : (stats * (int64 option)) Stream.in_out_processor =
     (fun in_file out_file ->
        let ref_block : Block.t option =
          match ref_block with
-         | Some block as sb ->
-           Printf.printf "Using the reference block which provided the file name\n";
-           sb
-         | None             -> (* no block provided, find a block to use as reference *)
-           (* try to find a metadata block first *)
-           Printf.printf "Scanning for a reference block\n";
-           match find_first_both_proc ~prefer:`Meta in_file with
-           | { meta = Some block; data = _ }          ->
-             begin
-               Printf.printf "Metadata block found\n";
-               Some block
-             end
-           | { meta = None;       data = Some block } ->
-             begin
-               Printf.printf "No metadata blocks were found, resorting to data block\n";
-               Some block
-             end
-           | { meta = None;       data = None }       -> None in
+         | Some block as sb -> sb
+         | None             -> ref_block_fetcher in_file in
        match ref_block with
        | None           -> raise (Packaged_exn "No usable blocks in file")
        | Some ref_block ->
@@ -564,8 +542,8 @@ module Processor = struct
 end
 
 module Process = struct
-  let fetch_out_filename ~(in_filename:string) : ((string option) * (Block.t option), string) result =
-    Stream.process_in ~in_filename Processor.out_filename_fetcher
+  let fetch_ref_block ~(in_filename:string) : (Block.t option, string) result =
+    Stream.process_in ~in_filename Processor.ref_block_fetcher
   ;;
 
   let hash_file ~(hash_type:Multihash.hash_type) ~(in_filename:string) : (bytes, string) result =
@@ -580,15 +558,14 @@ module Process = struct
   ;;
 
   let decode_file ~(ref_block:Block.t option) ~(in_filename:string) ~(out_filename:string option) : (stats, string) result =
-    let final_out_filename_and_block : ((string option) * (Block.t option), string) result =
+    let final_out_filename : string option =
       match out_filename with
-      | Some str -> Ok (Some str, ref_block)
-      | None     -> fetch_out_filename ~in_filename in
-    match final_out_filename_and_block with
-    | Error msg as em                   -> em
-    | Ok (None, _)                   ->
+      | Some str -> Some str
+      | None     -> Sbx_block_helpers.try_block_to_filename ref_block in
+    match final_out_filename with
+    | None              ->
       Error (Printf.sprintf "Failed to obtain a filename for output(none is provided and no valid metadata block with filename field is found in %s)" in_filename)
-    | Ok (Some out_filename, ref_block) ->
+    | Some out_filename ->
       let decoder = Processor.make_decoder ~ref_block in
       match Stream.process_in_out ~append:false ~in_filename ~out_filename decoder with
       | Ok (stats, Some trunc_size) ->
