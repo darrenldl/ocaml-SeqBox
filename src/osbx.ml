@@ -33,8 +33,9 @@ let default_cmd =
   let sdocs = Manpage.s_common_options in
   let exits = Term.default_exits in
   let man = help_secs in
-  Term.(ret (const (`Help (`Pager, None)))),
-  Term.info "osbx" ~version:Osbx_version.version ~doc ~sdocs ~exits ~man
+  (Term.(ret (const (`Help (`Pager, None)))),
+   Term.info "osbx" ~version:Osbx_version.version ~doc ~sdocs ~exits ~man
+  )
 ;;
 
 let encode_cmd =
@@ -48,7 +49,7 @@ let encode_cmd =
 let decode_cmd =
   let open Osbx_decode in
   let doc = "Decode sbx container" in
-  (Term.(const decode $ force $ in_file $ out_file),
+  (Term.(const decode $ force $ show_max $ in_file $ out_file),
    Term.info "decode" ~doc
   )
 ;;
@@ -64,7 +65,7 @@ let rescue_cmd =
 let show_cmd =
   let open Osbx_show in
   let doc = "Search for and print metadata in sbx container (or file)" in
-  (Term.(const show $ find_all $ in_file),
+  (Term.(const show $ find_max $ in_file),
    Term.info "show" ~doc
   )
 ;;

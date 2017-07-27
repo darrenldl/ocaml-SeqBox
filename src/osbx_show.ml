@@ -97,18 +97,24 @@ let rec print_meta_blocks ?(cur:int = 0) (lst:Block.t list) : unit =
     end
 ;;
 
-let show (find_all:bool) (in_filename:string) : unit =
+let show (find_max:int64 option) (in_filename:string) : unit =
+  Param.Show.set_meta_list_max_length_possibly find_max;
   try
-    if not find_all then
-      match Process.fetch_single_meta ~in_filename with
-      | Ok res    ->
-        begin
-          match res with
-          | Some block -> print_meta block
-          | None       -> Printf.printf "No metadata blocks found\n"
-        end
-      | Error str -> raise (Packaged_exn str)
-    else
+    match find_max with
+    | Some 0L        ->
+      ()
+    | None | Some 1L ->
+      begin
+        match Process.fetch_single_meta ~in_filename with
+        | Ok res    ->
+          begin
+            match res with
+            | Some block -> print_meta block
+            | None       -> Printf.printf "No metadata blocks found\n"
+          end
+        | Error str -> raise (Packaged_exn str)
+      end
+    | _             ->
       match Process.fetch_multi_meta ~in_filename with
       | Ok res    ->
         begin
@@ -116,7 +122,7 @@ let show (find_all:bool) (in_filename:string) : unit =
           | []         -> Printf.printf "No metadata blocks found\n"
           | lst        ->
             begin
-              Printf.printf "Showing first up to %Ld metadata blocks\n" Param.Show.meta_list_max_length;
+              Printf.printf "Showing first up to %Ld metadata blocks\n" !Param.Show.meta_list_max_length;
               print_newline ();
               print_meta_blocks lst
             end
@@ -126,9 +132,9 @@ let show (find_all:bool) (in_filename:string) : unit =
   | Packaged_exn str -> Printf.printf "%s\n" str
 ;;
 
-let find_all =
-  let doc = Printf.sprintf "Find first up to %Ld metadata blocks" Param.Show.meta_list_max_length in
-  Arg.(value & flag & info ["find-all"] ~doc)
+let find_max =
+  let doc = Printf.sprintf "Find first up to $(docv)(defaults to %Ld) metadata blocks" !Param.Show.meta_list_max_length in
+  Arg.(value & opt (some int64) None & info ["find-max"] ~docv:"FIND-MAX" ~doc)
 ;;
 
 let in_file =

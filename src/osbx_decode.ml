@@ -3,7 +3,8 @@ open Decode
 
 exception Packaged_exn of string
 
-let decode (force_out:bool) (in_filename:string) (provided_out_filename:string option) : unit =
+let decode (force_out:bool) (show_max:int64 option) (in_filename:string) (provided_out_filename:string option) : unit =
+  Param.Decode.set_failure_list_max_length_possibly show_max;
   try
     let ref_block =
       match Process.fetch_ref_block in_filename with
@@ -45,6 +46,12 @@ let decode (force_out:bool) (in_filename:string) (provided_out_filename:string o
       end
   with
   | Packaged_exn msg -> Printf.printf "%s\n" msg
+;;
+
+let show_max =
+  let doc = Printf.sprintf "Show up to $(docv)(defaults to %Ld) failing positions" !Param.Decode.failure_list_max_length in
+  Arg.(value & opt (some int64) None & info ["show-max"] ~docv:"SHOW-MAX" ~doc)
+;;
 
 let in_file =
   let doc = "Sbx container to decode" in
