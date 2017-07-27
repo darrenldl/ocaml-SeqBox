@@ -84,7 +84,7 @@ module Stats = struct
     ; start_time            = stats.start_time
     }
   ;;
-  
+
   let add_hashes ~(recorded_hash:Multihash.hash_bytes option) ~(output_file_hash:Multihash.hash_bytes option) (stats:t) : t =
     { block_size            = stats.block_size
     ; blocks_processed      = stats.blocks_processed
