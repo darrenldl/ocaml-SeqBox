@@ -133,7 +133,9 @@ let show (find_max:int64 option) (in_filename:string) : unit =
 ;;
 
 let find_max =
-  let doc = Printf.sprintf "Find first up to $(docv)(defaults to %Ld) metadata blocks" !Param.Show.meta_list_max_length in
+  let doc = Printf.sprintf "Find first up to $(docv)(defaults to 1) metadata blocks.
+  If the default is used(this option not specified), total block number and block number indicators are not shown.
+  If a number is provided, then all the indicators are shown, regardless of the value of $(docv)" in
   Arg.(value & opt (some int64) None & info ["find-max"] ~docv:"FIND-MAX" ~doc)
 ;;
 

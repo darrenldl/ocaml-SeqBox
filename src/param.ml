@@ -30,7 +30,7 @@ end
 
 module Show = struct
   let progress_report_interval = 0.2  (* update every 200ms *)
-  let meta_list_max_length     = ref 100L
+  let meta_list_max_length     = ref 0L
 
   let set_meta_list_max_length (n:int64) : unit =
     meta_list_max_length := n
