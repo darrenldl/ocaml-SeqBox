@@ -74,6 +74,9 @@ Changelog
 Todo/wishlist
   - See [todo](TODO.md)
 
+Travis CI stuff
+  - Based on [blog written](http://blog.mlin.net/2013/02/testing-ocaml-projects-on-travis-ci.html) by Mike lin
+
 ## Possibly useful additional features of ocaml-SeqBox(possibly not yet in official SeqBox)
   - Allows random ordering in sbx container
     - This also means block corruption will not stop the decoding process
@@ -166,7 +169,5 @@ The following files directly from [libcrc](https://github.com/lammertb/libcrc) a
 The following files translated from libcrc source code are under the same MIT License as used by libcrc and as stated in libcrc source code, the license text of the crcccitt.c is copied over to src/crcccitt.ml as well
   - src/crcccitt.ml
   - src/crcccitt.mli
-
-The Travis CI related files are copied from the OCaml project (with potential modifications), and are under the license [CC0 1.0 Universal](http://creativecommons.org/publicdomain/zero/1.0/) as used by the [OPAM](https://github.com/ocaml/opam-repository) repo
 
 All remaining files are distributed under the 3-Clause BSD license as stated in the LICENSE file
