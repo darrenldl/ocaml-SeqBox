@@ -64,7 +64,7 @@ let print_newline_if_not_done ~(units_so_far:int64) ~(total_units:int64) : unit 
                        100L
                        units_so_far)
                     total_units) in
-  if percent != 100 then
+  if percent <> 100 then
     print_newline ()
   else
     ()  (* do nothing *)

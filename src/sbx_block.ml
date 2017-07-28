@@ -513,7 +513,7 @@ end = struct
           match alt_seq_num with
           | None   -> (header, data)
           | Some n ->
-            if (Uint32.to_int n) != 0 then
+            if (Uint32.to_int n) <> 0 then
               raise Invalid_seq_num
             else
               (header, data)
@@ -531,7 +531,7 @@ end = struct
     let check_data_length ({header; data}:raw_block) : unit =
       let data_size         = Bytes.length data in
       let correct_data_size = ver_to_data_size header.version in
-      if data_size != correct_data_size then
+      if data_size <> correct_data_size then
         raise Invalid_size
     ;;
 
@@ -543,7 +543,7 @@ end = struct
                                         ] in
       let bytes_to_check              = Bytes.concat "" parts_to_check in
       let correct_crc_ccitt           = Helper.crc_ccitt_sbx ~ver:header.version ~input:bytes_to_check in
-      if (Bytes.compare crc_ccitt correct_crc_ccitt) != 0 then
+      if crc_ccitt <> correct_crc_ccitt then
         raise Invalid_bytes
     ;;
   end

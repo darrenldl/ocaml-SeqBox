@@ -54,7 +54,7 @@ let make_path (path_parts:string list) : string =
       begin
         let char_last     = String.get str ((String.length str) - 1) in
         let char_2nd_last = String.get str ((String.length str) - 2) in
-        if char_last = '/' && char_2nd_last != '\\' then
+        if char_last = '/' && char_2nd_last <> '\\' then
           get_bytes str ~pos:0 ~len:((String.length str) - 1)
         else
           str
