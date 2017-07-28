@@ -1,5 +1,7 @@
 export OPAM_VERSION=1.2.2
 
+export OPAM_PACKAGES='jbuilder stdint nocrypto digestif angstrom hex cmdliner'
+
 sudo apt-get update -qq
 
 sudo apt-get install -qq ocaml
@@ -16,6 +18,7 @@ popd
 
 opam switch 4.04.2
 eval `opam config -env`
-opam pin add osbx .
+
+opam install -q -y $(OPAM_PACKAGES)
 
 ./tests/dev_tests.sh
