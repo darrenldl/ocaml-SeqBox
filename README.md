@@ -74,9 +74,6 @@ Changelog
 Todo/wishlist
   - See [todo](TODO.md)
 
-Travis CI stuff
-  - Based on [blog written](http://blog.mlin.net/2013/02/testing-ocaml-projects-on-travis-ci.html) by Mike lin
-
 ## Possibly useful additional features of ocaml-SeqBox(possibly not yet in official SeqBox)
   - Allows random ordering in sbx container
     - This also means block corruption will not stop the decoding process
