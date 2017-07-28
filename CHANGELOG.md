@@ -1,4 +1,4 @@
-## 1.1.2  (development version, will be published on OPAM at some point)
+## 1.2.0  (development version, will be published on OPAM at some point)
   - Fixed slightly off progress counting in Decode
   - Optimized decoding code to avoid searching for a reference block twice
   - Added command line option for decode and show

@@ -1,6 +1,6 @@
 opam-version: "1.2"
 name: "osbx"
-version: "1.1.2"
+version: "1.2.0"
 maintainer: "Darren Ldl <darrenldldev@gmail.com>"
 authors: "Darren Ldl <darrenldldev@gmail.com>"
 homepage: "https://github.com/darrenldl/ocaml-SeqBox"
