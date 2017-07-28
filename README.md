@@ -51,7 +51,7 @@ osbx show   --help
 ## Notes
 ~~CRC-CCITT is currently implemented via FFI and links to the static object files compiled from [libcrc](https://github.com/lammertb/libcrc)~~
   - ~~See crcccitt\_wrap.ml, crcccitt\_wrap.mli for the FFI bindings~~
-  - ~~See crcccitt.c, checksum.h for libcrc source used(crcccitt.c is slightly modified, modification is under same license used by libcrc)~~
+  - ~~See crcccitt.c, checksum.h for libcrc source used(crcccitt.c is slightly modified, modifications are under same license used by libcrc)~~
 
 CRC-CCITT is currently implemented in pure OCaml and is translated from implementation in [libcrc](https://github.com/lammertb/libcrc)
   - See src/crcccitt.ml, src/crcccitt.mli for the OCaml implementation
@@ -81,7 +81,7 @@ Todo/wishlist
     - This means you can concatenate multiple copies of sbx container together directly to increase chance of recovery in case of corruption
 
 ## Technical Specification
-The following specification is copied directly from the official specification (with possible slight modification).
+The following specification is copied directly from the official specification (with possible slight modifications).
 
 Also see section "Features currently NOT planned to be implemented" for features ocaml-SeqBox is probably not going to have
 
@@ -166,5 +166,7 @@ The following files directly from [libcrc](https://github.com/lammertb/libcrc) a
 The following files translated from libcrc source code are under the same MIT License as used by libcrc and as stated in libcrc source code, the license text of the crcccitt.c is copied over to src/crcccitt.ml as well
   - src/crcccitt.ml
   - src/crcccitt.mli
+
+The Travis CI related files are copied from the OCaml project (with potential modifications), and are under the license [CC0 1.0 Universal](http://creativecommons.org/publicdomain/zero/1.0/) as used by the [OPAM](https://github.com/ocaml/opam-repository) repo
 
 All remaining files are distributed under the 3-Clause BSD license as stated in the LICENSE file
