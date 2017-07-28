@@ -17,20 +17,20 @@ esac
 echo OCAML_VERSION=$OCAML_VERSION
 echo OPAM_SWITCH=$OPAM_SWITCH
 
-echo pull req: $TRAVIS_PULL_REQUEST
-if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
-  curl -L https://github.com/$TRAVIS_REPO_SLUG/pull/$TRAVIS_PULL_REQUEST.diff -o pullreq.diff
-else
-  git show > pullreq.diff.tmp
-  merge=`grep "^Merge: " pullreq.diff.tmp | awk -F: '{print $2}'`
-  if [ "$merge" = "" ]; then
-    echo Not a merge
-    mv pullreq.diff.tmp pullreq.diff
-  else
-    echo Merge detected, extracting $merge diff
-    git show $merge > pullreq.diff
-  fi
-fi
+# echo pull req: $TRAVIS_PULL_REQUEST
+# if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
+#   curl -L https://github.com/$TRAVIS_REPO_SLUG/pull/$TRAVIS_PULL_REQUEST.diff -o pullreq.diff
+# else
+#   git show > pullreq.diff.tmp
+#   merge=`grep "^Merge: " pullreq.diff.tmp | awk -F: '{print $2}'`
+#   if [ "$merge" = "" ]; then
+#     echo Not a merge
+#     mv pullreq.diff.tmp pullreq.diff
+#   else
+#     echo Merge detected, extracting $merge diff
+#     git show $merge > pullreq.diff
+#   fi
+# fi
 
 echo OCaml version
 ocaml -version
@@ -44,13 +44,13 @@ case $TRAVIS_OS_NAME in
 osx) export OPAMFETCH=wget ;;
 esac
 
-cd $TRAVIS_BUILD_DIR
-echo Pull request:
-cat pullreq.diff
-# CR: this will be replaced with the OCamlot analysis of affected packages
-cat pullreq.diff | sed -E -n -e 's,\+\+\+ b/packages/[^/]*/([^/]*)/.*,\1,p' | sort -u > tobuild.txt
-echo To Build:
-cat tobuild.txt
+# cd $TRAVIS_BUILD_DIR
+# echo Pull request:
+# cat pullreq.diff
+# # CR: this will be replaced with the OCamlot analysis of affected packages
+# cat pullreq.diff | sed -E -n -e 's,\+\+\+ b/packages/[^/]*/([^/]*)/.*,\1,p' | sort -u > tobuild.txt
+# echo To Build:
+# cat tobuild.txt
 
 function opam_version_compat {
   local OPAM_MAJOR OPAM_MINOR ocamlv bytev
@@ -129,8 +129,10 @@ function build_one {
 
 build_switch
 
-for i in `cat tobuild.txt`; do
-  build_one $i
-done
+# for i in `cat tobuild.txt`; do
+#   build_one $i
+# done
+
+build_one osbx
 
 kill $PING_LOOP_PID
