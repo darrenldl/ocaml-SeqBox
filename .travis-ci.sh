@@ -2,6 +2,8 @@ export OPAM_VERSION=1.2.2
 
 sudo apt-get update -qq
 
+sudo apt-get install -qq ocaml
+
 # install opam
 curl -L https://github.com/OCamlPro/opam/archive/${OPAM_VERSION}.tar.gz | tar xz -C /tmp
 pushd /tmp/opam-${OPAM_VERSION}
@@ -12,6 +14,8 @@ opam init
 eval `opam config -env`
 popd
 
+opam switch 4.04.2
+eval `opam config -env`
 opam pin add osbx .
 
 ./tests/dev_tests.sh
