@@ -29,6 +29,7 @@ let print_meta (block:Block.t) : unit =
   else
     let open Metadata in
     let uid : string  = Conv_utils.bytes_to_hex_string (Block.block_to_file_uid block) in
+    let ver : string  = Sbx_specs.ver_to_string (Block.block_to_ver block) in
     let metadata_list = dedup (Block.block_to_meta block) in
     let fnm : string option =
       match Misc_utils.list_find_option (function | FNM _ -> true | _ -> false) metadata_list with
@@ -70,6 +71,8 @@ let print_meta (block:Block.t) : unit =
       (string_option_to_string fnm);
     Printf.printf "Sbx container name           : %s\n"
       (string_option_to_string snm);
+    Printf.printf "Sbx container version        : %s\n"
+      ver;
     Printf.printf "File size                    : %s\n"
       (uint64_option_to_string fsz);
     Printf.printf "File modification time UTC   : %s\n"

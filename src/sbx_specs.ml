@@ -99,3 +99,7 @@ let string_to_ver       (str:string)  : (version, string) result =
   | "3" -> Ok `V3
   | _   -> Error "Invalid version string"
 ;;
+
+let ver_to_string       (ver:version) : string =
+  Printf.sprintf "%d" (ver_to_int ver)
+;;
