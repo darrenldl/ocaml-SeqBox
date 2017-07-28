@@ -29,6 +29,7 @@ let print_meta (block:Block.t) : unit =
   else
     let open Metadata in
     let uid : string  = Conv_utils.bytes_to_hex_string (Block.block_to_file_uid block) in
+    let ver : string  = Sbx_specs.ver_to_string (Block.block_to_ver block) in
     let metadata_list = dedup (Block.block_to_meta block) in
     let fnm : string option =
       match Misc_utils.list_find_option (function | FNM _ -> true | _ -> false) metadata_list with
@@ -70,6 +71,8 @@ let print_meta (block:Block.t) : unit =
       (string_option_to_string fnm);
     Printf.printf "Sbx container name           : %s\n"
       (string_option_to_string snm);
+    Printf.printf "Sbx container version        : %s\n"
+      ver;
     Printf.printf "File size                    : %s\n"
       (uint64_option_to_string fsz);
     Printf.printf "File modification time UTC   : %s\n"
@@ -97,18 +100,24 @@ let rec print_meta_blocks ?(cur:int = 0) (lst:Block.t list) : unit =
     end
 ;;
 
-let show (find_all:bool) (in_filename:string) : unit =
+let show (find_max:int64 option) (in_filename:string) : unit =
+  Param.Show.set_meta_list_max_length_possibly find_max;
   try
-    if not find_all then
-      match Process.fetch_single_meta ~in_filename with
-      | Ok res    ->
-        begin
-          match res with
-          | Some block -> print_meta block
-          | None       -> Printf.printf "No metadata blocks found\n"
-        end
-      | Error str -> raise (Packaged_exn str)
-    else
+    match find_max with
+    | Some 0L ->
+      ()
+    | None    ->
+      begin
+        match Process.fetch_single_meta ~in_filename with
+        | Ok res    ->
+          begin
+            match res with
+            | Some block -> print_meta block
+            | None       -> Printf.printf "No metadata blocks found\n"
+          end
+        | Error str -> raise (Packaged_exn str)
+      end
+    | _       ->
       match Process.fetch_multi_meta ~in_filename with
       | Ok res    ->
         begin
@@ -116,7 +125,7 @@ let show (find_all:bool) (in_filename:string) : unit =
           | []         -> Printf.printf "No metadata blocks found\n"
           | lst        ->
             begin
-              Printf.printf "Showing first up to %Ld metadata blocks\n" Param.Show.meta_list_max_length;
+              Printf.printf "Showing first up to %Ld metadata blocks\n" !Param.Show.meta_list_max_length;
               print_newline ();
               print_meta_blocks lst
             end
@@ -126,9 +135,11 @@ let show (find_all:bool) (in_filename:string) : unit =
   | Packaged_exn str -> Printf.printf "%s\n" str
 ;;
 
-let find_all =
-  let doc = "Try to find all metadata blocks" in
-  Arg.(value & flag & info ["find-all"] ~doc)
+let find_max =
+  let doc = Printf.sprintf "Find first up to $(docv)(defaults to 1) metadata blocks.
+  If the default is used(this option not specified), total block number and block number indicators are not shown.
+  If a number is provided, then all the indicators are shown, regardless of the value of $(docv)" in
+  Arg.(value & opt (some int64) None & info ["find-max"] ~docv:"FIND-MAX" ~doc)
 ;;
 
 let in_file =

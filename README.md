@@ -23,7 +23,6 @@ Table of Contents
          * [Metadata encoding:](#metadata-encoding)
             * [IDs](#ids)
             * [Features currently NOT planned to be implemented](#features-currently-not-planned-to-be-implemented)
-      * [Progress Report](#progress-report)
       * [License](#license)
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
@@ -34,7 +33,7 @@ I would like to thank [Marco](https://github.com/MarcoPon) (author of the offici
 I would like to thank [Ming](https://github.com/mdchia/) for his feedback on the documentation, UX design, and several other general aspects of this project. And also his help on testing the building and installation of osbx on macOS.
 
 ## Getting started
-Osbx 1.0.1 is currently on OPAM, 1.1.0 (dev version) will be published shortly
+Osbx 1.1.1 is currently on OPAM, 1.2.0 will be published later at some point
 ```
 opam install osbx
 ```
@@ -46,12 +45,13 @@ osbx        --help
 osbx encode --help
 osbx decode --help
 osbx rescue --help
+osbx show   --help
 ```
 
 ## Notes
 ~~CRC-CCITT is currently implemented via FFI and links to the static object files compiled from [libcrc](https://github.com/lammertb/libcrc)~~
   - ~~See crcccitt\_wrap.ml, crcccitt\_wrap.mli for the FFI bindings~~
-  - ~~See crcccitt.c, checksum.h for libcrc source used(crcccitt.c is slightly modified, modification is under same license used by libcrc)~~
+  - ~~See crcccitt.c, checksum.h for libcrc source used(crcccitt.c is slightly modified, modifications are under same license used by libcrc)~~
 
 CRC-CCITT is currently implemented in pure OCaml and is translated from implementation in [libcrc](https://github.com/lammertb/libcrc)
   - See src/crcccitt.ml, src/crcccitt.mli for the OCaml implementation
@@ -60,6 +60,10 @@ CRC-CCITT is currently implemented in pure OCaml and is translated from implemen
 
 Exact behaviours in non-standard cases are not specified in official SeqBox technical specification
   - See [specification](SPECS.md) of ocaml-SeqBox for details on how ocaml-SeqBox behaves(if you care about undefined behaviour those sort of things)
+
+Hashing
+  - Nocrypto for SHA1, SHA256, SHA512
+  - Digestif for BLAKE2B\_512
 
 Index of soure code
   - See [index](INDEX.md)
@@ -77,7 +81,7 @@ Todo/wishlist
     - This means you can concatenate multiple copies of sbx container together directly to increase chance of recovery in case of corruption
 
 ## Technical Specification
-The following specification is copied directly from the official specification (with possible slight modification).
+The following specification is copied directly from the official specification (with possible slight modifications).
 
 Also see section "Features currently NOT planned to be implemented" for features ocaml-SeqBox is probably not going to have
 
@@ -140,42 +144,19 @@ All versions are implemented in ocaml-SeqBox
 | FSZ | filesize (8 bytes) |
 | FDT | date & time (8 bytes, seconds since epoch) |
 | SDT | sbx date & time (8 bytes) |
-| HSH | crypto hash (SHA256, using [Multihash](http://multiformats.io) protocol) |
+| HSH | crypto hash (using [Multihash](http://multiformats.io) protocol) |
 | PID | parent UID (*not used at the moment*)|
+
+Supported crypto hashes in 1.1.0 are
+  - SHA1
+  - SHA256
+  - SHA512
+  - BLAKE2B\_512
 
 #### Features currently NOT planned to be implemented
   - Data hiding (XOR encoding/decoding in official seqbox)
     - Provides neither sufficiently strong encryption nor sufficient stealth for any serious attempt to hide/secure data
     - You should use the appropriate tools for encryption
-
-## Progress Report
-  - Single SBX block encoding - done (Sbx_block module)
-  - Single SBX block decoding - done (Sbx_block module)
-  - Streamed processing framework - done (Streamed_file module)
-  - Streamed file encoding - done (Encode module)
-  - Streamed file decoding - done (Decode module)
-  - Profiling and optimization of encoding - done
-    - Result : CRC-CCITT implementation causes major slowdown
-  - Profiling and optimization of decoding - done
-    - Result : CRC-CCITT implementation causes major slowdown
-  - Replace CRC-CCITT implementation with a more efficient one(or create FFI to libcrc) - done
-    - CRC-CCITT is implemented via FFI to libcrc
-  - Commandline interface for encoding and decoding - done
-  - Further profiling and optimization of encoding - skipped for now
-  - Further profiling and optimization of decoding - skipped for now
-  - ~~Scan mode - not started~~
-    - Replaced by rescue mode
-  - ~~Recovery mode - not started~~
-    - Replaced by rescue mode
-  - Rescue mode - done
-  - ~~Commandline options for scanning and recovery - not started~~
-    - Replaced by rescue mode
-  - Commandline interface for rescue mode - done
-  - Packaging preparation - done
-  - Final testing - done
-    - See tests/ folder for test scripts
-  - Publish - done
-    - Available through OPAM - opam install osbx
 
 ## License
 The following files directly from [libcrc](https://github.com/lammertb/libcrc) are under the MIT License(see license text in each of the code files)

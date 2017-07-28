@@ -13,8 +13,8 @@ echo ""
 cd tests
 
 echo "Generating test data"
-# dd if=/dev/zero of=dummy bs=$[1024 * 1024 * 10] count=1
-truncate -s 10m dummy
+dd if=/dev/urandom of=dummy bs=$[1024 * 1024 * 1] count=1
+# truncate -s 10m dummy
 echo ""
 
 # version tests
@@ -33,8 +33,24 @@ echo "========================================"
 
 echo ""
 
+# hash test
+echo "Starting hash tests"
+echo "========================================"
+./hash_tests.sh
+echo "========================================"
+
+echo ""
+
 # rescue tests
 echo "Starting rescue tests"
 echo "========================================"
 ./rescue_tests.sh
+echo "========================================"
+
+echo ""
+
+# output file tests
+echo "Starting output file path logic tests"
+echo "========================================"
+./out_file_logic_tests.sh
 echo "========================================"

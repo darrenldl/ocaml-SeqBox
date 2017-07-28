@@ -312,7 +312,7 @@ end = struct
     match entry with
     | FNM v | SNM v         -> Conv_utils.string_to_bytes v
     | FSZ v | FDT v | SDT v -> Conv_utils.uint64_to_bytes v
-    | HSH hash_bytes        -> Multihash.hash_bytes_to_multihash ~hash_bytes
+    | HSH hash_bytes        -> Multihash.hash_bytes_to_multihash hash_bytes
     | PID v                 -> v
   ;;
 
@@ -381,15 +381,15 @@ end = struct
       >>| (fun x -> SDT x)
     ;;
 
-    let gen_hash_parser ~(hash_type:Multihash.hash_type) =
+    let gen_hash_parser (hash_type:Multihash.hash_type) =
       let open Multihash in
-      let total_len = Specs.hash_type_to_total_length ~hash_type in
+      let total_len = Specs.hash_type_to_total_length hash_type in
       let len_bytes = Conv_utils.uint8_to_bytes (Uint8.of_int total_len) in
-      string "HSH" *> string len_bytes *> Parser.gen_parser ~hash_type
+      string "HSH" *> string len_bytes *> Parser.gen_parser hash_type
     ;;
 
     let hsh_p : metadata Angstrom.t =
-      choice [gen_hash_parser `SHA256]
+      choice (List.map (fun hash_type -> gen_hash_parser hash_type) Multihash.all_hash_types)
       >>| (fun x -> HSH x)
     ;;
     (*let pid_p : metadata Angstrom.t =
@@ -432,6 +432,8 @@ module Block : sig
 
   type t
 
+  type block_type = [ `Meta | `Data ]
+
   val make_metadata_block : Header.common_fields   -> fields:Metadata.t list -> t
 
   val make_data_block     : ?seq_num:uint32        -> Header.common_fields   -> data:bytes             -> t
@@ -467,6 +469,8 @@ end = struct
     | Meta of { header : Header.t
               ; fields : Metadata.t list
               ; data   : bytes }
+
+  type block_type = [ `Meta | `Data ]
 
   let make_metadata_block (common:Header.common_fields) ~(fields:Metadata.t list) : t =
     (* encode once to make sure the size is okay *)
@@ -504,15 +508,19 @@ end = struct
             else
               (header, data)
         end
-      | Meta { header; data; _ } -> (header, data) in
+      | Meta { header; data; _ } ->
+        begin
+          match alt_seq_num with
+          | None   -> (header, data)
+          | Some n ->
+            if (Uint32.to_int n) <> 0 then
+              raise Invalid_seq_num
+            else
+              (header, data)
+        end in
     let header_bytes = Header.to_bytes ~alt_seq_num ~header ~data in
     Bytes.concat "" [header_bytes; data]
   ;;
-
-  (*module Parser = struct
-    open Angstrom
-
-  end*)
 
   type raw_block =
     { header : Header.raw_header
@@ -523,7 +531,7 @@ end = struct
     let check_data_length ({header; data}:raw_block) : unit =
       let data_size         = Bytes.length data in
       let correct_data_size = ver_to_data_size header.version in
-      if data_size != correct_data_size then
+      if data_size <> correct_data_size then
         raise Invalid_size
     ;;
 
@@ -535,7 +543,7 @@ end = struct
                                         ] in
       let bytes_to_check              = Bytes.concat "" parts_to_check in
       let correct_crc_ccitt           = Helper.crc_ccitt_sbx ~ver:header.version ~input:bytes_to_check in
-      if (Bytes.compare crc_ccitt correct_crc_ccitt) != 0 then
+      if crc_ccitt <> correct_crc_ccitt then
         raise Invalid_bytes
     ;;
   end
@@ -608,34 +616,3 @@ end = struct
     not (is_meta block)
   ;;
 end
-
-(*
-let test_metadata_block () : unit =
-  let open Metadata in
-  let fields : t list = [ FNM (String.make 10000 'a')
-                        ; SNM "filename.sbx"
-                        ; FSZ (Uint64.of_int 100)
-                        ; FDT (Uint64.of_int 100000)
-                        ; SDT (Uint64.of_int 100001)
-                        ; HSH "1220edeaaff3f1774ad2888673770c6d64097e391bc362d7d6fb34982ddf0efd18cb"
-                        ] in
-  try
-    let common = Header.make_common_fields `V1 in
-    let metadata_block = Block.make_metadata_block ~common ~fields in
-    let bytes = Block.to_bytes metadata_block in
-    Printf.printf "Okay :\n%s\n" (Hex.hexdump_s (Hex.of_string bytes))
-  with
-  | Metadata.Too_much_data str -> print_endline str
-;;
-
-let test_data_block () : unit =
-  let data = (Bytes.make 496 '\x00') in
-  let common = Header.make_common_fields `V1 in
-  let data_block = Block.make_data_block ~common ~data in
-  let bytes = Block.to_bytes ~alt_seq_num:(Uint32.of_int 0) data_block in
-  Printf.printf "Okay :\n%s\n" (Hex.hexdump_s (Hex.of_string bytes))
-;;
-
-test_metadata_block ();
-test_data_block ()
-   *)

@@ -7,7 +7,7 @@ module Common_param = struct
   let file_uid_len   : int   = 6
   let signature      : bytes = "SBx"
   let header_size    : int   = 16
-  let max_blocks_num : int64 = Int64.of_float ((2. ** 32.) -. 1.)
+  let max_blocks_num : int64 = Int64.sub (Int64.shift_left 0x1L 32) 1L  (* 2 ** 32 - 1 *)
 end
 
 module Param_for_v1 = struct
@@ -98,4 +98,8 @@ let string_to_ver       (str:string)  : (version, string) result =
   | "2" -> Ok `V2
   | "3" -> Ok `V3
   | _   -> Error "Invalid version string"
+;;
+
+let ver_to_string       (ver:version) : string =
+  Printf.sprintf "%d" (ver_to_int ver)
 ;;

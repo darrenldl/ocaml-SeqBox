@@ -2,7 +2,7 @@ open Stdint
 open Sbx_specs
 open Sbx_block
 open Stream_file
-open Nocrypto.Hash
+open Multihash
 
 exception File_metadata_get_failed
 
@@ -68,7 +68,7 @@ end
 type stats = Stats.t
 
 module Progress : sig
-  val report_encode : stats -> Core_kernel.In_channel.t -> unit
+  val report_encode : stats -> in_channel -> unit
 
 end = struct
 
@@ -86,14 +86,14 @@ end = struct
       ~total_units:total_chunks
   ;;
 
-  let report_encode : stats -> Core_kernel.In_channel.t -> unit  =
+  let report_encode : stats -> in_channel -> unit  =
     let first_time    = ref true in
     (fun stats in_file ->
        let data_size    : int64 =
          Int64.of_int stats.data_size in
        let total_chunks : int64 =
          Int64.div
-           (Int64.add (Core_kernel.In_channel.length in_file) (Int64.sub data_size 1L))
+           (Int64.add (LargeFile.in_channel_length in_file) (Int64.sub data_size 1L))
            data_size (* use of data_size is correct here *) in
        if !first_time then
          begin
@@ -108,7 +108,7 @@ end
 
 module Processor = struct
   (* Converts data to data blocks *)
-  let rec data_to_block_proc (in_file:Core_kernel.In_channel.t) (out_file:Core_kernel.Out_channel.t) ~(data_len:int) ~(stats:stats) ~(common:Header.common_fields) : stats =
+  let rec data_to_block_proc (in_file:in_channel) (out_file:out_channel) ~(data_len:int) ~(stats:stats) ~(common:Header.common_fields) : stats =
     let open Read_chunk in
     let open Write_chunk in
     (* report progress *)
@@ -125,26 +125,28 @@ module Processor = struct
       data_to_block_proc in_file out_file ~data_len ~stats:(Stats.add_written_data_block stats ~data_len:chunk_len) ~common
   ;;
 
-  let rec data_to_block_proc_w_hash ?(hash_state:SHA256.t = SHA256.init()) (in_file:Core_kernel.In_channel.t) (out_file:Core_kernel.Out_channel.t) ~(data_len:int) ~(stats:stats) ~(common:Header.common_fields) : stats * bytes =
-    let open Read_chunk in
-    let open Write_chunk in
-    (* report progress *)
-    Progress.report_encode stats in_file;
-    match read in_file ~len:data_len with
-    | None           -> (stats, Conv_utils.sha256_hash_state_to_bytes hash_state)
-    | Some { chunk } ->
-      let chunk_len   = Bytes.length chunk in
-      let seq_num     = Uint32.of_int64 (stats.data_blocks_written <+> 1L) in (* always off by +1 *)
-      let block       = Block.make_data_block ~seq_num common ~data:chunk in
-      let block_bytes = Block.to_bytes block in
-      (* update hash *)
-      SHA256.feed hash_state (Cstruct.of_bytes chunk);
-      (* write to file *)
-      write out_file ~chunk:block_bytes;
-      data_to_block_proc_w_hash ~hash_state in_file out_file ~data_len ~stats:(Stats.add_written_data_block stats ~data_len:chunk_len) ~common
+  let data_to_block_proc_w_hash (hash_type:hash_type) (in_file:in_channel) (out_file:out_channel) ~(data_len:int) ~(stats: stats) ~(common:Header.common_fields) : stats * hash_bytes =
+    let rec data_to_block_proc_w_hash_internal (hash_state:Hash.ctx) (in_file:in_channel) (out_file:out_channel) ~(data_len:int) ~(stats:stats) ~(common:Header.common_fields) : stats * hash_bytes =
+      let open Read_chunk in
+      let open Write_chunk in
+      (* report progress *)
+      Progress.report_encode stats in_file;
+      match read in_file ~len:data_len with
+      | None           -> (stats, Hash.get_hash_bytes hash_state)
+      | Some { chunk } ->
+        let chunk_len   = Bytes.length chunk in
+        let seq_num     = Uint32.of_int64 (stats.data_blocks_written <+> 1L) in (* always off by +1 *)
+        let block       = Block.make_data_block ~seq_num common ~data:chunk in
+        let block_bytes = Block.to_bytes block in
+        (* update hash *)
+        Hash.feed hash_state chunk;
+        (* write to file *)
+        write out_file ~chunk:block_bytes;
+        data_to_block_proc_w_hash_internal hash_state in_file out_file ~data_len ~stats:(Stats.add_written_data_block stats ~data_len:chunk_len) ~common in
+    data_to_block_proc_w_hash_internal (Hash.init hash_type) in_file out_file ~data_len ~stats ~common
   ;;
 
-  let make_in_out_encoder ~(common:Header.common_fields) ~(metadata:(Metadata.t list) option) : stats Stream.in_out_processor =
+  let make_in_out_encoder ~(hash_type:hash_type) ~(common:Header.common_fields) ~(metadata:(Metadata.t list) option) : stats Stream.in_out_processor =
     let ver      = Header.common_fields_to_ver common in
     let data_len = ver_to_data_size ver in
     let open Read_chunk in
@@ -164,20 +166,20 @@ module Processor = struct
            (* a dummy multihash is added to make sure there is actually enough space
             * in the metadata block before the encoding starts
             *)
-           let dummy_hash_bytes           = (Multihash.make_dummy_hash_bytes ~hash_type:`SHA256) in
+           let dummy_hash_bytes           = Multihash.make_dummy_hash_bytes hash_type in
            let dummy_fields               = (HSH dummy_hash_bytes) :: fields_except_hash in
            let dummy_metadata_block       = Block.make_metadata_block common ~fields:dummy_fields in
            let dummy_metadata_block_bytes = Block.to_bytes dummy_metadata_block in
            write out_file ~chunk:dummy_metadata_block_bytes;
            (* write data blocks *)
-           let (stats, hash)              =
-             data_to_block_proc_w_hash in_file out_file ~data_len ~stats:(Stats.make_blank_stats ~ver) ~common in
+           let (stats, hash_bytes)        =
+             data_to_block_proc_w_hash hash_type in_file out_file ~data_len ~stats:(Stats.make_blank_stats ~ver) ~common in
            let fields                     =
-             (HSH (Multihash.raw_hash_to_hash_bytes ~hash_type:`SHA256 ~raw:hash)) :: fields_except_hash in
+             (HSH hash_bytes) :: fields_except_hash in
            let metadata_block             = Block.make_metadata_block common ~fields in
            let metadata_block_bytes       = Block.to_bytes metadata_block in
            (* go back and write metadata block *)
-           Core_kernel.Out_channel.seek out_file 0L;
+           LargeFile.seek_out out_file 0L;
            write out_file ~chunk:metadata_block_bytes;
            (* update stats *)
            Stats.add_written_meta_block stats
@@ -194,8 +196,8 @@ module Process = struct
       let open Metadata in
       let open File_utils in
       let open Time_utils in
-      [ FNM in_filename
-      ; SNM out_filename
+      [ FNM (Misc_utils.path_to_file in_filename)
+      ; SNM (Misc_utils.path_to_file out_filename)
       ; FSZ (getsize_uint64  ~filename:in_filename)
       ; FDT (getmtime_uint64 ~filename:in_filename)
       ; SDT (gettime_uint64 ())
@@ -204,7 +206,7 @@ module Process = struct
     | _ -> raise File_metadata_get_failed
   ;;
 
-  let encode_file ~(uid:bytes option) ~(want_meta:bool) ~(ver:version) ~(in_filename:string) ~(out_filename:string) : (stats, string) result =
+  let encode_file ~(uid:bytes option) ~(want_meta:bool) ~(ver:version) ~(hash:string) ~(in_filename:string) ~(out_filename:string) : (stats, string) result =
     try
       (* check file size first *)
       let max_file_size = ver_to_max_file_size ver in
@@ -212,16 +214,25 @@ module Process = struct
       if file_size > max_file_size then
         Error (Printf.sprintf "File size (%Ld bytes) exceeds upper limit (%Ld bytes)" file_size max_file_size)
       else
-        let common   =
-          match uid with
-          | Some uid -> Header.make_common_fields ~uid ver
-          | None     -> Header.make_common_fields      ver in
-        let metadata =
-          match want_meta with
-          | true  -> Some (get_file_metadata ~in_filename ~out_filename)
-          | false -> None in
-        let encoder  = Processor.make_in_out_encoder ~common ~metadata in
-        Stream.process_in_out ~append:false ~in_filename ~out_filename encoder
+        (* check hash *)
+        match string_to_hash_type hash with
+        | Error msg as em -> em
+        | Ok hash_type    ->
+          if not (Hash.hash_type_is_supported hash_type) then
+            Error "Hash type is not supported"
+          else
+            begin
+              let common   =
+                match uid with
+                | Some uid -> Header.make_common_fields ~uid ver
+                | None     -> Header.make_common_fields      ver in
+              let metadata =
+                match want_meta with
+                | true  -> Some (get_file_metadata ~in_filename ~out_filename)
+                | false -> None in
+              let encoder  = Processor.make_in_out_encoder ~hash_type ~common ~metadata in
+              Stream.process_in_out ~append:false ~in_filename ~out_filename encoder
+            end
     with
     | File_utils.File_access_error        -> Error "Failed to access file"
     | File_metadata_get_failed            -> Error "Failed to get file metadata"

@@ -19,13 +19,13 @@ module Header : sig
 
   val common_fields_to_ver : common_fields -> version
 
-  val make_common_fields   : ?uid:bytes    -> version -> common_fields
+  val make_common_fields   : ?uid:bytes    -> version    -> common_fields
 
   val of_bytes             : bytes         -> raw_header
 
-  val raw_header_is_meta   : raw_header -> bool
+  val raw_header_is_meta   : raw_header    -> bool
 
-  val raw_header_is_data   : raw_header -> bool
+  val raw_header_is_data   : raw_header    -> bool
 end
 
 module Metadata : sig
@@ -53,13 +53,15 @@ module Block : sig
 
   type t
 
-  val make_metadata_block : Header.common_fields   -> fields:Metadata.t list -> t
+  type block_type = [ `Meta | `Data ]
 
-  val make_data_block     : ?seq_num:uint32        -> Header.common_fields   -> data:bytes             -> t
+  val make_metadata_block : Header.common_fields          -> fields:Metadata.t list -> t
 
-  val to_bytes            : ?alt_seq_num:uint32 -> t -> bytes
+  val make_data_block     : ?seq_num:uint32               -> Header.common_fields   -> data:bytes -> t
 
-  val of_bytes            : ?raw_header:Header.raw_header -> ?skipped_already:bool -> bytes -> t
+  val to_bytes            : ?alt_seq_num:uint32           -> t                      -> bytes
+
+  val of_bytes            : ?raw_header:Header.raw_header -> ?skipped_already:bool  -> bytes      -> t
 
   val block_to_ver        : t -> version
 

@@ -90,8 +90,10 @@ end
 type stats = Stats.t
 
 module Progress : sig
-  val report_rescue : stats -> Core_kernel.In_channel.t -> unit
+  val report_rescue : stats -> in_channel -> unit
+
 end = struct
+
   let print_rescue_progress_helper =
     let header         = "Data rescue progress" in
     let unit           = "bytes" in
@@ -106,10 +108,17 @@ end = struct
       ~total_units:total_bytes
   ;;
 
-  let report_rescue : stats -> Core_kernel.In_channel.t -> unit =
+  let report_rescue : stats -> in_channel -> unit =
+    let first_time = ref true in
     (fun stats in_file ->
        let total_bytes =
-         (Core_kernel.In_channel.length in_file) in
+         (LargeFile.in_channel_length in_file) in
+       if !first_time then
+         begin
+           (* print a notice *)
+           Printf.printf "Press Ctrl-C to interrupt\n";
+           first_time := false
+         end;
        print_rescue_progress ~stats ~total_bytes
     )
   ;;
@@ -129,16 +138,12 @@ module Logger = struct
   let write_helper ~(stats:stats) ~(log_filename:string) : (unit, string) result =
     let processor = make_write_proc ~stats in
     let write_helper_internal_w_exn () =
-      match Stream.process_out ~pack_break_into_error:false ~append:false ~out_filename:log_filename processor with
-      | Ok _      -> Ok ()
-      | Error msg -> Error msg in
+      Stream.process_out ~pack_break_into_error:false ~append:false ~out_filename:log_filename processor in
     let write_helper_internal_no_exn () =
-      match Stream.process_out                              ~append:false ~out_filename:log_filename processor with
-      | Ok _      -> Ok ()
-      | Error msg -> Error msg in
-    (* This is to make sure log writing is still done even when CTRL-C is entered
+      Stream.process_out                              ~append:false ~out_filename:log_filename processor in
+    (* This is to make sure log writing is still done even when Ctrl-C is entered
      *
-     * This probably will not stop extremely frequent CTRL-C presses where Break
+     * This probably will not stop extremely frequent Ctrl-C presses where Break
      * exception is raised during the exception handling bit (maybe? Not sure about this really)
      *
      * But should be good enough for normal actual human uses
@@ -156,10 +161,10 @@ module Logger = struct
   let write =
     let write_interval  : float     = Param.Rescue.log_write_interval in
     let last_write_time : float ref = ref 0. in
-    (fun ~(stats:stats) ~(log_filename:string) ~(in_file:Core_kernel.In_channel.t) : bool ->
+    (fun ~(stats:stats) ~(log_filename:string) ~(in_file:in_channel) : bool ->
        let cur_time : float = Sys.time () in
        let time_since_last_write : float = cur_time -. !last_write_time in
-       let total_bytes = Core_kernel.In_channel.length in_file in
+       let total_bytes = LargeFile.in_channel_length in_file in
        if time_since_last_write > write_interval || stats.bytes_processed = total_bytes (* always write when 100% done *) then
          begin
            last_write_time := cur_time;
@@ -214,9 +219,7 @@ module Logger = struct
   let read ~(log_filename:string) : (stats option, string) result =
     let processor = make_read_proc () in
     if Sys.file_exists log_filename then
-      match Stream.process_in ~in_filename:log_filename processor with
-      | Ok v      -> Ok v
-      | Error msg -> Error msg
+      Stream.process_in ~in_filename:log_filename processor
     else
       Ok (Some (Stats.make_blank_stats ()))
   ;;
@@ -224,7 +227,7 @@ end
 
 module Processor = struct
   (* scan for valid block *)
-  let scan_proc ~(stats:stats) ~(log_filename:string option) (in_file:Core_kernel.In_channel.t) : stats * ((Block.t * bytes) option) =
+  let scan_proc ~(stats:stats) ~(log_filename:string option) (in_file:in_channel) : stats * ((Block.t * bytes) option) =
     let open Read_chunk in
     let len = Param.Rescue.scan_alignment in
     let rec scan_proc_internal (stats:stats) : stats * ((Block.t * bytes) option) =
@@ -235,7 +238,13 @@ module Processor = struct
         | None              -> true
         | Some log_filename -> Logger.write ~stats ~log_filename ~in_file in
       if not log_okay then
-        (stats, None)
+        begin
+          (* just print and quit if cannot write log *)
+          print_newline ();
+          Printf.printf "Failed to write to log file";
+          print_newline ();
+          (stats, None)
+        end
       else
         begin
           match read in_file ~len with
@@ -278,7 +287,7 @@ module Processor = struct
       let uid_hex =
         Conv_utils.bytes_to_hex_string (Block.block_to_file_uid block) in
       Misc_utils.make_path [out_dirname; uid_hex] in
-    let output_proc_internal_processor (out_file:Core_kernel.Out_channel.t) : unit =
+    let output_proc_internal_processor (out_file:out_channel) : unit =
       let open Write_chunk in
       write out_file ~chunk in  (* use the actual bytes in original file rather than generating from scratch *)
     let new_stats =
@@ -286,17 +295,14 @@ module Processor = struct
         Stats.add_meta_block stats
       else
         Stats.add_data_block stats in
-    match Stream.process_out ~append:true ~out_filename output_proc_internal_processor with
-    | Ok _      -> (new_stats, Ok ())
-    | Error msg -> (new_stats, Error msg)
+    let res = Stream.process_out ~append:true ~out_filename output_proc_internal_processor in
+    (new_stats, res)
   ;;
 
   (* if there is any error with outputting, just print directly and return stats
    * this should be very rare however, if happening at all
    *)
-  let rec scan_and_output ~(stats:stats) ~(out_dirname:string) ~(log_filename:string option) (in_file:Core_kernel.In_channel.t) : stats =
-    (* exit if failed to write to log
-    *)
+  let rec scan_and_output ~(stats:stats) ~(out_dirname:string) ~(log_filename:string option) (in_file:in_channel) : stats =
     match scan_proc ~stats ~log_filename in_file with
     | (stats, None)                 -> stats  (* ran out of valid blocks in input file *)
     | (stats, Some block_and_chunk) ->
@@ -322,19 +328,18 @@ module Processor = struct
        | Error msg -> Error msg (* just exit due to error *)
        | Ok stats  ->
          (* seek to last position read *)
-         Core_kernel.In_channel.seek in_file stats.bytes_processed;
+         LargeFile.seek_in in_file stats.bytes_processed;
          (* start scan and output process *)
          Ok (scan_and_output in_file ~stats ~out_dirname ~log_filename)
     )
   ;;
-
 end
 
 module Process = struct
   let rescue_from_file ~(in_filename:string) ~(out_dirname:string) ~(log_filename:string option) : (stats, string) result =
     let processor = Processor.make_rescuer ~out_dirname ~log_filename in
     match Stream.process_in ~in_filename processor with
-    | Ok stats  -> stats
+    | Ok res    -> res
     | Error msg -> Error msg
   ;;
 end
