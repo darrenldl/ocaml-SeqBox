@@ -74,10 +74,10 @@ end = struct
 end
 
 module Processor = struct
-  let find_meta_blocks_proc ~(get_at_most:int64) (in_file:in_channel) : Block.t list =
+  let find_meta_blocks_proc ~(get_at_most:int64) (in_file:in_channel) : (Block.t * int64) list =
     let open Read_chunk in
     let len = Param.Decode.ref_block_scan_alignment in
-    let rec find_meta_blocks_proc_internal (stats:stats) (acc:Block.t list) : stats * (Block.t list) =
+    let rec find_meta_blocks_proc_internal (stats:stats) (acc:(Block.t * int64) list) : stats * ((Block.t * int64) list) =
       (* report progress *)
       Progress.report_scan stats in_file;
       if stats.meta_blocks_found >= get_at_most then
@@ -113,7 +113,7 @@ module Processor = struct
               | None       -> (new_stats, acc)
               | Some block ->
                 if Block.is_meta block then
-                  (Stats.add_meta_block new_stats, block :: acc)
+                  (Stats.add_meta_block new_stats, (block, stats.bytes_processed) :: acc)
                 else
                   (new_stats, acc) in
             find_meta_blocks_proc_internal new_stats new_acc in
@@ -122,24 +122,24 @@ module Processor = struct
     res
   ;;
 
-  let single_meta_fetcher (in_file:in_channel) : Block.t option =
+  let single_meta_fetcher (in_file:in_channel) : (Block.t * int64) option =
     match find_meta_blocks_proc ~get_at_most:1L in_file with
     | []       -> None
     | [x]      -> Some x
     | hd :: tl -> assert false
   ;;
 
-  let multi_meta_fetcher (in_file:in_channel) : Block.t list =
+  let multi_meta_fetcher (in_file:in_channel) : (Block.t * int64) list =
     List.rev (find_meta_blocks_proc ~get_at_most:!Param.Show.meta_list_max_length in_file)
   ;;
 end
 
 module Process = struct
-  let fetch_single_meta ~(in_filename:string) : (Block.t option, string) result =
+  let fetch_single_meta ~(in_filename:string) : ((Block.t * int64) option, string) result =
     Stream.process_in ~in_filename Processor.single_meta_fetcher
   ;;
 
-  let fetch_multi_meta ~(in_filename:string) : (Block.t list, string) result =
+  let fetch_multi_meta ~(in_filename:string) : ((Block.t * int64) list, string) result =
     Stream.process_in ~in_filename Processor.multi_meta_fetcher
   ;;
 end

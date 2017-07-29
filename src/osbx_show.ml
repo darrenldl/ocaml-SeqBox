@@ -23,7 +23,7 @@ let uint64_seconds_option_to_string (x:uint64 option) (mode:Conv_utils.date_time
   | None   -> "N/A"
 ;;
 
-let print_meta (block:Block.t) : unit =
+let print_meta ((block, pos):Block.t * int64) : unit =
   if Block.is_data block then
     assert false
   else
@@ -65,6 +65,9 @@ let print_meta (block:Block.t) : unit =
              )
       | None         -> None
       | _            -> assert false in
+    Printf.printf "Found at byte                : %Ld\n"
+      pos;
+    print_newline ();
     Printf.printf "File UID                     : %s\n"
       uid;
     Printf.printf "File name                    : %s\n"
@@ -87,16 +90,16 @@ let print_meta (block:Block.t) : unit =
       (string_option_to_string hsh)
 ;;
 
-let rec print_meta_blocks ?(cur:int = 0) (lst:Block.t list) : unit =
+let rec print_meta_blocks ?(cur:int64 = 0L) (lst:(Block.t * int64) list) : unit =
   match lst with
-  | []      -> ()
-  | b :: bs ->
+  | []              -> ()
+  | b_and_pos :: tl ->
     begin
-      Printf.printf "Metadata block number : %d\n" cur;
+      Printf.printf "Metadata block number : %Ld\n" cur;
       Printf.printf "========================================\n";
-      print_meta b;
+      print_meta b_and_pos;
       print_newline ();
-      print_meta_blocks ~cur:(cur + 1) bs
+      print_meta_blocks ~cur:(Int64.succ cur) tl
     end
 ;;
 
