@@ -103,7 +103,7 @@ let rec print_meta_blocks ?(cur:int64 = 0L) (lst:(Block.t * int64) list) : unit 
     end
 ;;
 
-let show (find_max:int64 option) (in_filename:string) : unit =
+let show (find_max:int64 option) (skip_to_byte:int64 option) (in_filename:string) : unit =
   Param.Show.set_meta_list_max_length_possibly find_max;
   try
     match find_max with
@@ -111,7 +111,7 @@ let show (find_max:int64 option) (in_filename:string) : unit =
       ()
     | None    ->
       begin
-        match Process.fetch_single_meta ~in_filename with
+        match Process.fetch_single_meta ~skip_to_byte ~in_filename with
         | Ok res    ->
           begin
             match res with
@@ -121,7 +121,7 @@ let show (find_max:int64 option) (in_filename:string) : unit =
         | Error str -> raise (Packaged_exn str)
       end
     | _       ->
-      match Process.fetch_multi_meta ~in_filename with
+      match Process.fetch_multi_meta ~skip_to_byte ~in_filename with
       | Ok res    ->
         begin
           match res with
@@ -139,10 +139,16 @@ let show (find_max:int64 option) (in_filename:string) : unit =
 ;;
 
 let find_max =
-  let doc = Printf.sprintf "Find first up to $(docv)(defaults to 1) metadata blocks.
+  let doc = "Find first up to $(docv)(defaults to 1) metadata blocks.
   If the default is used(this option not specified), total block number and block number indicators are not shown.
   If a number is provided, then all the indicators are shown, regardless of the value of $(docv)" in
   Arg.(value & opt (some int64) None & info ["find-max"] ~docv:"FIND-MAX" ~doc)
+;;
+
+let skip_to_byte =
+  let doc = Printf.sprintf "Skip to byte $(docv), the position is automatically rounded down to closest multiple of %d bytes"
+      Param.Rescue.scan_alignment in
+  Arg.(value & opt (some int64) None & info ["skip-to"] ~docv:"BYTE" ~doc)
 ;;
 
 let in_file =

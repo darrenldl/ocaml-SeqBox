@@ -7,6 +7,8 @@ let (<->) = Int64.sub;;
 
 let (<*>) = Int64.mul;;
 
+let (</>) = Int64.div;;
+
 module Stats = struct
   type t = { bytes_processed   : int64
            ; meta_blocks_found : int64
@@ -74,7 +76,16 @@ end = struct
 end
 
 module Processor = struct
-  let find_meta_blocks_proc ~(get_at_most:int64) (in_file:in_channel) : (Block.t * int64) list =
+  let find_meta_blocks_proc ~(skip_to_byte:int64 option) ~(get_at_most:int64) (in_file:in_channel) : (Block.t * int64) list =
+    (* skip to some byte *)
+    begin
+      match skip_to_byte with
+      | None   -> ()
+      | Some n ->
+        let alignment = Int64.of_int Param.Rescue.scan_alignment in
+        let target    = (n </> alignment) <*> alignment in
+        LargeFile.seek_in in_file target
+    end;
     let open Read_chunk in
     let len = Param.Decode.ref_block_scan_alignment in
     let rec find_meta_blocks_proc_internal (stats:stats) (acc:(Block.t * int64) list) : stats * ((Block.t * int64) list) =
@@ -122,24 +133,30 @@ module Processor = struct
     res
   ;;
 
-  let single_meta_fetcher (in_file:in_channel) : (Block.t * int64) option =
-    match find_meta_blocks_proc ~get_at_most:1L in_file with
-    | []       -> None
-    | [x]      -> Some x
-    | hd :: tl -> assert false
+  let make_single_meta_fetcher ~(skip_to_byte:int64 option) : ((Block.t * int64) option) Stream.in_processor =
+    (fun in_file ->
+       match find_meta_blocks_proc ~skip_to_byte ~get_at_most:1L in_file with
+       | []       -> None
+       | [x]      -> Some x
+       | hd :: tl -> assert false
+    )
   ;;
 
-  let multi_meta_fetcher (in_file:in_channel) : (Block.t * int64) list =
-    List.rev (find_meta_blocks_proc ~get_at_most:!Param.Show.meta_list_max_length in_file)
+  let make_multi_meta_fetcher ~(skip_to_byte:int64 option) : ((Block.t * int64) list) Stream.in_processor =
+    (fun in_file ->
+       List.rev (find_meta_blocks_proc ~skip_to_byte ~get_at_most:!Param.Show.meta_list_max_length in_file)
+    )
   ;;
 end
 
 module Process = struct
-  let fetch_single_meta ~(in_filename:string) : ((Block.t * int64) option, string) result =
-    Stream.process_in ~in_filename Processor.single_meta_fetcher
+  let fetch_single_meta ~(skip_to_byte:int64 option) ~(in_filename:string) : ((Block.t * int64) option, string) result =
+    let processor = Processor.make_single_meta_fetcher ~skip_to_byte in
+    Stream.process_in ~in_filename processor
   ;;
 
-  let fetch_multi_meta ~(in_filename:string) : ((Block.t * int64) list, string) result =
-    Stream.process_in ~in_filename Processor.multi_meta_fetcher
+  let fetch_multi_meta ~(skip_to_byte:int64 option) ~(in_filename:string) : ((Block.t * int64) list, string) result =
+    let processor = Processor.make_multi_meta_fetcher  ~skip_to_byte in
+    Stream.process_in ~in_filename processor
   ;;
 end
