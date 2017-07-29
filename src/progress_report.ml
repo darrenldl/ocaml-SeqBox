@@ -5,37 +5,54 @@ let seconds_to_hms (total_secs:int) : int * int * int =
   (hour, minute, second)
 ;;
 
+let calc_percent ~(units_so_far:int64) ~(total_units:int64) : int =
+  Int64.to_int (Int64.div
+                  (Int64.mul
+                     100L
+                     units_so_far)
+                  total_units) 
+;;
+
+let make_progress_bar ~(percent:int) : string =
+  let fill_char   = '#' in
+  let empty_char  = '-' in
+  let total_len   = 20 in
+  let filled_len  = total_len * percent / 100 in
+  let empty_len   = total_len - filled_len in
+  let filled_part = String.make filled_len fill_char  in
+  let empty_part  = String.make empty_len  empty_char in
+  let bar         = String.concat "" ["["; filled_part; empty_part; "]"] in
+  Printf.sprintf "%s %3d%%" bar percent
+;;
+
 let gen_print_generic ~(header:string) ~(unit:string) ~(print_interval:float) =
   let last_report_time    : float ref = ref 0. in
   let last_reported_units : int64 ref = ref 0L in
   let max_print_length    : int   ref = ref 0  in
   (fun ~(start_time:float) ~(units_so_far:int64) ~(total_units:int64) : unit ->
-     let percent : int =
-       Int64.to_int (Int64.div
-                       (Int64.mul
-                          100L
-                          units_so_far)
-                       total_units) in
+     let percent                : int   = calc_percent ~units_so_far ~total_units in
      let cur_time               : float = Sys.time () in
      let time_since_last_report : float = cur_time -. !last_report_time in
      if time_since_last_report > print_interval || percent = 0 || percent = 100 (* always print if at 0% or reached 100% *) then 
        begin
+         let progress_bar           : string    = make_progress_bar ~percent in
          let cur_rate               : float     = (Int64.to_float (Int64.sub units_so_far !last_reported_units)) /. time_since_last_report in
-         (* let time_elapsed           : float     = cur_time -. start_time in *)
+         let time_elapsed_secs      : int       = int_of_float (cur_time -. start_time) in
          (* let avg_rate               : float     = (Int64.to_float units_so_far) /. time_elapsed in *)
          let units_remaining        : int64     = Int64.sub total_units units_so_far in
          let etc_total_secs         : int       = int_of_float ((Int64.to_float units_remaining) /. cur_rate +. 1.) in
-         let (etc_hour, etc_minute, etc_second) = seconds_to_hms etc_total_secs in
+         let (etc_hour,  etc_minute,  etc_second)  = seconds_to_hms etc_total_secs    in
+         let (used_hour, used_minute, used_second) = seconds_to_hms time_elapsed_secs in
          last_report_time    := cur_time;
          last_reported_units := units_so_far;
-         let message = Printf.sprintf "\r%s : %Ld / %Ld %s - %d%%  cur : %.0f %s/s  etc : %02d:%02d:%02d"
+         let message = Printf.sprintf "\r%s : %s  cur : %.0f %s/s  used : %02d:%02d:%02d  etc : %02d:%02d:%02d"
            header
-           units_so_far
-           total_units
-           unit
-           percent
+           progress_bar
            cur_rate
            unit
+           used_hour
+           used_minute
+           used_second
            etc_hour
            etc_minute
            etc_second in
