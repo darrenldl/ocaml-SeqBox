@@ -6,6 +6,7 @@
     - Added --find-max      for show
   - Updated show command to also show sbx container version
   - Added position tracking to show mode
+  - Added --skip-to for show for skipping to some byte
 
 ## 1.1.1  (newest version on OPAM)
   - Removed dependency on Core\_kernel
