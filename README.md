@@ -49,10 +49,6 @@ osbx show   --help
 ```
 
 ## Notes
-~~CRC-CCITT is currently implemented via FFI and links to the static object files compiled from [libcrc](https://github.com/lammertb/libcrc)~~
-  - ~~See crcccitt\_wrap.ml, crcccitt\_wrap.mli for the FFI bindings~~
-  - ~~See crcccitt.c, checksum.h for libcrc source used(crcccitt.c is slightly modified, modifications are under same license used by libcrc)~~
-
 CRC-CCITT is currently implemented in pure OCaml and is translated from implementation in [libcrc](https://github.com/lammertb/libcrc)
   - See src/crcccitt.ml, src/crcccitt.mli for the OCaml implementation
     - The translated source code is under the same MIT license used by and stated in libcrc source code
@@ -60,6 +56,9 @@ CRC-CCITT is currently implemented in pure OCaml and is translated from implemen
 
 Exact behaviours in non-standard cases are not specified in official SeqBox technical specification
   - See [specification](SPECS.md) of ocaml-SeqBox for details on how ocaml-SeqBox behaves(if you care about undefined behaviour those sort of things)
+
+Wiki
+  - See [Wiki](https://github.com/darrenldl/ocaml-SeqBox/wiki)
 
 Hashing
   - Nocrypto for SHA1, SHA256, SHA512
@@ -73,9 +72,6 @@ Changelog
 
 Todo/wishlist
   - See [todo](TODO.md)
-
-Wiki
-  - See [Wiki](https://github.com/darrenldl/ocaml-SeqBox/wiki)
 
 ## Possibly useful additional features of ocaml-SeqBox(possibly not yet in official SeqBox)
   - Allows random ordering in sbx container
