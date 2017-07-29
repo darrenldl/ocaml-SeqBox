@@ -115,8 +115,8 @@ let show (find_max:int64 option) (skip_to_byte:int64 option) (in_filename:string
         | Ok res    ->
           begin
             match res with
-            | Some block -> print_meta block
-            | None       -> Printf.printf "No metadata blocks found\n"
+            | Some x -> print_meta x
+            | None   -> Printf.printf "No metadata blocks found\n"
           end
         | Error str -> raise (Packaged_exn str)
       end
