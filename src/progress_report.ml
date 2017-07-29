@@ -70,7 +70,7 @@ let gen_print_generic ~(header:string) ~(unit:string) ~(print_interval:float) =
          let (used_hour, used_minute, used_second) = seconds_to_hms time_elapsed_secs in
          last_report_time    := cur_time;
          last_reported_units := units_so_far;
-         let message = Printf.sprintf "\r%s : %s  cur : %s %s/s  used : %02d:%02d:%02d  etc : %02d:%02d:%02d"
+         let message = Printf.sprintf "\r%s : %s  %s %s/s  used : %02d:%02d:%02d  etc : %02d:%02d:%02d"
            header
            progress_bar
            cur_rate_str
