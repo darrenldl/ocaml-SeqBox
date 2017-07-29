@@ -5,6 +5,7 @@
     - Added --show-fail-max for decode
     - Added --find-max      for show
   - Updated show command to also show sbx container version
+  - Added position tracking to show mode
 
 ## 1.1.1  (newest version on OPAM)
   - Removed dependency on Core\_kernel
