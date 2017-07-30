@@ -158,7 +158,7 @@ module Logger = struct
       end
   ;;
 
-  let write =
+  let gen_write () =
     let write_interval  : float     = Param.Rescue.log_write_interval in
     let last_write_time : float ref = ref 0. in
     (fun ~(stats:stats) ~(log_filename:string) ~(in_file:in_channel) : bool ->
@@ -175,6 +175,10 @@ module Logger = struct
        else
          true (* things are okay and do nothing *)
     )
+  ;;
+
+  let write =
+    gen_write ()
   ;;
 
   module Parser = struct
