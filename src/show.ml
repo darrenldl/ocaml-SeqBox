@@ -61,9 +61,10 @@ end = struct
   ;;
 
   let report_scan : stats -> in_channel -> unit =
+    let total_bytes : int64 option ref = ref None in
     (fun stats in_file ->
        let total_bytes =
-         LargeFile.in_channel_length in_file in
+         Misc_utils.get_option_ref_init_if_none (fun () -> LargeFile.in_channel_length in_file) total_bytes in
        print_scan_progress ~stats ~total_bytes
     )
   ;;
