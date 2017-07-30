@@ -10,6 +10,7 @@
   - Improved progress reporting
     - Replaced fraction with progress bar
     - Made the rate more readable
+  - Optimized performance of progress printing code and log writing code
 
 ## 1.1.1  (newest version on OPAM)
   - Removed dependency on Core\_kernel
