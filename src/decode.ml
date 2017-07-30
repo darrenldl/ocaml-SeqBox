@@ -334,36 +334,6 @@ module Processor = struct
     res
   ;;
 
-  let find_first_block_proc ~(want:Block.block_type) (in_file:in_channel) : Block.t option =
-    let open Read_chunk in
-    let want_block (block:Block.t) : bool =
-      match want with
-      | `Meta -> Block.is_meta block
-      | `Data -> Block.is_data block in
-    let rec find_first_block_proc_internal (stats:scan_stats) (block:Block.t option) : scan_stats * (Block.t option) =
-      (* report progress *)
-      Progress.report_scan stats in_file;
-      match block with
-      | Some block -> (stats, Some block)
-      | None       ->
-        let (read_len, block) = Processor_components.try_get_block_from_in_channel in_file in
-        let new_stats         = Stats.add_bytes_scanned stats ~num:read_len in
-        if read_len = 0L then
-          (new_stats, block)
-        else
-          begin
-            let block =
-              match block with
-              | Some block -> if want_block block then Some block else None
-              | None       -> None in
-            find_first_block_proc_internal new_stats block
-          end in
-    let (stats, res) = find_first_block_proc_internal (Stats.make_blank_scan_stats ()) None in
-    LargeFile.seek_in in_file 0L;  (* reset seek position *)
-    Progress.print_newline_possibly_scan stats in_file;
-    res
-  ;;
-
   (* ref_block will be used as reference for version and uid
    *  block must match those two parameters to be accepted
    *)
@@ -379,7 +349,7 @@ module Processor = struct
       | None        ->
         let (read_len, block) = Processor_components.try_get_block_from_in_channel in_file in
         if read_len = 0L then
-          (stats, None)
+          (stats, result_so_far)
         else
           let (new_stats, new_result) =
             match block with
