@@ -24,9 +24,12 @@ let patch_block_bytes_if_needed (in_file:in_channel) ~(raw_header:Header.raw_hea
     chunk
 ;;
 
-let try_get_block_and_bytes_from_in_channel ?(raw_header_pred:(Header.raw_header -> bool) = (fun _ -> true)) (in_file:in_channel) : int64 * ((Block.t * bytes) option) =
+let try_get_block_and_bytes_from_in_channel ?(fixed_len:int option) ?(raw_header_pred:(Header.raw_header -> bool) = (fun _ -> true)) (in_file:in_channel) : int64 * ((Block.t * bytes) option) =
   let open Read_chunk in
-  let len = Param.Common.block_scan_alignment in
+  let len =
+    match fixed_len with
+    | Some n -> if n <= 0 then assert false else n
+    | None   -> Param.Common.block_scan_alignment in
   match read in_file ~len with
   | None           -> (0L, None)
   | Some { chunk } ->
@@ -35,7 +38,10 @@ let try_get_block_and_bytes_from_in_channel ?(raw_header_pred:(Header.raw_header
       let raw_header_bytes : bytes                    = Misc_utils.get_bytes chunk ~pos:0 ~len:16 in
       let raw_header       : Header.raw_header        = Header.of_bytes raw_header_bytes in
       if raw_header_pred raw_header then
-        let chunk            : bytes                    = patch_block_bytes_if_needed in_file ~raw_header ~chunk in
+        let chunk            : bytes                    =
+          match fixed_len with
+          | Some _ -> chunk
+          | None   -> patch_block_bytes_if_needed in_file ~raw_header ~chunk in
         let read_len         : int64                    = Int64.of_int (Bytes.length chunk) in
         let block            : Block.t option           = bytes_to_block ~raw_header chunk in
         let block_and_bytes  : (Block.t * bytes) option =
@@ -50,8 +56,8 @@ let try_get_block_and_bytes_from_in_channel ?(raw_header_pred:(Header.raw_header
     | Header.Invalid_bytes     -> (read_len, None)
 ;;
 
-let try_get_block_from_in_channel ?(raw_header_pred:(Header.raw_header -> bool) option) (in_file:in_channel) : int64 * (Block.t option) =
-  let (read_len, block_and_bytes) = try_get_block_and_bytes_from_in_channel ?raw_header_pred in_file in
+let try_get_block_from_in_channel ?(fixed_len:int option) ?(raw_header_pred:(Header.raw_header -> bool) option) (in_file:in_channel) : int64 * (Block.t option) =
+  let (read_len, block_and_bytes) = try_get_block_and_bytes_from_in_channel ?fixed_len ?raw_header_pred in_file in
   let block =
     match block_and_bytes with
     | None        -> None

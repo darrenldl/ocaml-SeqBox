@@ -339,16 +339,16 @@ module Processor = struct
    *)
   let find_valid_data_block_proc ~(ref_block:Block.t) (in_file:in_channel) ~(stats:stats) : stats * (Block.t option) =
     let open Read_chunk in
-    let ref_ver      = Block.block_to_ver ref_block in
-    let ref_file_uid = Block.block_to_file_uid ref_block in
+    let ref_ver        = Block.block_to_ver ref_block in
+    let ref_file_uid   = Block.block_to_file_uid ref_block in
+    let ref_block_size = ver_to_block_size ref_ver in
     let rec find_valid_data_block_proc_internal (stats:stats) (result_so_far:Block.t option) : stats * Block.t option =
       (* report progress *)
       Progress.report_decode stats in_file;
       match result_so_far with
       | Some _ as x -> (stats, x)
       | None        ->
-        let raw_header_pred   = (fun h -> h.Header.file_uid = ref_file_uid && h.version = ref_ver) in
-        let (read_len, block) = Processor_components.try_get_block_from_in_channel ~raw_header_pred in_file in
+        let (read_len, block) = Processor_components.try_get_block_from_in_channel ~fixed_len:ref_block_size in_file in
         if read_len = 0L then
           (stats, result_so_far)
         else
@@ -364,7 +364,11 @@ module Processor = struct
                   (Stats.add_okay_data_block stats, Some block)
               else
                 (Stats.add_failed_block stats, None)
-            | None       -> (stats, None) in
+            | None       ->
+              if read_len = Int64.of_int ref_block_size then
+                (Stats.add_failed_block stats, None)
+              else
+                (stats,                        None) in
           find_valid_data_block_proc_internal new_stats new_result in
     find_valid_data_block_proc_internal stats None
   ;;
