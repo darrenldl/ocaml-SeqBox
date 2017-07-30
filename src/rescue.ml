@@ -59,7 +59,7 @@ module Stats = struct
   let make_stats (bytes_processed:int64) (blocks_processed:int64) (meta_blocks_processed:int64) (data_blocks_processed:int64) : t =
     { bytes_processed =
         begin
-          let alignment = Int64.of_int Param.Rescue.scan_alignment in
+          let alignment = Int64.of_int Param.Common.block_scan_alignment in
           (bytes_processed </> alignment ) <*> alignment
         end
     ; blocks_processed
@@ -229,53 +229,34 @@ module Processor = struct
   (* scan for valid block *)
   let scan_proc ~(stats:stats) ~(log_filename:string option) (in_file:in_channel) : stats * ((Block.t * bytes) option) =
     let open Read_chunk in
-    let len = Param.Rescue.scan_alignment in
-    let rec scan_proc_internal (stats:stats) : stats * ((Block.t * bytes) option) =
+    let rec scan_proc_internal (stats:stats) (result_so_far:(Block.t * bytes) option) : stats * ((Block.t * bytes) option) =
       (* report progress *)
       Progress.report_rescue stats in_file;
-      let log_okay : bool =
-        match log_filename with
-        | None              -> true
-        | Some log_filename -> Logger.write ~stats ~log_filename ~in_file in
-      if not log_okay then
-        begin
-          (* just print and quit if cannot write log *)
-          print_newline ();
-          Printf.printf "Failed to write to log file";
-          print_newline ();
-          (stats, None)
-        end
-      else
-        begin
-          match read in_file ~len with
-          | None           -> (stats, None)
-          | Some { chunk } ->
-            let new_stats =
-              Stats.add_bytes stats ~num:(Int64.of_int (Bytes.length chunk)) in
-            if Bytes.length chunk < 16 then
-              (new_stats, None)  (* no more bytes left in file *)
+      match result_so_far with
+      | Some _ as x -> (stats, x)
+      | None        ->
+        let log_okay : bool =
+          match log_filename with
+          | None              -> true
+          | Some log_filename -> Logger.write ~stats ~log_filename ~in_file in
+        if not log_okay then
+          begin
+            (* just print and quit if cannot write log *)
+            print_newline ();
+            Printf.printf "Failed to write to log file";
+            print_newline ();
+            (stats, None)
+          end
+        else
+          begin
+            let (read_len, block_and_bytes) = Processor_components.try_get_block_and_bytes_from_in_channel in_file in
+            if read_len = 0L then
+              (stats, result_so_far)
             else
-              let test_header_bytes = Misc_utils.get_bytes chunk ~pos:0 ~len:16 in
-              let test_header : Header.raw_header option =
-                try
-                  Some (Header.of_bytes test_header_bytes)
-                with
-                | Header.Invalid_bytes -> None in
-              match test_header with
-              | None            -> scan_proc_internal new_stats
-              | Some raw_header ->
-                (* possibly grab more bytes depending on version *)
-                let chunk =
-                  Processor_components.patch_block_bytes_if_needed in_file ~raw_header ~chunk in
-                let test_block : Block.t option =
-                  Processor_components.bytes_to_block ~raw_header chunk in
-                let new_stats =
-                  Stats.add_bytes stats ~num:(Int64.of_int (Bytes.length chunk)) in
-                match test_block with
-                | None       -> scan_proc_internal new_stats
-                | Some block -> (new_stats, Some (block, chunk))  (* found a valid block *)
-        end in
-    scan_proc_internal stats
+              let new_stats = Stats.add_bytes stats ~num:read_len in
+              scan_proc_internal new_stats block_and_bytes
+          end in
+    scan_proc_internal stats None
   ;;
 
   (* append blocks to filename (use uid in hex string as filename)

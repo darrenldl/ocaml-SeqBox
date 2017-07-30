@@ -222,7 +222,7 @@ end
 
 module Metadata : sig
   exception Too_much_data of string
-  exception Invalid_entry of string
+  (* exception Invalid_entry of string *)
   exception Invalid_bytes
 
   type t =
@@ -243,7 +243,7 @@ module Metadata : sig
 end = struct
 
   exception Too_much_data of string
-  exception Invalid_entry of string
+  (* exception Invalid_entry of string *)
   exception Invalid_bytes
 
   type t =

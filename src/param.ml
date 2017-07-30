@@ -7,7 +7,6 @@ module Encode = struct
 end
 
 module Decode = struct
-  let ref_block_scan_alignment = Common.block_scan_alignment
   let progress_report_interval = 0.2  (* update every 200ms *)
   let failure_list_max_length  = ref 100L
 
@@ -23,7 +22,6 @@ module Decode = struct
 end
 
 module Rescue = struct
-  let scan_alignment           = Common.block_scan_alignment
   let progress_report_interval = 0.2  (* update every 200ms *)
   let log_write_interval       = 0.1  (* write  every 100ms *)
 end

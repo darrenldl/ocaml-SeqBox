@@ -36,7 +36,7 @@ let make_readable_rate ~(rate:float) : string =
       let rate_str    = Printf.sprintf "%4.0f"   adjusted_rate in
       (rate_str, "K")
     else
-      let rate_str    = Printf.sprintf "%4.0f"   rate          in
+      let rate_str    = Printf.sprintf "%5.0f"   rate          in
       (rate_str,  "") in
   Printf.sprintf "%s%s" rate unit
 ;;
