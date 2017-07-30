@@ -64,7 +64,8 @@ let try_get_fixed_ver_block_and_bytes_from_in_channel ~(ver:version) (in_file:in
   | Some { chunk } ->
     let read_len : int64 = Int64.of_int (Bytes.length chunk) in
     try
-      let raw_header_bytes : bytes             = Misc_utils.get_bytes chunk ~pos:0 ~len:16 in let raw_header       : Header.raw_header = Header.of_bytes raw_header_bytes in
+      let raw_header_bytes : bytes             = Misc_utils.get_bytes chunk ~pos:0 ~len:16 in
+      let raw_header       : Header.raw_header = Header.of_bytes raw_header_bytes in
       if raw_header.version = ver then
         let block           : Block.t option           = bytes_to_block ~raw_header chunk in
         let block_and_bytes : (Block.t * bytes) option =
