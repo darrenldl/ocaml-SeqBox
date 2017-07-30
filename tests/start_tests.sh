@@ -5,7 +5,7 @@ opam install osbx
 echo ""
 
 echo "Copying osbx binary over"
-cp ~/.opam/system/bin/osbx ./osbx
+cp ~/.opam/system/bin/osbx ./tests/osbx
 echo ""
 
 echo "Generating test data"
