@@ -67,7 +67,7 @@ let gen_print_generic ~(header:string) ~(unit:string) ~(print_interval:float) =
      let cur_time               : float = Sys.time () in
      let time_since_last_report : float = cur_time -. !last_report_time in
      (* always print if not printed yet or reached 100% *)
-     if (percent <> 100 && (!call_count > !call_per_interval (*time_since_last_report > print_interval*) || !not_printed_yet))
+     if (percent <> 100 && (!call_count > !call_per_interval || !not_printed_yet))
      || (percent =  100 && not !printed_at_100)
      then
        begin
