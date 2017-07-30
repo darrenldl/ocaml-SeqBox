@@ -306,10 +306,10 @@ module Processor = struct
       | { meta = _;      data = Some _ } when prefer = `Data -> (stats, result_so_far)
       | _                                                    ->
         let (read_len, block) = Processor_components.try_get_block_from_in_channel in_file in
-        let new_stats         = Stats.add_bytes_scanned stats ~num:read_len in
         if read_len = 0L then
-          (new_stats, result_so_far)
+          (stats, result_so_far)
         else
+          let new_stats         = Stats.add_bytes_scanned stats ~num:read_len in
           match block with
           | None       -> find_first_both_proc_internal result_so_far new_stats
           | Some block -> 
@@ -347,7 +347,7 @@ module Processor = struct
       match result_so_far with
       | Some _ as x -> (stats, x)
       | None        ->
-        let (read_len, block) = Processor_components.try_get_block_from_in_channel in_file in
+        let (read_len, block) = Processor_components.try_get_fixed_ver_block_from_in_channel ~ver:ref_ver in_file in
         if read_len = 0L then
           (stats, result_so_far)
         else

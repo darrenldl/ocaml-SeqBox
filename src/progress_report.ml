@@ -54,15 +54,19 @@ let make_progress_bar ~(percent:int) : string =
 ;;
 
 let gen_print_generic ~(header:string) ~(unit:string) ~(print_interval:float) =
-  let last_report_time    : float ref = ref 0.   in
-  let last_reported_units : int64 ref = ref 0L   in
-  let max_print_length    : int   ref = ref 0    in
-  let not_printed_yet     : bool  ref = ref true in
+  let last_report_time    : float ref = ref 0.    in
+  let last_reported_units : int64 ref = ref 0L    in
+  let max_print_length    : int   ref = ref 0     in
+  let not_printed_yet     : bool  ref = ref true  in
+  let printed_at_100      : bool  ref = ref false in
   (fun ~(start_time:float) ~(units_so_far:int64) ~(total_units:int64) : unit ->
      let percent                : int   = calc_percent ~units_so_far ~total_units in
      let cur_time               : float = Sys.time () in
      let time_since_last_report : float = cur_time -. !last_report_time in
-     if time_since_last_report > print_interval || !not_printed_yet || percent = 100 (* always print if not printed yet or reached 100% *) then 
+     (* always print if not printed yet or reached 100% *)
+     if (percent <> 100 && (time_since_last_report > print_interval || !not_printed_yet))
+     || (percent =  100 && not !printed_at_100)
+     then
        begin
          let progress_bar           : string    = make_progress_bar ~percent in
          let cur_rate : float =
@@ -75,6 +79,7 @@ let gen_print_generic ~(header:string) ~(unit:string) ~(print_interval:float) =
          let (etc_hour,  etc_minute,  etc_second)  = seconds_to_hms etc_total_secs    in
          let (used_hour, used_minute, used_second) = seconds_to_hms time_elapsed_secs in
          not_printed_yet     := false;
+         if percent = 100 && not !printed_at_100 then printed_at_100 := true;
          last_report_time    := cur_time;
          last_reported_units := units_so_far;
          let message = Printf.sprintf "\r%s : %s  %s %s/s  used : %02d:%02d:%02d  etc : %02d:%02d:%02d"
@@ -99,10 +104,10 @@ let gen_print_generic ~(header:string) ~(unit:string) ~(print_interval:float) =
                ""
              end in
          Printf.printf "%s%s " message padding;
-         flush stdout
-       end;
-     if percent = 100 then
-       print_newline ()
+         flush stdout;
+         if percent = 100 then
+           print_newline ()
+       end
   )
 ;;
 

@@ -55,3 +55,35 @@ let try_get_block_from_in_channel (in_file:in_channel) : int64 * (Block.t option
     | Some (b, _) -> Some b in
   (read_len, block)
 ;;
+
+let try_get_fixed_ver_block_and_bytes_from_in_channel ~(ver:version) (in_file:in_channel) : int64 * ((Block.t * bytes) option) =
+  let open Read_chunk in
+  let len = ver_to_block_size ver in
+  match read in_file ~len with
+  | None           -> (0L, None)
+  | Some { chunk } ->
+    let read_len : int64 = Int64.of_int (Bytes.length chunk) in
+    try
+      let raw_header_bytes : bytes             = Misc_utils.get_bytes chunk ~pos:0 ~len:16 in let raw_header       : Header.raw_header = Header.of_bytes raw_header_bytes in
+      if raw_header.version = ver then
+        let block           : Block.t option           = bytes_to_block ~raw_header chunk in
+        let block_and_bytes : (Block.t * bytes) option =
+          match block with
+          | None   -> None
+          | Some b -> Some (b, chunk) in
+        (read_len, block_and_bytes)
+      else
+        (read_len, None)
+    with
+    | Misc_utils.Invalid_range -> (read_len, None)
+    | Header.Invalid_bytes     -> (read_len, None)
+;;
+
+let try_get_fixed_ver_block_from_in_channel ~(ver:version) (in_file:in_channel) : int64 * (Block.t option) =
+  let (read_len, block_and_bytes) = try_get_fixed_ver_block_and_bytes_from_in_channel ~ver in_file in
+  let block =
+    match block_and_bytes with
+    | None        -> None
+    | Some (b, _) -> Some b in
+  (read_len, block)
+;;
