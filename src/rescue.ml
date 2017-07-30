@@ -158,16 +158,28 @@ module Logger = struct
       end
   ;;
 
-  let gen_write () =
-    let write_interval  : float     = Param.Rescue.log_write_interval in
-    let last_write_time : float ref = ref 0. in
+  let write =
+    let write_interval    : float            = Param.Rescue.log_write_interval in
+    let last_write_time   : float        ref = ref (Sys.time ()) in
+    let call_count        : int          ref = ref 0 in
+    let call_per_interval : int          ref = ref 0 in
+    let total_bytes       : int64 option ref = ref None in
     (fun ~(stats:stats) ~(log_filename:string) ~(in_file:in_channel) : bool ->
-       let cur_time : float = Sys.time () in
-       let time_since_last_write : float = cur_time -. !last_write_time in
-       let total_bytes = LargeFile.in_channel_length in_file in
-       if time_since_last_write > write_interval || stats.bytes_processed = total_bytes (* always write when 100% done *) then
+       call_count                       := !call_count + 1;
+       let total_bytes =
+         match !total_bytes with
+         | Some n -> n
+         | None   ->
+           let n = LargeFile.in_channel_length in_file in
+           total_bytes := Some n;
+           n in
+       if !call_count > !call_per_interval || stats.bytes_processed = total_bytes (* always write when 100% done *) then
          begin
-           last_write_time := cur_time;
+           let cur_time              : float = Sys.time () in
+           let time_since_last_write : float = cur_time -. !last_write_time in
+           call_per_interval                := int_of_float ((float_of_int !call_count) /. (time_since_last_write /. write_interval));
+           call_count                       := 0;
+           last_write_time                  := cur_time;
            match write_helper ~stats ~log_filename with
            | Error msg -> Printf.printf "%s\n" msg; false
            | Ok _      -> true
@@ -175,10 +187,6 @@ module Logger = struct
        else
          true (* things are okay and do nothing *)
     )
-  ;;
-
-  let write =
-    gen_write ()
   ;;
 
   module Parser = struct
