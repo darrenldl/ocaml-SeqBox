@@ -59,12 +59,15 @@ let gen_print_generic ~(header:string) ~(unit:string) ~(print_interval:float) =
   let max_print_length    : int   ref = ref 0     in
   let not_printed_yet     : bool  ref = ref true  in
   let printed_at_100      : bool  ref = ref false in
+  let call_count          : int   ref = ref 0     in
+  let call_per_interval   : int   ref = ref 0     in
   (fun ~(start_time:float) ~(units_so_far:int64) ~(total_units:int64) : unit ->
+     call_count                        := !call_count + 1;
      let percent                : int   = calc_percent ~units_so_far ~total_units in
      let cur_time               : float = Sys.time () in
      let time_since_last_report : float = cur_time -. !last_report_time in
      (* always print if not printed yet or reached 100% *)
-     if (percent <> 100 && (time_since_last_report > print_interval || !not_printed_yet))
+     if (percent <> 100 && (!call_count > !call_per_interval (*time_since_last_report > print_interval*) || !not_printed_yet))
      || (percent =  100 && not !printed_at_100)
      then
        begin
@@ -79,9 +82,11 @@ let gen_print_generic ~(header:string) ~(unit:string) ~(print_interval:float) =
          let (etc_hour,  etc_minute,  etc_second)  = seconds_to_hms etc_total_secs    in
          let (used_hour, used_minute, used_second) = seconds_to_hms time_elapsed_secs in
          not_printed_yet     := false;
-         if percent = 100 then printed_at_100 := true;
+         call_per_interval   := int_of_float ((float_of_int !call_count) /. (time_since_last_report /. print_interval));
+         call_count          := 0;
          last_report_time    := cur_time;
          last_reported_units := units_so_far;
+         if percent = 100 then printed_at_100 := true;
          let message = Printf.sprintf "\r%s : %s  %s %s/s  used : %02d:%02d:%02d  etc : %02d:%02d:%02d"
            header
            progress_bar

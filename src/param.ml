@@ -3,11 +3,11 @@ module Common = struct
 end
 
 module Encode = struct
-  let progress_report_interval = 0.3  (* update every  200ms *)
+  let progress_report_interval = 0.3  (* update every  300ms *)
 end
 
 module Decode = struct
-  let progress_report_interval = 0.3  (* update every  200ms *)
+  let progress_report_interval = 0.3  (* update every  300ms *)
   let failure_list_max_length  = ref 100L
 
   let set_failure_list_max_length (n:int64) : unit =
@@ -22,12 +22,12 @@ module Decode = struct
 end
 
 module Rescue = struct
-  let progress_report_interval = 0.3  (* update every  200ms *)
-  let log_write_interval       = 1.0  (* write  every 5000ms *)
+  let progress_report_interval = 0.3  (* update every  300ms *)
+  let log_write_interval       = 1.0  (* write  every 1000ms *)
 end
 
 module Show = struct
-  let progress_report_interval = 0.3  (* update every  200ms *)
+  let progress_report_interval = 0.3  (* update every  300ms *)
   let meta_list_max_length     = ref 0L
 
   let set_meta_list_max_length (n:int64) : unit =
