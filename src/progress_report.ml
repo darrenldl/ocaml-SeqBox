@@ -15,19 +15,24 @@ let calc_percent ~(units_so_far:int64) ~(total_units:int64) : int =
 
 let make_readable_rate ~(rate:float) : string =
   let (rate, unit) : string * string =
-    if      rate >  1_000_000_000. then
+    if      rate >  1_000_000_000_000. then
       let adjusted_rate =
-        rate     /. 1_000_000_000. in
+        rate     /. 1_000_000_000_000. in
+      let rate_str    = Printf.sprintf "%6.2f" adjusted_rate in
+      (rate_str, "T")
+    else if rate >      1_000_000_000. then
+      let adjusted_rate =
+        rate     /.     1_000_000_000. in
       let rate_str    = Printf.sprintf "%6.2f" adjusted_rate in
       (rate_str, "G")
-    else if rate >      1_000_000. then
+    else if rate >          1_000_000. then
       let adjusted_rate =
-        rate     /.     1_000_000. in
+        rate     /.         1_000_000. in
       let rate_str    = Printf.sprintf "%6.2f" adjusted_rate in
       (rate_str, "M")
-    else if rate >          1_000. then
+    else if rate >              1_000. then
       let adjusted_rate =
-        rate     /.         1_000. in
+        rate     /.             1_000. in
       let rate_str    = Printf.sprintf "%4.0f"   adjusted_rate in
       (rate_str, "K")
     else
