@@ -228,9 +228,10 @@ end = struct
   ;;
 
   let report_scan : scan_stats -> in_channel -> unit =
+    let total_bytes : int64 option ref = ref None in
     (fun stats in_file ->
        let total_bytes =
-         LargeFile.in_channel_length in_file in
+         Misc_utils.get_option_ref_init_if_none (fun () -> LargeFile.in_channel_length in_file) total_bytes in
        print_scan_progress ~stats ~total_bytes
     )
   ;;
@@ -250,15 +251,20 @@ end = struct
   ;;
 
   let report_decode : stats -> in_channel -> unit  =
+    let block_size   : int64 option ref = ref None in
+    let total_blocks : int64 option ref = ref None in
     (fun stats in_file ->
        let block_size   : int64 =
-         Int64.of_int stats.block_size in
+         Misc_utils.get_option_ref_init_if_none (fun () -> Int64.of_int stats.block_size) block_size in
        let total_blocks : int64 =
-         (* round down to the closest multiple of block size *)
-         Int64.div
-           (* (Int64.add (LargeFile.in_channel_length in_file) (Int64.sub block_size 1L)) *)
-           (LargeFile.in_channel_length in_file)
-           block_size in
+         Misc_utils.get_option_ref_init_if_none
+           (fun () ->
+              (* round down to the closest multiple of block size *)
+              Int64.div
+                  (LargeFile.in_channel_length in_file)
+                  block_size
+           )
+           total_blocks in
        print_decode_progress ~stats ~total_blocks
     )
   ;;
@@ -278,9 +284,10 @@ end = struct
   ;;
 
   let report_hash : hash_stats -> in_channel -> unit =
+    let total_bytes : int64 option ref = ref None in
     (fun stats in_file ->
        let total_bytes =
-         LargeFile.in_channel_length in_file in
+         Misc_utils.get_option_ref_init_if_none (fun () -> LargeFile.in_channel_length in_file) total_bytes in
        print_hash_progress ~stats ~total_bytes
     )
   ;;

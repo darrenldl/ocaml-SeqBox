@@ -92,3 +92,12 @@ let path_to_list (path:string) : string list =
 let path_to_file (path:string) : string =
   List.hd (List.rev (path_to_list path))
 ;;
+
+let get_option_ref_init_if_none (eval:(unit -> 'a)) (opt_ref:'a option ref) : 'a =
+  match !opt_ref with
+  | Some x -> x
+  | None   ->
+    let x = eval () in
+    opt_ref := Some x;
+    x
+;;

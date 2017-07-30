@@ -167,12 +167,7 @@ module Logger = struct
     (fun ~(stats:stats) ~(log_filename:string) ~(in_file:in_channel) : bool ->
        call_count                       := !call_count + 1;
        let total_bytes =
-         match !total_bytes with
-         | Some n -> n
-         | None   ->
-           let n = LargeFile.in_channel_length in_file in
-           total_bytes := Some n;
-           n in
+         Misc_utils.get_option_ref_init_if_none (fun () -> LargeFile.in_channel_length in_file) total_bytes in
        if !call_count > !call_per_interval || stats.bytes_processed = total_bytes (* always write when 100% done *) then
          begin
            let cur_time              : float = Sys.time () in
