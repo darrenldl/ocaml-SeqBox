@@ -255,7 +255,8 @@ end = struct
          Int64.of_int stats.block_size in
        let total_blocks : int64 =
          Int64.div
-           (Int64.add (LargeFile.in_channel_length in_file) (Int64.sub block_size 1L))
+           (* (Int64.add (LargeFile.in_channel_length in_file) (Int64.sub block_size 1L)) *)
+           (LargeFile.in_channel_length in_file)
            block_size in
        print_decode_progress ~stats ~total_blocks
     )

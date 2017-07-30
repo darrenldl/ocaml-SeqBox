@@ -79,7 +79,7 @@ let gen_print_generic ~(header:string) ~(unit:string) ~(print_interval:float) =
          let (etc_hour,  etc_minute,  etc_second)  = seconds_to_hms etc_total_secs    in
          let (used_hour, used_minute, used_second) = seconds_to_hms time_elapsed_secs in
          not_printed_yet     := false;
-         if percent = 100 && not !printed_at_100 then printed_at_100 := true;
+         if percent = 100 then printed_at_100 := true;
          last_report_time    := cur_time;
          last_reported_units := units_so_far;
          let message = Printf.sprintf "\r%s : %s  %s %s/s  used : %02d:%02d:%02d  etc : %02d:%02d:%02d"
