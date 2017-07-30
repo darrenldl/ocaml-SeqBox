@@ -23,7 +23,7 @@ let uint64_seconds_option_to_string (x:uint64 option) (mode:Conv_utils.date_time
   | None   -> "N/A"
 ;;
 
-let print_meta (block:Block.t) : unit =
+let print_meta ((block, pos):Block.t * int64) : unit =
   if Block.is_data block then
     assert false
   else
@@ -65,6 +65,9 @@ let print_meta (block:Block.t) : unit =
              )
       | None         -> None
       | _            -> assert false in
+    Printf.printf "Found at byte                : %Ld\n"
+      pos;
+    print_newline ();
     Printf.printf "File UID                     : %s\n"
       uid;
     Printf.printf "File name                    : %s\n"
@@ -87,20 +90,20 @@ let print_meta (block:Block.t) : unit =
       (string_option_to_string hsh)
 ;;
 
-let rec print_meta_blocks ?(cur:int = 0) (lst:Block.t list) : unit =
+let rec print_meta_blocks ?(cur:int64 = 0L) (lst:(Block.t * int64) list) : unit =
   match lst with
-  | []      -> ()
-  | b :: bs ->
+  | []              -> ()
+  | b_and_pos :: tl ->
     begin
-      Printf.printf "Metadata block number : %d\n" cur;
+      Printf.printf "Metadata block number : %Ld\n" cur;
       Printf.printf "========================================\n";
-      print_meta b;
+      print_meta b_and_pos;
       print_newline ();
-      print_meta_blocks ~cur:(cur + 1) bs
+      print_meta_blocks ~cur:(Int64.succ cur) tl
     end
 ;;
 
-let show (find_max:int64 option) (in_filename:string) : unit =
+let show (find_max:int64 option) (skip_to_byte:int64 option) (in_filename:string) : unit =
   Param.Show.set_meta_list_max_length_possibly find_max;
   try
     match find_max with
@@ -108,17 +111,17 @@ let show (find_max:int64 option) (in_filename:string) : unit =
       ()
     | None    ->
       begin
-        match Process.fetch_single_meta ~in_filename with
+        match Process.fetch_single_meta ~skip_to_byte ~in_filename with
         | Ok res    ->
           begin
             match res with
-            | Some block -> print_meta block
-            | None       -> Printf.printf "No metadata blocks found\n"
+            | Some x -> print_meta x
+            | None   -> Printf.printf "No metadata blocks found\n"
           end
         | Error str -> raise (Packaged_exn str)
       end
     | _       ->
-      match Process.fetch_multi_meta ~in_filename with
+      match Process.fetch_multi_meta ~skip_to_byte ~in_filename with
       | Ok res    ->
         begin
           match res with
@@ -136,10 +139,16 @@ let show (find_max:int64 option) (in_filename:string) : unit =
 ;;
 
 let find_max =
-  let doc = Printf.sprintf "Find first up to $(docv)(defaults to 1) metadata blocks.
+  let doc = "Find first up to $(docv)(defaults to 1) metadata blocks.
   If the default is used(this option not specified), total block number and block number indicators are not shown.
   If a number is provided, then all the indicators are shown, regardless of the value of $(docv)" in
   Arg.(value & opt (some int64) None & info ["find-max"] ~docv:"FIND-MAX" ~doc)
+;;
+
+let skip_to_byte =
+  let doc = Printf.sprintf "Skip to byte $(docv), the position is automatically rounded down to closest multiple of %d bytes"
+      Param.Rescue.scan_alignment in
+  Arg.(value & opt (some int64) None & info ["skip-to"] ~docv:"BYTE" ~doc)
 ;;
 
 let in_file =
