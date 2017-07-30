@@ -254,6 +254,7 @@ end = struct
        let block_size   : int64 =
          Int64.of_int stats.block_size in
        let total_blocks : int64 =
+         (* round down to the closest multiple of block size *)
          Int64.div
            (* (Int64.add (LargeFile.in_channel_length in_file) (Int64.sub block_size 1L)) *)
            (LargeFile.in_channel_length in_file)
@@ -369,6 +370,7 @@ module Processor = struct
               if read_len = Int64.of_int ref_block_size then
                 (Stats.add_failed_block stats, None)
               else
+                (* reading in a chunk smaller than a block is not considered to be a failure *)
                 (stats,                        None) in
           find_valid_data_block_proc_internal new_stats new_result in
     find_valid_data_block_proc_internal stats None
