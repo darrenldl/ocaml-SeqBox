@@ -347,7 +347,8 @@ module Processor = struct
       match result_so_far with
       | Some _ as x -> (stats, x)
       | None        ->
-        let (read_len, block) = Processor_components.try_get_fixed_ver_block_from_in_channel ~ver:ref_ver in_file in
+        let raw_header_pred   = (fun h -> h.Header.file_uid = ref_file_uid && h.version = ref_ver) in
+        let (read_len, block) = Processor_components.try_get_block_from_in_channel ~raw_header_pred in_file in
         if read_len = 0L then
           (stats, result_so_far)
         else
