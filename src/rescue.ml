@@ -166,16 +166,18 @@ module Logger = struct
     let call_per_interval : int          ref = ref 0 in
     let total_bytes       : int64 option ref = ref None in
     (fun ~(stats:stats) ~(log_filename:string) ~(in_file:in_channel) : bool ->
-       call_count := !call_count + 1;
+       call_count := succ !call_count;
        let total_bytes =
          Misc_utils.get_option_ref_init_if_none (fun () -> LargeFile.in_channel_length in_file) total_bytes in
        if !call_count > !call_per_interval || stats.bytes_processed = total_bytes (* always write when 100% done *) then
          begin
            let cur_time              : float = Sys.time () in
            let time_since_last_write : float = cur_time -. !last_write_time in
-           call_per_interval                := int_of_float ((float_of_int !call_count) /. (time_since_last_write /. write_interval));
-           call_count                       := 0;
-           last_write_time                  := cur_time;
+           begin
+             call_per_interval := int_of_float ((float_of_int !call_count) /. (time_since_last_write /. write_interval));
+             call_count        := 0;
+             last_write_time   := cur_time
+           end;
            match write_helper ~stats ~log_filename with
            | Error msg -> Printf.printf "%s\n" msg; false
            | Ok _      -> true

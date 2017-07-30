@@ -62,31 +62,33 @@ let gen_print_generic ~(header:string) ~(unit:string) ~(print_interval:float) =
   let call_count          : int   ref = ref 0     in
   let call_per_interval   : int   ref = ref 0     in
   (fun ~(start_time:float) ~(units_so_far:int64) ~(total_units:int64) : unit ->
-     call_count                        := !call_count + 1;
+     call_count                        := succ !call_count;
      let percent                : int   = calc_percent ~units_so_far ~total_units in
-     let cur_time               : float = Sys.time () in
-     let time_since_last_report : float = cur_time -. !last_report_time in
      (* always print if not printed yet or reached 100% *)
      if (percent <> 100 && (!call_count > !call_per_interval || !not_printed_yet))
      || (percent =  100 && not !printed_at_100)
      then
        begin
-         let progress_bar           : string    = make_progress_bar ~percent in
-         let cur_rate : float =
+         let cur_time               : float        = Sys.time () in
+         let time_since_last_report : float        = cur_time -. !last_report_time in
+         let progress_bar           : string       = make_progress_bar ~percent in
+         let cur_rate               : float        =
            (Int64.to_float (Int64.sub units_so_far !last_reported_units)) /. time_since_last_report in
-         let cur_rate_str           : string    = make_readable_rate ~rate:cur_rate in
-         let time_elapsed_secs      : int       = int_of_float (cur_time -. start_time) in
-         (* let avg_rate               : float     = (Int64.to_float units_so_far) /. time_elapsed in *)
-         let units_remaining        : int64     = Int64.sub total_units units_so_far in
-         let etc_total_secs         : int       = int_of_float ((Int64.to_float units_remaining) /. cur_rate +. 1.) in
+         let cur_rate_str           : string       = make_readable_rate ~rate:cur_rate in
+         let time_elapsed_secs      : int          = int_of_float (cur_time -. start_time) in
+         let units_remaining        : int64        = Int64.sub total_units units_so_far in
+         let etc_total_secs         : int          = int_of_float ((Int64.to_float units_remaining) /. cur_rate +. 1.) in
          let (etc_hour,  etc_minute,  etc_second)  = seconds_to_hms etc_total_secs    in
          let (used_hour, used_minute, used_second) = seconds_to_hms time_elapsed_secs in
-         not_printed_yet     := false;
-         call_per_interval   := int_of_float ((float_of_int !call_count) /. (time_since_last_report /. print_interval));
-         call_count          := 0;
-         last_report_time    := cur_time;
-         last_reported_units := units_so_far;
-         if percent = 100 then printed_at_100 := true;
+         begin
+           not_printed_yet     := false;
+           call_per_interval   := int_of_float ((float_of_int !call_count) /. (time_since_last_report /. print_interval));
+           call_count          := 0;
+           last_report_time    := cur_time;
+           last_reported_units := units_so_far;
+           if percent = 100 then
+             printed_at_100 := true
+         end;
          let message = Printf.sprintf "\r%s : %s  %s %s/s  used : %02d:%02d:%02d  etc : %02d:%02d:%02d"
            header
            progress_bar
