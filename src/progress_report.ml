@@ -33,10 +33,10 @@ let make_readable_rate ~(rate:float) : string =
     else if rate >              1_000. then
       let adjusted_rate =
         rate     /.             1_000. in
-      let rate_str    = Printf.sprintf "%4.0f"   adjusted_rate in
+      let rate_str    = Printf.sprintf "%6.0f"   adjusted_rate in
       (rate_str, "K")
     else
-      let rate_str    = Printf.sprintf "%5.0f"   rate          in
+      let rate_str    = Printf.sprintf "%7.0f"   rate          in
       (rate_str,  "") in
   Printf.sprintf "%s%s" rate unit
 ;;
@@ -61,9 +61,16 @@ let gen_print_generic ~(header:string) ~(unit:string) ~(print_interval:float) =
   let printed_at_100      : bool  ref = ref false in
   let call_count          : int   ref = ref 0     in
   let call_per_interval   : int   ref = ref 0     in
+  let call_on_start  () : unit =
+    Printf.printf "%s\n" header in
+  let call_on_finish () : unit =
+    print_newline () in
   (fun ~(start_time:float) ~(units_so_far:int64) ~(total_units:int64) : unit ->
      call_count                        := succ !call_count;
      let percent                : int   = calc_percent ~units_so_far ~total_units in
+     (* print header once *)
+     if !not_printed_yet then
+       call_on_start ();
      (* always print if not printed yet or reached 100% *)
      if (percent <> 100 && (!call_count > !call_per_interval || !not_printed_yet))
      || (percent =  100 && not !printed_at_100)
@@ -89,8 +96,7 @@ let gen_print_generic ~(header:string) ~(unit:string) ~(print_interval:float) =
            if percent = 100 then
              printed_at_100 := true
          end;
-         let message = Printf.sprintf "\r%s : %s  %s %s/s  used : %02d:%02d:%02d  etc : %02d:%02d:%02d"
-           header
+         let message = Printf.sprintf "\r==> %s  %s %s/s  used : %02d:%02d:%02d  etc : %02d:%02d:%02d"
            progress_bar
            cur_rate_str
            unit
@@ -113,7 +119,7 @@ let gen_print_generic ~(header:string) ~(unit:string) ~(print_interval:float) =
          Printf.printf "%s%s " message padding;
          flush stdout;
          if percent = 100 then
-           print_newline ()
+           call_on_finish ()
        end
   )
 ;;
