@@ -44,7 +44,7 @@ let make_readable_rate ~(rate:float) : string =
 let make_progress_bar ~(percent:int) : string =
   let fill_char   = '#' in
   let empty_char  = '-' in
-  let total_len   = 20 in
+  let total_len   = 25 in
   let filled_len  = total_len * percent / 100 in
   let empty_len   = total_len - filled_len in
   let filled_part = String.make filled_len fill_char  in
@@ -96,7 +96,7 @@ let gen_print_generic ~(header:string) ~(unit:string) ~(print_interval:float) =
            if percent = 100 then
              printed_at_100 := true
          end;
-         let message = Printf.sprintf "\r==> %s  %s %s/s  used : %02d:%02d:%02d  etc : %02d:%02d:%02d"
+         let message = Printf.sprintf "\r%s  %s %s/s  used : %02d:%02d:%02d  etc : %02d:%02d:%02d"
            progress_bar
            cur_rate_str
            unit
