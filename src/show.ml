@@ -96,7 +96,10 @@ module Processor = struct
       if stats.meta_blocks_found >= get_at_most then
         (stats, acc)
       else
-        let (read_len, block) = Processor_components.try_get_block_from_in_channel in_file in
+        let raw_header_pred =
+          let uint32_0 = Stdint.Uint32.of_int 0 in
+          (fun x -> x.Header.seq_num = uint32_0) in
+        let (read_len, block) = Processor_components.try_get_block_from_in_channel ~raw_header_pred in_file in
         if read_len = 0L then
           (stats, acc)
         else
