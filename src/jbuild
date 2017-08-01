@@ -6,7 +6,6 @@
                    nocrypto
                    nocrypto.unix
                    angstrom
-                   #| core_kernel |#
                    hex
                    cmdliner
                    digestif
