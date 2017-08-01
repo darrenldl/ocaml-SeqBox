@@ -142,14 +142,14 @@ module Stats = struct
   ;;
 
   let print_stats (stats:t) : unit =
-    Printf.printf "Block size used in decoding                    : %d\n"  stats.block_size;
-    Printf.printf "Number of          blocks processed            : %Ld\n" stats.blocks_processed;
-    Printf.printf "Number of metadata blocks successfully decoded : %Ld\n" stats.meta_blocks_decoded;
-    Printf.printf "Number of data     blocks successfully decoded : %Ld\n" stats.data_blocks_decoded;
-    Printf.printf "Number of          blocks failed to decode     : %Ld\n" stats.blocks_failed;
+    Printf.printf "Block size used in decoding                      : %d\n"  stats.block_size;
+    Printf.printf "Number of blocks processed                       : %Ld\n" stats.blocks_processed;
+    Printf.printf "Number of blocks successfully decoded (metadata) : %Ld\n" stats.meta_blocks_decoded;
+    Printf.printf "Number of blocks successfully decoded (data)     : %Ld\n" stats.data_blocks_decoded;
+    Printf.printf "Number of blocks failed to decode                : %Ld\n" stats.blocks_failed;
     let (hour, minute, second) = Progress_report.seconds_to_hms (int_of_float (Sys.time() -. stats.start_time)) in
-    Printf.printf "Time elapsed                                   : %02d:%02d:%02d\n" hour minute second;
-    Printf.printf "Recorded hash                                  : %s\n"
+    Printf.printf "Time elapsed                                     : %02d:%02d:%02d\n" hour minute second;
+    Printf.printf "Recorded hash                                    : %s\n"
       (match stats.recorded_hash with
        | Some hsh ->
          Printf.sprintf "%s - %s"
@@ -158,7 +158,7 @@ module Stats = struct
        | None     ->
          "N/A"
       );
-    Printf.printf "Hash of the output file                        : %s\n"
+    Printf.printf "Hash of the output file                          : %s\n"
       (match (stats.output_file_hash, stats.recorded_hash) with
        | (Some hsh, _     )     ->
          Printf.sprintf "%s - %s"

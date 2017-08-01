@@ -65,28 +65,26 @@ let print_meta ((block, pos):Block.t * int64) : unit =
              )
       | None         -> None
       | _            -> assert false in
-    Printf.printf "Found at byte                : %Ld\n"
+    Printf.printf "Found at byte          : %Ld\n"
       pos;
     print_newline ();
-    Printf.printf "File UID                     : %s\n"
+    Printf.printf "File UID               : %s\n"
       uid;
-    Printf.printf "File name                    : %s\n"
+    Printf.printf "File name              : %s\n"
       (string_option_to_string fnm);
-    Printf.printf "Sbx container name           : %s\n"
+    Printf.printf "Sbx container name     : %s\n"
       (string_option_to_string snm);
-    Printf.printf "Sbx container version        : %s\n"
+    Printf.printf "Sbx container version  : %s\n"
       ver;
-    Printf.printf "File size                    : %s\n"
+    Printf.printf "File size              : %s\n"
       (uint64_option_to_string fsz);
-    Printf.printf "File modification time UTC   : %s\n"
-      (uint64_seconds_option_to_string fdt `UTC);
-    Printf.printf "Sbx encoding time      UTC   : %s\n"
-      (uint64_seconds_option_to_string sdt `UTC);
-    Printf.printf "File modification time local : %s\n"
+    Printf.printf "File modification time : %s (UTC)  %s (Local)\n"
+      (uint64_seconds_option_to_string fdt `UTC)
       (uint64_seconds_option_to_string fdt `Local);
-    Printf.printf "Sbx encoding time      local : %s\n"
+    Printf.printf "Sbx encoding time      : %s (UTC)  %s (Local)\n"
+      (uint64_seconds_option_to_string sdt `UTC)
       (uint64_seconds_option_to_string sdt `Local);
-    Printf.printf "Hash                         : %s\n"
+    Printf.printf "Hash                   : %s\n"
       (string_option_to_string hsh)
 ;;
 

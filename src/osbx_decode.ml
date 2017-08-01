@@ -39,7 +39,7 @@ let decode (force_out:bool) (show_max:int64 option) (in_filename:string) (provid
       raise (Packaged_exn (Printf.sprintf "File %s already exists" final_out_path))
     else
       begin
-        Printf.printf "Output file name                               : %s\n" final_out_path;
+        Printf.printf "Output file name                                 : %s\n" final_out_path;
         match Process.decode_file ~ref_block ~in_filename ~out_filename:(Some final_out_path) with
         | Ok stats  -> Stats.print_stats stats
         | Error msg -> raise (Packaged_exn msg)
