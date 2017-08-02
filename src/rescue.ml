@@ -93,9 +93,9 @@ module Progress = struct
   let { print_progress = report_encode; _ } : (unit, stats, in_channel) Progress_report.progress_print_functions =
     Progress_report.gen_print_generic
       ~header:"Data rescue progress"
-      ~display_while_active:[`Progress_bar; `Percentage; `Time_used; `Time_left]
-      ~display_on_finish:[`Time_used; `Average_rate]
-      ~display_on_finish_early:[]
+      ~display_while_active:Param.Rescue.Rescue_progress.display_while_active
+      ~display_on_finish:Param.Rescue.Rescue_progress.display_on_finish
+      ~display_on_finish_early:Param.Rescue.Rescue_progress.display_on_finish_early
       ~unit:"bytes"
       ~print_interval:Param.Rescue.progress_report_interval
       ~eval_start_time:Sys.time
