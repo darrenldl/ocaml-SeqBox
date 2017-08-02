@@ -89,41 +89,20 @@ end
 
 type stats = Stats.t
 
-(* module Progress : sig
-  val report_rescue : stats -> in_channel -> unit
-
-end = struct
-
-  let print_rescue_progress_helper =
-    let header         = "Data rescue progress" in
-    let unit           = "bytes" in
-    let print_interval = Param.Rescue.progress_report_interval in
-    Progress_report.gen_print_generic ~header ~unit ~print_interval
+module Progress = struct
+  let { print_progress = report_encode; _ } : (unit, stats, in_channel) Progress_report.progress_print_functions =
+    Progress_report.gen_print_generic
+      ~header:"Data rescue progress"
+      ~display_while_active:[`Progress_bar; `Percentage; `Time_used; `Time_left]
+      ~display_on_finish:[`Time_used; `Average_rate]
+      ~display_on_finish_early:[]
+      ~unit:"bytes"
+      ~print_interval:Param.Rescue.progress_report_interval
+      ~eval_start_time:Sys.time
+      ~eval_units_so_far:(fun stats -> stats.Stats.bytes_processed)
+      ~eval_total_units:(fun in_file -> LargeFile.in_channel_length in_file)
   ;;
-
-  let print_rescue_progress ~(stats:stats) ~(total_bytes:int64) =
-    print_rescue_progress_helper
-      ~start_time:stats.start_time
-      ~units_so_far:stats.bytes_processed
-      ~total_units:total_bytes
-  ;;
-
-  let report_rescue : stats -> in_channel -> unit =
-    let first_time = ref true in
-    let total_bytes : int64 option ref = ref None in
-    (fun stats in_file ->
-       let total_bytes =
-         Misc_utils.get_option_ref_init_if_none (fun () -> LargeFile.in_channel_length in_file) total_bytes in
-       if !first_time then
-         begin
-           (* print a notice *)
-           Printf.printf "Press Ctrl-C to interrupt\n";
-           first_time := false
-         end;
-       print_rescue_progress ~stats ~total_bytes
-    )
-  ;;
-end *)
+end
 
 module Logger = struct
   let make_write_proc ~(stats:stats) : unit Stream.out_processor =
@@ -239,20 +218,9 @@ module Processor = struct
   (* scan for valid block *)
   let scan_proc ~(stats:stats) ~(log_filename:string option) (in_file:in_channel) : stats * ((Block.t * bytes) option) =
     let open Read_chunk in
-    let { print_progress; _ } : stats Progress_report.progress_print_functions =
-      Progress_report.gen_print_generic
-        ~header:"Data rescue progress"
-        ~display_while_active:[`Progress_bar; `Percentage; `Time_used; `Time_left]
-        ~display_on_finish:[`Time_used; `Average_rate]
-        ~display_on_finish_early:[]
-        ~unit:"bytes"
-        ~print_interval:Param.Rescue.progress_report_interval
-        ~eval_start_time:Sys.time
-        ~eval_units_so_far:(fun stats -> stats.Stats.bytes_processed)
-        ~eval_total_units:(fun () -> LargeFile.in_channel_length in_file) in
     let rec scan_proc_internal (stats:stats) (result_so_far:(Block.t * bytes) option) : stats * ((Block.t * bytes) option) =
       (* report progress *)
-      print_progress stats;
+      Progress.report_encode ~start_time_src:() ~units_so_far_src:stats ~total_units_src:in_file;
       match result_so_far with
       | Some _ as x -> (stats, x)
       | None        ->

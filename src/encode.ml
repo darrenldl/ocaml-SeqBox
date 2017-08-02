@@ -67,63 +67,29 @@ end
 
 type stats = Stats.t
 
-(*module Progress : sig
-
-end = struct
-
-  let print_encode_progress_helper =
-    let header         = "Data encoding progress" in
-    let unit           = "chunks" in
-    let print_interval = Param.Encode.progress_report_interval in
-    Progress_report.gen_print_generic ~header ~unit ~print_interval
+module Progress = struct
+  let { print_progress = report_encode; _ } : (unit, stats, in_channel) Progress_report.progress_print_functions =
+    Progress_report.gen_print_generic
+      ~header:"Data encoding progress"
+      ~display_while_active:[`Progress_bar; `Percentage; `Current_rate; `Time_left]
+      ~display_on_finish:[`Average_rate; `Time_used]
+      ~display_on_finish_early:[]
+      ~unit:"chunks"
+      ~print_interval:Param.Encode.progress_report_interval
+      ~eval_start_time:Sys.time
+      ~eval_units_so_far:(fun stats -> stats.Stats.blocks_written)
+      ~eval_total_units:(fun in_file -> LargeFile.in_channel_length in_file)
   ;;
-
-  let print_encode_progress ~(stats:stats) ~(total_chunks:int64) =
-    print_encode_progress_helper
-      ~eval_start_time:stats.start_time
-      ~units_so_far:stats.blocks_written
-      ~total_units:total_chunks
-  ;;
-
-  let report_encode : stats -> in_channel -> unit  =
-    let first_time    = ref true in
-    (fun stats in_file ->
-       let data_size    : int64 =
-         Int64.of_int stats.data_size in
-       let total_chunks : int64 =
-         Int64.div
-           (Int64.add (LargeFile.in_channel_length in_file) (Int64.sub data_size 1L))
-           data_size (* use of data_size is correct here *) in
-       if !first_time then
-         begin
-           (* print a notice *)
-           Printf.printf "Only data blocks are reported in the progress reporting below\n";
-           first_time := false
-         end;
-       print_encode_progress ~stats ~total_chunks;
-    )
-  ;;
-end *)
+end
 
 module Processor = struct
   (* Converts data to data blocks *)
   let data_to_block_proc (in_file:in_channel) (out_file:out_channel) ~(data_len:int) ~(stats:stats) ~(common:Header.common_fields) : stats =
     let open Read_chunk in
     let open Write_chunk in
-    let { print_progress; _ } : stats Progress_report.progress_print_functions =
-      Progress_report.gen_print_generic
-        ~header:"Data encoding progress"
-        ~display_while_active:[`Progress_bar; `Percentage; `Current_rate; `Time_left]
-        ~display_on_finish:[`Average_rate; `Time_used]
-        ~display_on_finish_early:[]
-        ~unit:"chunks"
-        ~print_interval:Param.Encode.progress_report_interval
-        ~eval_start_time:Sys.time
-        ~eval_units_so_far:(fun stats -> stats.Stats.blocks_written)
-        ~eval_total_units:(fun () -> LargeFile.in_channel_length in_file) in
     let rec data_to_block_proc_internal (stats:stats) : stats =
       (* report progress *)
-      print_progress stats;
+      Progress.report_encode ~start_time_src:() ~units_so_far_src:stats ~total_units_src:in_file;
       match read in_file ~len:data_len with
       | None           -> stats
       | Some { chunk } ->
@@ -142,7 +108,7 @@ module Processor = struct
       let open Read_chunk in
       let open Write_chunk in
       (* report progress *)
-      Progress.report_encode stats in_file;
+      Progress.report_encode ~start_time_src:() ~units_so_far_src:stats ~total_units_src:in_file;
       match read in_file ~len:data_len with
       | None           -> (stats, Hash.get_hash_bytes hash_state)
       | Some { chunk } ->

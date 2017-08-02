@@ -39,40 +39,21 @@ end
 
 type stats = Stats.t
 
-module Progress : sig
-  val report_scan                 : stats -> in_channel -> unit
-
-  val print_newline_possibly_scan : stats -> in_channel -> unit
-
-end = struct
-
-  let print_scan_progress_helper =
-    let header         = "Scan progress" in
-    let unit           = "bytes" in
-    let print_interval = Param.Show.progress_report_interval in
-    Progress_report.gen_print_generic ~header ~unit ~print_interval
-  ;;
-
-  let print_scan_progress ~(stats:stats) ~(total_bytes:int64) =
-    print_scan_progress_helper
-      ~start_time:stats.start_time
-      ~units_so_far:stats.bytes_processed
-      ~total_units:total_bytes
-  ;;
-
-  let report_scan : stats -> in_channel -> unit =
-    let total_bytes : int64 option ref = ref None in
-    (fun stats in_file ->
-       let total_bytes =
-         Misc_utils.get_option_ref_init_if_none (fun () -> LargeFile.in_channel_length in_file) total_bytes in
-       print_scan_progress ~stats ~total_bytes
-    )
-  ;;
-
-  let print_newline_possibly_scan (stats:stats) (in_file:in_channel) : unit =
-    Progress_report.print_newline_if_not_done
-      ~units_so_far:stats.bytes_processed
-      ~total_units:(LargeFile.in_channel_length in_file)
+module Progress = struct
+  let { print_progress            = report_scan
+      ; print_newline_if_not_done = report_scan_print_newline_if_not_done
+      }
+    : (unit, stats, in_channel) Progress_report.progress_print_functions =
+    Progress_report.gen_print_generic
+      ~header:"Scan progress"
+      ~display_while_active:Param.Show.Show_progress.display_while_active
+      ~display_on_finish:Param.Show.Show_progress.display_on_finish
+      ~display_on_finish_early:Param.Show.Show_progress.display_on_finish_early
+      ~unit:"bytes"
+      ~print_interval:Param.Show.progress_report_interval
+      ~eval_start_time:Sys.time
+      ~eval_units_so_far:(fun (stats:stats) -> stats.bytes_processed)
+      ~eval_total_units:(fun in_file -> LargeFile.in_channel_length in_file)
   ;;
 end
 
@@ -92,7 +73,7 @@ module Processor = struct
         actual_offset in
     let rec find_meta_blocks_proc_internal (stats:stats) (acc:(Block.t * int64) list) : stats * ((Block.t * int64) list) =
       (* report progress *)
-      Progress.report_scan stats in_file;
+      Progress.report_scan ~start_time_src:() ~units_so_far_src:stats ~total_units_src:in_file;
       if stats.meta_blocks_found >= get_at_most then
         (stats, acc)
       else
@@ -115,7 +96,7 @@ module Processor = struct
           find_meta_blocks_proc_internal new_stats new_acc in
     let start_stats  = Stats.add_bytes_scanned (Stats.make_blank_scan_stats ()) ~num:offset in
     let (stats, res) = find_meta_blocks_proc_internal start_stats [] in
-    Progress.print_newline_possibly_scan stats in_file;
+    Progress.report_scan_print_newline_if_not_done ~start_time_src:() ~units_so_far_src:stats ~total_units_src:in_file;
     res
   ;;
 
