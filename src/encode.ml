@@ -59,7 +59,7 @@ module Stats = struct
     Printf.printf "Number of metadata blocks written : %Ld\n" stats.meta_blocks_written;
     Printf.printf "Number of data     blocks written : %Ld\n" stats.data_blocks_written;
     Printf.printf "Amount of data encoded (in bytes) : %Ld\n" stats.total_data_encoded;
-    let (hour, minute, second) = Progress_report.seconds_to_hms (int_of_float (Sys.time() -. stats.start_time)) in
+    let (hour, minute, second) = Progress_report.Helper.seconds_to_hms (int_of_float (Sys.time() -. stats.start_time)) in
     Printf.printf "Time elapsed                      : %02d:%02d:%02d\n" hour minute second
   ;;
 
@@ -67,8 +67,7 @@ end
 
 type stats = Stats.t
 
-module Progress : sig
-  val report_encode : stats -> in_channel -> unit
+(*module Progress : sig
 
 end = struct
 
@@ -81,7 +80,7 @@ end = struct
 
   let print_encode_progress ~(stats:stats) ~(total_chunks:int64) =
     print_encode_progress_helper
-      ~start_time:stats.start_time
+      ~eval_start_time:stats.start_time
       ~units_so_far:stats.blocks_written
       ~total_units:total_chunks
   ;;
@@ -104,25 +103,38 @@ end = struct
        print_encode_progress ~stats ~total_chunks;
     )
   ;;
-end
+end *)
 
 module Processor = struct
   (* Converts data to data blocks *)
-  let rec data_to_block_proc (in_file:in_channel) (out_file:out_channel) ~(data_len:int) ~(stats:stats) ~(common:Header.common_fields) : stats =
+  let data_to_block_proc (in_file:in_channel) (out_file:out_channel) ~(data_len:int) ~(stats:stats) ~(common:Header.common_fields) : stats =
     let open Read_chunk in
     let open Write_chunk in
-    (* report progress *)
-    Progress.report_encode stats in_file;
-    match read in_file ~len:data_len with
-    | None           -> stats
-    | Some { chunk } ->
-      let chunk_len   = Bytes.length chunk in
-      let seq_num     = Uint32.of_int64 (stats.data_blocks_written <+> 1L) in (* always off by +1 *)
-      let block       = Block.make_data_block ~seq_num common ~data:chunk in
-      let block_bytes = Block.to_bytes block in
-      (* write to file *)
-      write out_file ~chunk:block_bytes;
-      data_to_block_proc in_file out_file ~data_len ~stats:(Stats.add_written_data_block stats ~data_len:chunk_len) ~common
+    let { print_progress; _ } : stats Progress_report.progress_print_functions =
+      Progress_report.gen_print_generic
+        ~header:"Data encoding progress"
+        ~display_while_active:[`Progress_bar; `Percentage; `Current_rate; `Time_left]
+        ~display_on_finish:[`Average_rate; `Time_used]
+        ~display_on_finish_early:[]
+        ~unit:"chunks"
+        ~print_interval:Param.Encode.progress_report_interval
+        ~eval_start_time:Sys.time
+        ~eval_units_so_far:(fun stats -> stats.Stats.blocks_written)
+        ~eval_total_units:(fun () -> LargeFile.in_channel_length in_file) in
+    let rec data_to_block_proc_internal (stats:stats) : stats =
+      (* report progress *)
+      print_progress stats;
+      match read in_file ~len:data_len with
+      | None           -> stats
+      | Some { chunk } ->
+        let chunk_len   = Bytes.length chunk in
+        let seq_num     = Uint32.of_int64 (stats.data_blocks_written <+> 1L) in (* always off by +1 *)
+        let block       = Block.make_data_block ~seq_num common ~data:chunk in
+        let block_bytes = Block.to_bytes block in
+        (* write to file *)
+        write out_file ~chunk:block_bytes;
+        data_to_block_proc_internal (Stats.add_written_data_block stats ~data_len:chunk_len) in
+    data_to_block_proc_internal stats
   ;;
 
   let data_to_block_proc_w_hash (hash_type:hash_type) (in_file:in_channel) (out_file:out_channel) ~(data_len:int) ~(stats: stats) ~(common:Header.common_fields) : stats * hash_bytes =

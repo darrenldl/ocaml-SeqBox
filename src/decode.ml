@@ -306,9 +306,20 @@ module Processor = struct
 
   let find_first_both_proc ~(prefer:Block.block_type) (in_file:in_channel) : find_both_result =
     let open Read_chunk in
+    let report_progress =
+      Progress_report.gen_print_generic
+        ~header:"Scan progress"
+        ~display_while_active:   [`Progress_bar; `Percentage  ; `Current_rate; `Average_rate; `Time_used; `Time_left]
+        ~display_on_finish:      [`Average_rate; `Time_used]
+        ~display_on_finish_early:[`Percentage  ; `Average_rate; `Time_used]
+        ~unit:"bytes"
+        ~print_internval:Param.Decode.progress_report_interval
+        ~eval_start_time:Sys.time
+        ~eval_units_so_far:(fun stats -> stats.bytes_processed)
+        ~eval_total_units:(fun () -> LargeFile.in_channel_length in_file) in
     let rec find_first_both_proc_internal (result_so_far:find_both_result) (stats:scan_stats) : scan_stats * find_both_result =
       (* report progress *)
-      Progress.report_scan stats in_file;
+      report_progress stats;
       match result_so_far with
       | { meta = Some _; data = Some _ }                     -> (stats, result_so_far)
       | { meta = Some _; data = _ }      when prefer = `Meta -> (stats, result_so_far)

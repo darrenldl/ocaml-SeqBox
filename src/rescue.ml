@@ -74,7 +74,7 @@ module Stats = struct
     Printf.printf "Number of          blocks processed : %Ld\n" stats.blocks_processed;
     Printf.printf "Number of metadata blocks processed : %Ld\n" stats.meta_blocks_processed;
     Printf.printf "Number of data     blocks processed : %Ld\n" stats.data_blocks_processed;
-    let (hour, minute, second) = Progress_report.seconds_to_hms (int_of_float (Sys.time() -. stats.start_time)) in
+    let (hour, minute, second) = Progress_report.Helper.seconds_to_hms (int_of_float (Sys.time() -. stats.start_time)) in
     Printf.printf "Time elapsed                        : %02d:%02d:%02d\n" hour minute second
   ;;
 
@@ -89,7 +89,7 @@ end
 
 type stats = Stats.t
 
-module Progress : sig
+(* module Progress : sig
   val report_rescue : stats -> in_channel -> unit
 
 end = struct
@@ -123,7 +123,7 @@ end = struct
        print_rescue_progress ~stats ~total_bytes
     )
   ;;
-end
+end *)
 
 module Logger = struct
   let make_write_proc ~(stats:stats) : unit Stream.out_processor =
@@ -239,9 +239,20 @@ module Processor = struct
   (* scan for valid block *)
   let scan_proc ~(stats:stats) ~(log_filename:string option) (in_file:in_channel) : stats * ((Block.t * bytes) option) =
     let open Read_chunk in
+    let { print_progress; _ } : stats Progress_report.progress_print_functions =
+      Progress_report.gen_print_generic
+        ~header:"Data rescue progress"
+        ~display_while_active:[`Progress_bar; `Percentage; `Time_used; `Time_left]
+        ~display_on_finish:[`Time_used; `Average_rate]
+        ~display_on_finish_early:[]
+        ~unit:"bytes"
+        ~print_interval:Param.Rescue.progress_report_interval
+        ~eval_start_time:Sys.time
+        ~eval_units_so_far:(fun stats -> stats.Stats.bytes_processed)
+        ~eval_total_units:(fun () -> LargeFile.in_channel_length in_file) in
     let rec scan_proc_internal (stats:stats) (result_so_far:(Block.t * bytes) option) : stats * ((Block.t * bytes) option) =
       (* report progress *)
-      Progress.report_rescue stats in_file;
+      print_progress stats;
       match result_so_far with
       | Some _ as x -> (stats, x)
       | None        ->
