@@ -69,7 +69,7 @@ module Helper = struct
       else
         let rate_str    = Printf.sprintf "%7.0f"   rate          in
         (rate_str,  "") in
-    Printf.sprintf "%s%s %s" rate multiplier unit
+    Printf.sprintf "%s%s %s/s" rate multiplier unit
   ;;
 
   let make_progress_bar ~(percent:int) : string =
