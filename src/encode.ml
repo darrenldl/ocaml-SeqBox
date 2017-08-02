@@ -78,10 +78,12 @@ module Progress = struct
       ~print_interval:Param.Encode.progress_report_interval
       ~eval_start_time:Sys.time
       ~eval_units_so_far:(fun stats -> stats.Stats.blocks_written)
-      ~eval_total_units:(fun (stats, in_file) ->
-          let data_size = Int64.of_int stats.Stats.data_size in
+      ~eval_total_units:
+        (fun (stats, in_file) ->
+          let data_size       = Int64.of_int stats.Stats.data_size in
+          let total_file_size = LargeFile.in_channel_length in_file in
           Int64.div
-            (Int64.add (LargeFile.in_channel_length in_file) (Int64.sub data_size 1L))
+            (Int64.add total_file_size (Int64.sub data_size 1L))
             data_size
         )
   ;;

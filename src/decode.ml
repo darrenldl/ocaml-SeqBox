@@ -238,7 +238,7 @@ module Progress = struct
   let { print_progress            = report_decode
       ; print_newline_if_not_done = report_decode_print_newline_if_not_done
       }
-    : (unit, stats, in_channel) Progress_report.progress_print_functions =
+    : (unit, stats, stats * in_channel) Progress_report.progress_print_functions =
     Progress_report.gen_print_generic
       ~header:"Decode progress"
       ~display_while_active:Param.Decode.Decode_progress.display_while_active
@@ -248,7 +248,14 @@ module Progress = struct
       ~print_interval:Param.Decode.progress_report_interval
       ~eval_start_time:Sys.time
       ~eval_units_so_far:(fun (stats:stats) -> stats.blocks_processed)
-      ~eval_total_units:(fun in_file -> LargeFile.in_channel_length in_file)
+      ~eval_total_units:
+        (fun (stats, in_file) ->
+           let block_size =
+             Int64.of_int stats.Stats.block_size
+           and total_file_size =
+             LargeFile.in_channel_length in_file in
+           Int64.div total_file_size block_size
+        )
   ;;
 end
 
@@ -306,7 +313,7 @@ module Processor = struct
     let ref_block_size = ver_to_block_size ref_ver in
     let rec find_valid_data_block_proc_internal (stats:stats) (result_so_far:Block.t option) : stats * Block.t option =
       (* report progress *)
-      Progress.report_decode ~start_time_src:() ~units_so_far_src:stats ~total_units_src:in_file;
+      Progress.report_decode ~start_time_src:() ~units_so_far_src:stats ~total_units_src:(stats, in_file);
       match result_so_far with
       | Some _ as x -> (stats, x)
       | None        ->
