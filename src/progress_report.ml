@@ -91,8 +91,8 @@ let make_message ~(info:info) ~(elements:progress_element list) : string =
     match element with
     | `Percentage   -> Printf.sprintf "%3d%%" percent
     | `Progress_bar -> Helper.make_progress_bar ~percent
-    | `Current_rate -> Helper.make_readable_rate ~rate:cur_rate ~unit
-    | `Average_rate -> Helper.make_readable_rate ~rate:avg_rate ~unit
+    | `Current_rate -> Printf.sprintf "cur : %s" (Helper.make_readable_rate ~rate:cur_rate ~unit)
+    | `Average_rate -> Printf.sprintf "avg : %s" (Helper.make_readable_rate ~rate:avg_rate ~unit)
     | `Time_used    ->
       let (hour, min, sec) = Helper.seconds_to_hms (int_of_float time_used) in
       Printf.sprintf "used : %02d:%02d:%02d" hour min sec
