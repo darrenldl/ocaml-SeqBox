@@ -21,3 +21,5 @@ val path_to_list : string -> string list
 val path_to_file : string -> string
 
 val get_option_ref_init_if_none : (unit -> 'a) -> 'a option ref -> 'a
+
+val pad_string : string -> int -> char -> string
