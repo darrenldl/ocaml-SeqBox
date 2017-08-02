@@ -11,13 +11,17 @@ type ('a, 'b, 'c) progress_print_functions =
       unit
   }
 
-type progress_element         = [ `Percentage
-                                | `Progress_bar
-                                | `Current_rate
-                                | `Average_rate
-                                | `Time_used
-                                | `Time_left
-                                ]
+type progress_element = [ `Percentage
+                        | `Progress_bar
+                        | `Current_rate_short
+                        | `Average_rate_short
+                        | `Time_used_short
+                        | `Time_left_short
+                        | `Current_rate_long
+                        | `Average_rate_long
+                        | `Time_used_long
+                        | `Time_left_long
+                        ]
 
 module Helper : sig
   val seconds_to_hms : int -> int * int * int

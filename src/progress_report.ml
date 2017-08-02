@@ -13,10 +13,14 @@ type ('a, 'b, 'c) progress_print_functions =
 
 type progress_element = [ `Percentage
                         | `Progress_bar
-                        | `Current_rate
-                        | `Average_rate
-                        | `Time_used
-                        | `Time_left
+                        | `Current_rate_short
+                        | `Average_rate_short
+                        | `Time_used_short
+                        | `Time_left_short
+                        | `Current_rate_long
+                        | `Average_rate_long
+                        | `Time_used_long
+                        | `Time_left_long
                         ]
 
 type info = { percent   : int
@@ -89,16 +93,24 @@ let make_message ~(info:info) ~(elements:progress_element list) : string =
   let { percent; cur_time; cur_rate; avg_rate; unit; time_used; time_left } = info in
   let make_string_for_element (element:progress_element) : string =
     match element with
-    | `Percentage   -> Printf.sprintf "%3d%%" percent
-    | `Progress_bar -> Helper.make_progress_bar ~percent
-    | `Current_rate -> Printf.sprintf "cur : %s" (Helper.make_readable_rate ~rate:cur_rate ~unit)
-    | `Average_rate -> Printf.sprintf "avg : %s" (Helper.make_readable_rate ~rate:avg_rate ~unit)
-    | `Time_used    ->
+    | `Percentage         -> Printf.sprintf "%3d%%" percent
+    | `Progress_bar       -> Helper.make_progress_bar ~percent
+    | `Current_rate_short -> Printf.sprintf "cur : %s" (Helper.make_readable_rate ~rate:cur_rate ~unit)
+    | `Current_rate_long  -> Printf.sprintf "Current rate : %s" (Helper.make_readable_rate ~rate:cur_rate ~unit)
+    | `Average_rate_short -> Printf.sprintf "avg : %s" (Helper.make_readable_rate ~rate:avg_rate ~unit)
+    | `Average_rate_long  -> Printf.sprintf "Average rate : %s" (Helper.make_readable_rate ~rate:avg_rate ~unit)
+    | `Time_used_short    ->
       let (hour, min, sec) = Helper.seconds_to_hms (int_of_float time_used) in
       Printf.sprintf "used : %02d:%02d:%02d" hour min sec
-    | `Time_left    ->
+    | `Time_used_long     ->
+      let (hour, min, sec) = Helper.seconds_to_hms (int_of_float time_used) in
+      Printf.sprintf "Time elapsed   : %02d:%02d:%02d" hour min sec
+    | `Time_left_short    ->
       let (hour, min, sec) = Helper.seconds_to_hms (int_of_float time_left) in
-      Printf.sprintf "left : %02d:%02d:%02d" hour min sec in
+      Printf.sprintf "left : %02d:%02d:%02d" hour min sec
+    | `Time_left_long     ->
+      let (hour, min, sec) = Helper.seconds_to_hms (int_of_float time_left) in
+      Printf.sprintf "Time remaining : %02d:%02d:%02d" hour min sec in
   let rec make_message_internal (elements:progress_element list) (acc:string list) : string =
     match elements with
     | []      -> String.concat "  " (List.rev acc)
