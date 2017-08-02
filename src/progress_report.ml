@@ -23,6 +23,7 @@ type info = { percent   : int
             ; cur_time  : float
             ; cur_rate  : float
             ; avg_rate  : float
+            ; unit      : string
             ; time_used : float
             ; time_left : float
             }
@@ -43,8 +44,8 @@ module Helper = struct
                     total_units) 
   ;;
 
-  let make_readable_rate ~(rate:float) : string =
-    let (rate, unit) : string * string =
+  let make_readable_rate ~(rate:float) ~(unit:string) : string =
+    let (rate, multiplier) : string * string =
       if      rate >  1_000_000_000_000. then
         let adjusted_rate =
           rate     /. 1_000_000_000_000. in
@@ -68,7 +69,7 @@ module Helper = struct
       else
         let rate_str    = Printf.sprintf "%7.0f"   rate          in
         (rate_str,  "") in
-    Printf.sprintf "%s%s" rate unit
+    Printf.sprintf "%s%s %s" rate multiplier unit
   ;;
 
   let make_progress_bar ~(percent:int) : string =
@@ -85,19 +86,19 @@ module Helper = struct
 end
 
 let make_message ~(info:info) ~(elements:progress_element list) : string =
-  let { percent; cur_time; cur_rate; avg_rate; time_used; time_left } = info in
+  let { percent; cur_time; cur_rate; avg_rate; unit; time_used; time_left } = info in
   let make_string_for_element (element:progress_element) : string =
     match element with
     | `Percentage   -> Printf.sprintf "%3d%%" percent
     | `Progress_bar -> Helper.make_progress_bar ~percent
-    | `Current_rate -> Helper.make_readable_rate ~rate:cur_rate
-    | `Average_rate -> Helper.make_readable_rate ~rate:avg_rate
+    | `Current_rate -> Helper.make_readable_rate ~rate:cur_rate ~unit
+    | `Average_rate -> Helper.make_readable_rate ~rate:avg_rate ~unit
     | `Time_used    ->
       let (hour, min, sec) = Helper.seconds_to_hms (int_of_float time_used) in
-      Printf.sprintf "%02d:%02d:%02d" hour min sec
+      Printf.sprintf "used : %02d:%02d:%02d" hour min sec
     | `Time_left    ->
       let (hour, min, sec) = Helper.seconds_to_hms (int_of_float time_left) in
-      Printf.sprintf "%02d:%02d:%02d" hour min sec in
+      Printf.sprintf "left : %02d:%02d:%02d" hour min sec in
   let rec make_message_internal (elements:progress_element list) (acc:string list) : string =
     match elements with
     | []      -> String.concat "  " (List.rev acc)
@@ -138,7 +139,7 @@ let gen_print_generic
          let percent      : int   = Helper.calc_percent ~units_so_far ~total_units in
 
          (* print header once *)
-         if !not_printed_yet then Printf.printf "%s" header;
+         if !not_printed_yet then Printf.printf "%s\n" header;
 
          (* always print if not printed yet or reached 100% *)
          if (percent <> 100 && (!call_count > !call_per_interval || !not_printed_yet))
@@ -150,13 +151,14 @@ let gen_print_generic
              let cur_time               : float = Sys.time () in
              let time_since_last_report : float = cur_time -. !last_report_time in
              let units_remaining        : int64 = Int64.sub total_units units_so_far in
-             let time_used              : float = cur_time -. !last_report_time in
+             let time_used              : float = cur_time -. start_time in
              let cur_rate               : float =
                (Int64.to_float (Int64.sub units_so_far !last_reported_units)) /. time_since_last_report in
              let info = { percent
                         ; cur_time
                         ; cur_rate
                         ; avg_rate  = (Int64.to_float units_so_far) /. time_used
+                        ; unit
                         ; time_used
                         ; time_left = (Int64.to_float units_remaining) /. cur_rate +. 1.
                         } in
@@ -179,7 +181,7 @@ let gen_print_generic
                    max_print_length := msg_len;
                    ""
                  end in
-             Printf.printf "%s%s " message padding;
+             Printf.printf "\r%s%s " message padding;
              flush stdout;
              if percent = 100 then
                print_endline (make_message ~info ~elements:display_on_finish)
