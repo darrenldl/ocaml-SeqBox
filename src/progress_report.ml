@@ -119,16 +119,32 @@ let make_message ~(info:info) ~(elements:progress_element list) : string =
 ;;
 
 let make_info
+    ~(percent:int)
+    ~(unit:string)
+    ~(cur_time:float)
     ~(start_time:float option ref)
     ~(start_time_init:unit -> float)
     ~(total_units:int64)
     ~(last_report_time:float)
+    ~(last_reported_units:int64)
     ~(units_so_far:int64)
   : info =
   let start_time             : float =
     Misc_utils.get_option_ref_init_if_none start_time_init start_time in
-  let cur_time               : float = Sys.time () in
+  let time_used              : float = cur_time -. start_time in
   let time_since_last_report : float = cur_time -. last_report_time in
+  let units_remaining        : int64 = Int64.sub total_units units_so_far in
+  let cur_rate               : float =
+    (Int64.to_float (Int64.sub units_so_far last_reported_units)) /. time_since_last_report in
+  { percent
+  ; cur_time
+  ; cur_rate
+  ; avg_rate  = (Int64.to_float units_so_far) /. time_used
+  ; unit
+  ; time_used
+  ; time_left = (Int64.to_float units_remaining) /. cur_rate +. 1.
+  }
+;;
 
 let gen_print_generic
     (type a b c)
@@ -170,22 +186,19 @@ let gen_print_generic
          || (percent =  100 && not !printed_at_100)
          then
            begin
-             let units_remaining        : int64 = Int64.sub total_units units_so_far in
-             let time_used              : float = cur_time -. start_time in
-             let cur_rate               : float =
-               (Int64.to_float (Int64.sub units_so_far !last_reported_units)) /. time_since_last_report in
+             let cur_time = Sys.time () in
              let info =
                make_info
+                 ~percent
+                 ~unit
+                 ~cur_time
                  ~start_time
                  ~start_time_init:(fun () -> eval_start_time start_time_src)
-             let info = { percent
-                        ; cur_time
-                        ; cur_rate
-                        ; avg_rate  = (Int64.to_float units_so_far) /. time_used
-                        ; unit
-                        ; time_used
-                        ; time_left = (Int64.to_float units_remaining) /. cur_rate +. 1.
-                        } in
+                 ~total_units
+                 ~last_report_time:!last_report_time
+                 ~last_reported_units:!last_reported_units
+                 ~units_so_far in
+             let time_since_last_report : float = cur_time -. !last_report_time in
 
              not_printed_yet     := false;
              call_per_interval   := int_of_float ((float_of_int !call_count) /. (time_since_last_report /. print_interval));
@@ -215,22 +228,17 @@ let gen_print_generic
            Misc_utils.get_option_ref_init_if_none (fun () -> eval_total_units total_units_src) total_units in
          let percent      : int   = Helper.calc_percent ~units_so_far ~total_units in
          if percent <> 100 then
-           let start_time             : float =
-             Misc_utils.get_option_ref_init_if_none (fun () -> eval_start_time start_time_src) start_time in
-           let cur_time               : float = Sys.time () in
-           let time_since_last_report : float = cur_time -. !last_report_time in
-           let units_remaining        : int64 = Int64.sub total_units units_so_far in
-           let time_used              : float = cur_time -. start_time in
-           let cur_rate               : float =
-             (Int64.to_float (Int64.sub units_so_far !last_reported_units)) /. time_since_last_report in
-           let info = { percent
-                      ; cur_time
-                      ; cur_rate
-                      ; avg_rate  = (Int64.to_float units_so_far) /. time_used
-                      ; unit
-                      ; time_used
-                      ; time_left = (Int64.to_float units_remaining) /. cur_rate +. 1.
-                      } in
+           let info =
+             make_info
+               ~percent
+               ~unit
+               ~cur_time:(Sys.time ())
+               ~start_time
+               ~start_time_init:(fun () -> eval_start_time start_time_src)
+               ~total_units
+               ~last_report_time:!last_report_time
+               ~last_reported_units:!last_reported_units
+               ~units_so_far in
            let message        = make_message ~info ~elements:display_on_finish_early in
            let padded_message = Misc_utils.pad_string message !max_print_length ' ' in
            Printf.printf "\r%s \n" padded_message
