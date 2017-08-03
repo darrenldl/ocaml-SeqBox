@@ -47,7 +47,7 @@ module Helper = struct
                     total_units) 
   ;;
 
-  let make_readable_rate ~(rate:float) ~(unit:string) : string =
+  (* let make_readable_rate ~(rate:float) ~(unit:string) : string =
     let (rate, multiplier) : string * string =
       if      rate >  1_000_000_000_000. then
         let adjusted_rate =
@@ -73,6 +73,29 @@ module Helper = struct
         let rate_str    = Printf.sprintf "%7.0f"   rate          in
         (rate_str,  "") in
     String.concat "" [rate; multiplier; " "; unit; "/s"]
+  ;; *)
+
+  let make_readable_rate ~(rate:float) ~(unit:string) : string =
+    let rate_string : string =
+      if      rate >  1_000_000_000_000. then
+        let adjusted_rate =
+          rate     /. 1_000_000_000_000. in
+        Printf.sprintf "%6.2f%c" adjusted_rate 'T'
+      else if rate >      1_000_000_000. then
+        let adjusted_rate =
+          rate     /.     1_000_000_000. in
+        Printf.sprintf "%6.2f%c" adjusted_rate 'G'
+      else if rate >          1_000_000. then
+        let adjusted_rate =
+          rate     /.         1_000_000. in
+        Printf.sprintf "%6.2f%c" adjusted_rate 'M'
+      else if rate >              1_000. then
+        let adjusted_rate =
+          rate     /.             1_000. in
+        Printf.sprintf "%6.0f%c" adjusted_rate 'K'
+      else
+        Printf.sprintf "%7.0f"   rate in
+    String.concat "" [rate_string; " "; unit; "/s"]
   ;;
 
   let make_progress_bar ~(percent:int) : string =
