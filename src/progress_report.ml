@@ -104,7 +104,7 @@ let make_message ~(info:info) ~(elements:progress_element list) : string =
       Printf.sprintf "used : %02d:%02d:%02d" hour min sec
     | `Time_used_long     ->
       let (hour, min, sec) = Helper.seconds_to_hms (int_of_float time_used) in
-      Printf.sprintf "Time elapsed   : %02d:%02d:%02d" hour min sec
+      Printf.sprintf "Time elapsed : %02d:%02d:%02d" hour min sec
     | `Time_left_short    ->
       let (hour, min, sec) = Helper.seconds_to_hms (int_of_float time_left) in
       Printf.sprintf "left : %02d:%02d:%02d" hour min sec
@@ -117,6 +117,18 @@ let make_message ~(info:info) ~(elements:progress_element list) : string =
     | e :: tl -> make_message_internal tl ((make_string_for_element e) :: acc) in
   make_message_internal elements []
 ;;
+
+let make_info
+    ~(start_time:float option ref)
+    ~(start_time_init:unit -> float)
+    ~(total_units:int64)
+    ~(last_report_time:float)
+    ~(units_so_far:int64)
+  : info =
+  let start_time             : float =
+    Misc_utils.get_option_ref_init_if_none start_time_init start_time in
+  let cur_time               : float = Sys.time () in
+  let time_since_last_report : float = cur_time -. last_report_time in
 
 let gen_print_generic
     (type a b c)
@@ -158,14 +170,14 @@ let gen_print_generic
          || (percent =  100 && not !printed_at_100)
          then
            begin
-             let start_time             : float =
-               Misc_utils.get_option_ref_init_if_none (fun () -> eval_start_time start_time_src) start_time in
-             let cur_time               : float = Sys.time () in
-             let time_since_last_report : float = cur_time -. !last_report_time in
              let units_remaining        : int64 = Int64.sub total_units units_so_far in
              let time_used              : float = cur_time -. start_time in
              let cur_rate               : float =
                (Int64.to_float (Int64.sub units_so_far !last_reported_units)) /. time_since_last_report in
+             let info =
+               make_info
+                 ~start_time
+                 ~start_time_init:(fun () -> eval_start_time start_time_src)
              let info = { percent
                         ; cur_time
                         ; cur_rate
@@ -190,7 +202,10 @@ let gen_print_generic
              if percent = 100 then
                let message        = (make_message ~info ~elements:display_on_finish) in
                let padded_message = Misc_utils.pad_string message !max_print_length ' ' in
-               Printf.printf "\r%s \n" padded_message
+               if message = "" then
+                 Printf.printf "\r%s \r" padded_message
+               else
+                 Printf.printf "\r%s \n" padded_message
            end
       )
   ; print_newline_if_not_done =
@@ -200,7 +215,25 @@ let gen_print_generic
            Misc_utils.get_option_ref_init_if_none (fun () -> eval_total_units total_units_src) total_units in
          let percent      : int   = Helper.calc_percent ~units_so_far ~total_units in
          if percent <> 100 then
-           print_newline ()
+           let start_time             : float =
+             Misc_utils.get_option_ref_init_if_none (fun () -> eval_start_time start_time_src) start_time in
+           let cur_time               : float = Sys.time () in
+           let time_since_last_report : float = cur_time -. !last_report_time in
+           let units_remaining        : int64 = Int64.sub total_units units_so_far in
+           let time_used              : float = cur_time -. start_time in
+           let cur_rate               : float =
+             (Int64.to_float (Int64.sub units_so_far !last_reported_units)) /. time_since_last_report in
+           let info = { percent
+                      ; cur_time
+                      ; cur_rate
+                      ; avg_rate  = (Int64.to_float units_so_far) /. time_used
+                      ; unit
+                      ; time_used
+                      ; time_left = (Int64.to_float units_remaining) /. cur_rate +. 1.
+                      } in
+           let message        = make_message ~info ~elements:display_on_finish_early in
+           let padded_message = Misc_utils.pad_string message !max_print_length ' ' in
+           Printf.printf "\r%s \n" padded_message
       )
   }
 ;;
