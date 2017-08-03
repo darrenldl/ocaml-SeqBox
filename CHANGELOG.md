@@ -10,6 +10,7 @@
   - Improved progress reporting
     - Replaced fraction with progress bar
     - Made the rate more readable
+    - General overhaul to improve quality
   - Optimized performance of progress printing code and log writing code
 
 ## 1.1.1  (newest version on OPAM)
