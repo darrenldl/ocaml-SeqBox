@@ -72,7 +72,7 @@ module Helper = struct
       else
         let rate_str    = Printf.sprintf "%7.0f"   rate          in
         (rate_str,  "") in
-    Printf.sprintf "%s%s %s/s" rate multiplier unit
+    String.concat "" [rate; multiplier; " "; unit; "/s"]
   ;;
 
   let make_progress_bar ~(percent:int) : string =
@@ -83,8 +83,7 @@ module Helper = struct
     let empty_len   = total_len - filled_len in
     let filled_part = String.make filled_len fill_char  in
     let empty_part  = String.make empty_len  empty_char in
-    let bar         = String.concat "" ["["; filled_part; empty_part; "]"] in
-    Printf.sprintf "%s" bar
+    String.concat "" ["["; filled_part; empty_part; "]"]
   ;;
 end
 
