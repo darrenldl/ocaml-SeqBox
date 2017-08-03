@@ -152,11 +152,11 @@ module Logger = struct
          begin
            let cur_time              : float = Sys.time () in
            let time_since_last_write : float = cur_time -. !last_write_time in
-           begin
-             call_per_interval := int_of_float ((float_of_int !call_count) /. (time_since_last_write /. write_interval));
-             call_count        := 0;
-             last_write_time   := cur_time
-           end;
+
+           call_per_interval := int_of_float ((float_of_int !call_count) /. (time_since_last_write /. write_interval));
+           call_count        := 0;
+           last_write_time   := cur_time;
+
            match write_helper ~stats ~log_filename with
            | Error msg -> Printf.printf "%s\n" msg; false
            | Ok _      -> true
