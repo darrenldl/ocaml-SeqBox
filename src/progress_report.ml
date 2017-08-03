@@ -177,10 +177,10 @@ let gen_print_generic
          let percent      : int   = Helper.calc_percent ~units_so_far ~total_units in
 
          (* print header once *)
-         if !not_printed_yet then Printf.printf "%s\n" header;
+         if !not_printed_yet then print_endline header;
 
          (* always print if not printed yet or reached 100% *)
-         if (percent <> 100 && (!call_count > !call_per_interval || !not_printed_yet))
+         if ((* percent <> 100 && *) (!call_count > !call_per_interval || !not_printed_yet))
          || (percent =  100 && not !printed_at_100)
          then
            begin
