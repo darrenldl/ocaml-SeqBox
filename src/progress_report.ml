@@ -95,10 +95,10 @@ let make_message ~(info:info) ~(elements:progress_element list) : string =
     match element with
     | `Percentage         -> Printf.sprintf "%3d%%" percent
     | `Progress_bar       -> Helper.make_progress_bar ~percent
-    | `Current_rate_short -> Printf.sprintf "cur : %s" (Helper.make_readable_rate ~rate:cur_rate ~unit)
-    | `Current_rate_long  -> Printf.sprintf "Current rate : %s" (Helper.make_readable_rate ~rate:cur_rate ~unit)
-    | `Average_rate_short -> Printf.sprintf "avg : %s" (Helper.make_readable_rate ~rate:avg_rate ~unit)
-    | `Average_rate_long  -> Printf.sprintf "Average rate : %s" (Helper.make_readable_rate ~rate:avg_rate ~unit)
+    | `Current_rate_short -> String.concat "" ["cur : "; (Helper.make_readable_rate ~rate:cur_rate ~unit)]
+    | `Current_rate_long  -> String.concat "" ["Current rate : "; (Helper.make_readable_rate ~rate:cur_rate ~unit)]
+    | `Average_rate_short -> String.concat "" ["avg : "; (Helper.make_readable_rate ~rate:avg_rate ~unit)]
+    | `Average_rate_long  -> String.concat "" ["Average rate : "; (Helper.make_readable_rate ~rate:avg_rate ~unit)]
     | `Time_used_short    ->
       let (hour, min, sec) = Helper.seconds_to_hms (int_of_float time_used) in
       Printf.sprintf "used : %02d:%02d:%02d" hour min sec
@@ -113,9 +113,9 @@ let make_message ~(info:info) ~(elements:progress_element list) : string =
       Printf.sprintf "Time remaining : %02d:%02d:%02d" hour min sec in
   let rec make_message_internal (elements:progress_element list) (acc:string list) : string =
     match elements with
-    | []      -> String.concat "  " (List.rev acc)
+    | []      -> String.concat "  " acc
     | e :: tl -> make_message_internal tl ((make_string_for_element e) :: acc) in
-  make_message_internal elements []
+  make_message_internal (List.rev elements) []
 ;;
 
 let make_info
