@@ -54,7 +54,7 @@ module Stats = struct
   ;;
 
   (* automatically correct bytes_processed alignment
-   * by rounding down to closest 128 bytes
+   * by rounding down to closest multiple of block scan alignment
    *)
   let make_stats (bytes_processed:int64) (blocks_processed:int64) (meta_blocks_processed:int64) (data_blocks_processed:int64) : t =
     { bytes_processed =
@@ -77,14 +77,6 @@ module Stats = struct
     let (hour, minute, second) = Progress_report.Helper.seconds_to_hms (int_of_float (Sys.time() -. stats.start_time)) in
     Printf.printf "Time elapsed                        : %02d:%02d:%02d\n" hour minute second
   ;;
-
-  (*let print_stats_single_line (stats:t) : unit =
-    Printf.printf "\rBytes : %Ld, Blocks : %Ld, Meta : %Ld, Data : %Ld"
-      stats.bytes_processed
-      stats.blocks_processed
-      stats.meta_blocks_processed
-      stats.data_blocks_processed
-  ;;*)
 end
 
 type stats = Stats.t
