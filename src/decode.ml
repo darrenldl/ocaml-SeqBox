@@ -278,7 +278,7 @@ module Processor = struct
         if read_len = 0L then
           (stats, result_so_far)
         else
-          let new_stats         = Stats.add_bytes_scanned stats ~num:read_len in
+          let new_stats = Stats.add_bytes_scanned stats ~num:read_len in
           match block with
           | None       -> find_first_both_proc_internal result_so_far new_stats
           | Some block -> 
@@ -286,14 +286,14 @@ module Processor = struct
               { meta =
                   begin
                     match result_so_far.meta with
-                    | Some meta as x -> x
-                    | None           -> if Block.is_meta block then Some block else None
+                    | Some _ as x -> x
+                    | None        -> if Block.is_meta block then Some block else None
                   end
               ; data =
                   begin
                     match result_so_far.data with
-                    | Some data as x -> x
-                    | None           -> if Block.is_data block then Some block else None
+                    | Some _ as x -> x
+                    | None        -> if Block.is_data block then Some block else None
                   end
               } in
             find_first_both_proc_internal new_result_so_far new_stats in
@@ -391,8 +391,8 @@ module Processor = struct
     (fun in_file out_file ->
        let ref_block : Block.t option =
          match ref_block with
-         | Some block as sb -> sb
-         | None             -> ref_block_fetcher in_file in
+         | Some _ as x -> x
+         | None        -> ref_block_fetcher in_file in
        match ref_block with
        | None           -> raise (Packaged_exn "No usable blocks in file")
        | Some ref_block ->
