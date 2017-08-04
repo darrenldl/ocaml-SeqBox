@@ -286,14 +286,14 @@ module Processor = struct
               { meta =
                   begin
                     match result_so_far.meta with
-                    | Some meta -> Some meta
-                    | None      -> if Block.is_meta block then Some block else None
+                    | Some meta as x -> x
+                    | None           -> if Block.is_meta block then Some block else None
                   end
               ; data =
                   begin
                     match result_so_far.data with
-                    | Some data -> Some data
-                    | None      -> if Block.is_data block then Some block else None
+                    | Some data as x -> x
+                    | None           -> if Block.is_data block then Some block else None
                   end
               } in
             find_first_both_proc_internal new_result_so_far new_stats in
