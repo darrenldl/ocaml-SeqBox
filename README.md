@@ -13,6 +13,7 @@ Table of Contents
       * [Acknowledgement](#acknowledgement)
       * [Getting started](#getting-started)
       * [Notes](#notes)
+      * [Links](#links)
       * [Possibly useful additional features of ocaml-SeqBox(possibly not yet in official SeqBox)](#possibly-useful-additional-features-of-ocaml-seqboxpossibly-not-yet-in-official-seqbox)
       * [Technical Specification](#technical-specification)
          * [Common blocks header:](#common-blocks-header)
@@ -33,13 +34,13 @@ I would like to thank [Marco](https://github.com/MarcoPon) (author of the offici
 I would like to thank [Ming](https://github.com/mdchia/) for his feedback on the documentation, UX design, and several other general aspects of this project. And also his help on testing the building and installation of osbx on macOS.
 
 ## Getting started
-Osbx 1.1.1 is currently on OPAM, 1.2.0 will be published later at some point
+Osbx 1.1.1 is currently on OPAM, 1.2.0 is currently in the process of being published
 ```
 opam install osbx
 ```
-There are three modes/commands for osbx currently : encode, decode, rescue
+There are four modes/commands for osbx currently : encode, decode, rescue, show
 
-You can consult the man pages of osbx itself and all the three commands via
+You can consult the man pages of osbx itself and all the four commands via
 ```
 osbx        --help
 osbx encode --help
@@ -57,21 +58,18 @@ CRC-CCITT is currently implemented in pure OCaml and is translated from implemen
 Exact behaviours in non-standard cases are not specified in official SeqBox technical specification
   - See [specification](SPECS.md) of ocaml-SeqBox for details on how ocaml-SeqBox behaves(if you care about undefined behaviour those sort of things)
 
-Wiki
-  - See [Wiki](https://github.com/darrenldl/ocaml-SeqBox/wiki)
-
-Hashing
+Hashing libraries
   - Nocrypto for SHA1, SHA256, SHA512
   - Digestif for BLAKE2B\_512
 
-Index of soure code
-  - See [index](INDEX.md)
+## Links
+[Wiki](https://github.com/darrenldl/ocaml-SeqBox/wiki)
 
-Changelog
-  - See [changelog](CHANGELOG.md)
+[Index of source code](INDEX.md)
 
-Todo/wishlist
-  - See [todo](TODO.md)
+[Changelog](CHANGELOG.md)
+
+[Todo/wishlist](TODO.md)
 
 ## Possibly useful additional features of ocaml-SeqBox(possibly not yet in official SeqBox)
   - Allows random ordering in sbx container
