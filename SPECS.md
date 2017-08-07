@@ -9,6 +9,7 @@ Table of Contents
             * [Handling of duplicate metadata/data blocks](#handling-of-duplicate-metadatadata-blocks)
             * [Handling of duplicate metadata in metadata block given the block is valid](#handling-of-duplicate-metadata-in-metadata-block-given-the-block-is-valid)
       * [Rescuing workflow](#rescuing-workflow)
+      * [Show workflow](#show-workflow)
       * [To successfully encode a file](#to-successfully-encode-a-file)
       * [To successfully decode a sbx container](#to-successfully-decode-a-sbx-container)
       * [To successfully rescue your sbx container](#to-successfully-rescue-your-sbx-container)
@@ -67,12 +68,21 @@ Data block is valid if and only if
     - if log file is specified, then
       - the log file will be used to initialize the scan's starting position
         - bytes_processed field will be rounded down to closest multiple of 128 automatically
-      - the log file will be updated on every read of bytes
+      - the log file will be updated on every ~1.0 second
     - each block is appended to OUTDIR/uid, where :
       - OUTDIR = output directory specified
       - uid    = uid of the block in hex
     - the original bytes in the file is used, that is, the output block bytes are not generated from scratch by osbx
   2. User is expected to attempt to decode the rescued data in OUTDIR using the osbx decode command
+
+## Show workflow
+  1. Scan for metadata blocks from start of provided file using 128 bytes alignment
+    - if block scanned has sequence number 0, then
+      - if the block is a valid metadatablock, it will be collected
+      - up to some specified maximum number of blocks are collected(defaults to 1)
+    - else
+      - nothing is done
+  2. Metadata of collected list of metadata blocks are displayed
 
 ## To successfully encode a file
   - File size must be within threshold
