@@ -122,8 +122,6 @@ N.B. Current versions differs only by blocksize.
 |  2  | 128       |         |
 |  3  | 4096      |         |
 
-All versions are implemented in ocaml-SeqBox
-
 ### Metadata encoding:
 
 | Bytes | Field | 
