@@ -17,7 +17,7 @@ let sbx_version =
 ;;
 
 let silent =
-  let doc = "One of : 0(only show progress stats when done) 1(show absolutely nothing). This only affects progress text printing." in
+  let doc = "One of : 0(only show progress stats when done) 1(show nothing). This only affects progress text printing." in
   let open Progress_report in
   Arg.(value & opt (some (enum [("0", L0); ("1", L1)])) None & info ["s"; "silent"] ~docv:"LEVEL" ~doc)
 ;;
