@@ -112,4 +112,3 @@ let pad_string (input:string) (len:int) (pad_char:char) : string =
       "" in
   String.concat "" [input; padding]
 ;;
-

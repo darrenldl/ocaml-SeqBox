@@ -2,6 +2,12 @@ open Progress_report
 
 module Common = struct
   let block_scan_alignment     = 128  (* largest common divisor of version 1, 2, 3 block sizes *)
+
+  let silence_settings         = ref default_silence_settings
+
+  let set_silence_settings (level:silence_level option) : unit =
+    silence_settings := Progress_report.Helper.silence_level_to_silence_settings level
+  ;;
 end
 
 module Encode = struct

@@ -46,6 +46,7 @@ module Progress = struct
     : (unit, stats, in_channel) Progress_report.progress_print_functions =
     Progress_report.gen_print_generic
       ~header:"Scan progress"
+      ~silence_settings:Param.Common.silence_settings
       ~display_while_active:Param.Show.Show_progress.display_while_active
       ~display_on_finish:Param.Show.Show_progress.display_on_finish
       ~display_on_finish_early:Param.Show.Show_progress.display_on_finish_early

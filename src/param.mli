@@ -1,5 +1,9 @@
 module Common : sig
   val block_scan_alignment     : int
+
+  val silence_settings         : Progress_report.silence_settings ref
+
+  val set_silence_settings     : Progress_report.silence_level option -> unit
 end
 
 module Encode : sig

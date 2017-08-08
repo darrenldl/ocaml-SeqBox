@@ -209,6 +209,7 @@ module Progress = struct
     : (unit, scan_stats, in_channel) Progress_report.progress_print_functions =
     Progress_report.gen_print_generic
       ~header:"Scan progress"
+      ~silence_settings:Param.Common.silence_settings
       ~display_while_active:Param.Decode.Scan_progress.display_while_active
       ~display_on_finish:Param.Decode.Scan_progress.display_on_finish
       ~display_on_finish_early:Param.Decode.Scan_progress.display_on_finish_early
@@ -225,6 +226,7 @@ module Progress = struct
     : (unit, hash_stats, in_channel) Progress_report.progress_print_functions =
     Progress_report.gen_print_generic
       ~header:"Hash progress"
+      ~silence_settings:Param.Common.silence_settings
       ~display_while_active:Param.Decode.Hash_progress.display_while_active
       ~display_on_finish:Param.Decode.Hash_progress.display_on_finish
       ~display_on_finish_early:Param.Decode.Hash_progress.display_on_finish_early
@@ -241,6 +243,7 @@ module Progress = struct
     : (unit, stats, stats * in_channel) Progress_report.progress_print_functions =
     Progress_report.gen_print_generic
       ~header:"Decode progress"
+      ~silence_settings:Param.Common.silence_settings
       ~display_while_active:Param.Decode.Decode_progress.display_while_active
       ~display_on_finish:Param.Decode.Decode_progress.display_on_finish
       ~display_on_finish_early:Param.Decode.Decode_progress.display_on_finish_early

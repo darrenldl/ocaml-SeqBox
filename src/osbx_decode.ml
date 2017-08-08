@@ -3,8 +3,9 @@ open Decode
 
 exception Packaged_exn of string
 
-let decode (force_out:bool) (show_max:int64 option) (in_filename:string) (provided_out_filename:string option) : unit =
+let decode (silent:Progress_report.silence_level option) (force_out:bool) (show_max:int64 option) (in_filename:string) (provided_out_filename:string option) : unit =
   Param.Decode.set_failure_list_max_length_possibly show_max;
+  Param.Common.set_silence_settings silent;
   try
     let ref_block =
       match Process.fetch_ref_block in_filename with

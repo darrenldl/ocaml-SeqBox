@@ -16,6 +16,12 @@ let sbx_version =
   Arg.(value & opt (some string) None & info ["sbx-version"] ~docv:"SBX-VERSION" ~doc)
 ;;
 
+let silent =
+  let doc = "One of : 0(only show progress stats when done) 1(show absolutely nothing). This only affects progress text printing." in
+  let open Progress_report in
+  Arg.(value & opt (some (enum [("0", L0); ("1", L1)])) None & info ["s"; "silent"] ~docv:"LEVEL" ~doc)
+;;
+
 let force =
   let doc = "Force overwrites even if $(docv) exists" in
   Arg.(value & flag & info ["f"; "force"] ~docv:"OUT" ~doc)
@@ -41,7 +47,7 @@ let default_cmd =
 let encode_cmd =
   let open Osbx_encode in
   let doc = "Encode file" in
-  (Term.(const encode $ force $ no_meta $ sbx_version $ uid $ hash $ in_file $ out_file),
+  (Term.(const encode $ silent $ force $ no_meta $ sbx_version $ uid $ hash $ in_file $ out_file),
    Term.info "encode" ~doc
   )
 ;;
@@ -49,7 +55,7 @@ let encode_cmd =
 let decode_cmd =
   let open Osbx_decode in
   let doc = "Decode sbx container" in
-  (Term.(const decode $ force $ show_max $ in_file $ out_file),
+  (Term.(const decode $ silent $ force $ show_max $ in_file $ out_file),
    Term.info "decode" ~doc
   )
 ;;
@@ -57,7 +63,7 @@ let decode_cmd =
 let rescue_cmd =
   let open Osbx_rescue in
   let doc = "Rescue sbx data from file" in
-  (Term.(const rescue $ in_file $ out_dir $ log_file),
+  (Term.(const rescue $ silent $ in_file $ out_dir $ log_file),
    Term.info "rescue" ~doc
   )
 ;;
@@ -65,7 +71,7 @@ let rescue_cmd =
 let show_cmd =
   let open Osbx_show in
   let doc = "Search for and print metadata in sbx container (or file)" in
-  (Term.(const show $ find_max $ skip_to_byte $ in_file),
+  (Term.(const show $ silent $ find_max $ skip_to_byte $ in_file),
    Term.info "show" ~doc
   )
 ;;

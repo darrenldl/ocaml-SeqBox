@@ -1,13 +1,20 @@
+type silence_level = L0 | L1
+
+type silence_settings =
+  { silent_while_active : bool
+  ; silent_when_done    : bool
+  }
+
 type ('a, 'b, 'c) progress_print_functions =
   { print_progress            :
-      start_time_src:'a ->
+      start_time_src:'a   ->
       units_so_far_src:'b ->
-      total_units_src:'c ->
+      total_units_src:'c  ->
       unit
   ; print_newline_if_not_done :
-      start_time_src:'a ->
+      start_time_src:'a   ->
       units_so_far_src:'b ->
-      total_units_src:'c ->
+      total_units_src:'c  ->
       unit
   }
 
@@ -80,7 +87,16 @@ module Helper = struct
     let empty_part  = String.make empty_len  empty_char in
     String.concat "" ["["; filled_part; empty_part; "]"]
   ;;
+
+  let silence_level_to_silence_settings (level:silence_level option) : silence_settings =
+    match level with
+    | None    -> { silent_while_active = false; silent_when_done = false }
+    | Some L0 -> { silent_while_active = true ; silent_when_done = false }
+    | Some L1 -> { silent_while_active = true ; silent_when_done = true  }
+  ;;
 end
+
+let default_silence_settings = Helper.silence_level_to_silence_settings None;;
 
 let make_message ~(info:info) ~(elements:progress_element list) : string =
   let { percent; cur_time; cur_rate; avg_rate; unit; time_used; time_left } = info in
@@ -115,15 +131,12 @@ let make_info
     ~(percent:int)
     ~(unit:string)
     ~(cur_time:float)
-    ~(start_time:float option ref)
-    ~(start_time_init:unit -> float)
+    ~(start_time:float)
     ~(total_units:int64)
     ~(last_report_time:float)
     ~(last_reported_units:int64)
     ~(units_so_far:int64)
   : info =
-  let start_time             : float =
-    Misc_utils.get_option_ref_init_if_none start_time_init start_time in
   let time_used              : float = cur_time -. start_time in
   let time_since_last_report : float = cur_time -. last_report_time in
   let units_remaining        : int64 = Int64.sub total_units units_so_far in
@@ -142,6 +155,7 @@ let make_info
 let gen_print_generic
     (type a b c)
     ~(header:string)
+    ~(silence_settings:silence_settings ref)
     ~(display_while_active:progress_element list)
     ~(display_on_finish:progress_element list)
     ~(display_on_finish_early:progress_element list)
@@ -152,6 +166,7 @@ let gen_print_generic
     ~(eval_total_units:c -> int64) 
   : (a, b, c) progress_print_functions =
   let max_print_length    : int   ref = ref 0     in
+  let printed_header      : bool  ref = ref false in
   let not_printed_yet     : bool  ref = ref true  in
   let printed_at_100      : bool  ref = ref false in
   let call_count          : int   ref = ref 0     in
@@ -164,77 +179,98 @@ let gen_print_generic
 
   { print_progress =
       (fun ~(start_time_src:a) ~(units_so_far_src:b) ~(total_units_src:c) : unit ->
-         (* interval is estimated dynamically using call count to reduce floating point operations *)
-         call_count              := succ !call_count;
-         let units_so_far : int64 = eval_units_so_far units_so_far_src in
-         let total_units  : int64 =
-           Misc_utils.get_option_ref_init_if_none (fun () -> eval_total_units total_units_src) total_units in
-         let percent      : int   = Helper.calc_percent ~units_so_far ~total_units in
-
-         (* print header once *)
-         if !not_printed_yet then print_endline header;
-
-         (* always print if not printed yet or reached 100% *)
-         if ((* percent <> 100 && *) (!call_count > !call_per_interval || !not_printed_yet))
-         || (percent =  100 && not !printed_at_100)
-         then
+         let { silent_while_active; silent_when_done } = !silence_settings in
+         if not (silent_while_active && silent_when_done) then
            begin
-             let cur_time = Sys.time () in
-             let info =
-               make_info
-                 ~percent
-                 ~unit
-                 ~cur_time
-                 ~start_time
-                 ~start_time_init:(fun () -> eval_start_time start_time_src)
-                 ~total_units
-                 ~last_report_time:!last_report_time
-                 ~last_reported_units:!last_reported_units
-                 ~units_so_far in
-             let time_since_last_report : float = cur_time -. !last_report_time in
+             (* interval is estimated dynamically using call count to reduce floating point operations *)
+             call_count              := succ !call_count;
+             let units_so_far : int64 = eval_units_so_far units_so_far_src in
+             let total_units  : int64 =
+               Misc_utils.get_option_ref_init_if_none (fun () -> eval_total_units total_units_src) total_units in
+             let percent      : int   = Helper.calc_percent ~units_so_far ~total_units in
 
-             not_printed_yet     := false;
-             call_per_interval   := int_of_float ((float_of_int !call_count) /. (time_since_last_report /. print_interval));
-             call_count          := 0;
-             last_report_time    := cur_time;
-             last_reported_units := units_so_far;
-             printed_at_100      := percent = 100;
+             (* print header once *)
+             if not !printed_header then
+               begin
+                 print_endline header;
+                 printed_header := true
+               end;
 
-             let message        = make_message ~info ~elements:display_while_active in
-             let padded_message = Misc_utils.pad_string message !max_print_length ' ' in
-             max_print_length := max (String.length padded_message) !max_print_length;
-             Printf.printf "\r%s " padded_message;
-             flush stdout;
-             if percent = 100 then
-               let message        = (make_message ~info ~elements:display_on_finish) in
-               let padded_message = Misc_utils.pad_string message !max_print_length ' ' in
-               if message = "" then
-                 Printf.printf "\r%s \r" padded_message
-               else
-                 Printf.printf "\r%s \n" padded_message
+             (* initialise start time *)
+             if !start_time = None then start_time := Some (eval_start_time start_time_src);
+
+             (* always print if not printed yet or reached 100% *)
+             if ((percent <> 100 && not silent_while_active) && (!call_count > !call_per_interval || !not_printed_yet))
+             || ((percent =  100 && not silent_when_done   ) && not !printed_at_100)
+             then
+               begin
+                 let start_time =
+                   match !start_time with
+                   | Some n -> n
+                   | None   -> assert false in
+                 let cur_time = Sys.time () in
+                 let info =
+                   make_info
+                     ~percent
+                     ~unit
+                     ~cur_time
+                     ~start_time
+                     ~total_units
+                     ~last_report_time:!last_report_time
+                     ~last_reported_units:!last_reported_units
+                     ~units_so_far in
+                 let time_since_last_report : float = cur_time -. !last_report_time in
+
+                 not_printed_yet     := false;
+                 call_per_interval   := int_of_float ((float_of_int !call_count) /. (time_since_last_report /. print_interval));
+                 call_count          := 0;
+                 last_report_time    := cur_time;
+                 last_reported_units := units_so_far;
+                 printed_at_100      := percent = 100;
+
+                 let message        = make_message ~info ~elements:display_while_active in
+                 let padded_message = Misc_utils.pad_string message !max_print_length ' ' in
+                 max_print_length := max (String.length padded_message) !max_print_length;
+                 Printf.printf "\r%s " padded_message;
+                 flush stdout;
+                 if percent = 100 then
+                   let message        = (make_message ~info ~elements:display_on_finish) in
+                   let padded_message = Misc_utils.pad_string message !max_print_length ' ' in
+                   if message = "" then
+                     Printf.printf "\r%s \r" padded_message
+                   else
+                     Printf.printf "\r%s \n" padded_message
+               end
            end
       )
   ; print_newline_if_not_done =
       (fun ~(start_time_src:a) ~(units_so_far_src:b) ~(total_units_src:c) : unit ->
-         let units_so_far : int64 = eval_units_so_far units_so_far_src in
-         let total_units  : int64 =
-           Misc_utils.get_option_ref_init_if_none (fun () -> eval_total_units total_units_src) total_units in
-         let percent      : int   = Helper.calc_percent ~units_so_far ~total_units in
-         if percent <> 100 then
-           let info =
-             make_info
-               ~percent
-               ~unit
-               ~cur_time:(Sys.time ())
-               ~start_time
-               ~start_time_init:(fun () -> eval_start_time start_time_src)
-               ~total_units
-               ~last_report_time:!last_report_time
-               ~last_reported_units:!last_reported_units
-               ~units_so_far in
-           let message        = make_message ~info ~elements:display_on_finish_early in
-           let padded_message = Misc_utils.pad_string message !max_print_length ' ' in
-           Printf.printf "\r%s \n" padded_message
+         let { silent_when_done; _ } = !silence_settings in
+         if not silent_when_done then
+           begin
+             let start_time =
+               match !start_time with
+               | Some n -> n
+               | None   -> assert false in
+             let units_so_far : int64 = eval_units_so_far units_so_far_src in
+             let total_units  : int64 =
+               Misc_utils.get_option_ref_init_if_none (fun () -> eval_total_units total_units_src) total_units in
+             let percent      : int   = Helper.calc_percent ~units_so_far ~total_units in
+             if percent <> 100 then
+               let info =
+                 make_info
+                   ~percent
+                   ~unit
+                   ~cur_time:(Sys.time ())
+                   ~start_time
+                   ~total_units
+                   ~last_report_time:!last_report_time
+                   ~last_reported_units:!last_reported_units
+                   ~units_so_far in
+               let message        = make_message ~info ~elements:display_on_finish_early in
+               let padded_message = Misc_utils.pad_string message !max_print_length ' ' in
+               Printf.printf "\r%s \n" padded_message
+           end
       )
   }
 ;;

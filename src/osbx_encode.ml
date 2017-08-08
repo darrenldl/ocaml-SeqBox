@@ -4,7 +4,8 @@ open Sbx_specs
 
 exception Packaged_exn of string
 
-let encode (force_out:bool) (no_meta:bool) (ver:string option) (uid:string option) (hash_type:string option) (in_filename:string) (provided_out_filename:string option) : unit =
+let encode (silent:Progress_report.silence_level option) (force_out:bool) (no_meta:bool) (ver:string option) (uid:string option) (hash_type:string option) (in_filename:string) (provided_out_filename:string option) : unit =
+  Param.Common.set_silence_settings silent;
   try
     let ver : version =
       match ver with
@@ -52,6 +53,8 @@ let encode (force_out:bool) (no_meta:bool) (ver:string option) (uid:string optio
       match hash_type with
       | Some str -> str
       | None     -> "SHA256" in
+
+
     match Process.encode_file ~uid ~want_meta:(not no_meta) ~ver ~hash ~in_filename ~out_filename with
     | Ok stats  -> Stats.print_stats stats
     | Error msg -> raise (Packaged_exn msg)

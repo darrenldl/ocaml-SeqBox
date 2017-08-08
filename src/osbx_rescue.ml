@@ -1,7 +1,8 @@
 open Cmdliner
 open Rescue
 
-let rescue (in_filename:string) (out_dirname:string) (log_filename:string option) : unit =
+let rescue (silent: Progress_report.silence_level option) (in_filename:string) (out_dirname:string) (log_filename:string option) : unit =
+  Param.Common.set_silence_settings silent;
   match Process.rescue_from_file ~in_filename ~out_dirname ~log_filename with
   | Ok stats  -> Stats.print_stats stats
   | Error msg -> Printf.printf "%s\n" msg

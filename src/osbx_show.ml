@@ -101,8 +101,9 @@ let rec print_meta_blocks ?(cur:int64 = 0L) (lst:(Block.t * int64) list) : unit 
     end
 ;;
 
-let show (find_max:int64 option) (skip_to_byte:int64 option) (in_filename:string) : unit =
+let show (silent:Progress_report.silence_level option) (find_max:int64 option) (skip_to_byte:int64 option) (in_filename:string) : unit =
   Param.Show.set_meta_list_max_length_possibly find_max;
+  Param.Common.set_silence_settings silent;
   try
     match find_max with
     | Some 0L ->
