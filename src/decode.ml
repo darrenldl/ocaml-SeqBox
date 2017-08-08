@@ -426,10 +426,10 @@ module Processor = struct
   ;;
 
   let make_hasher ~(hash_type:Multihash.hash_type) : bytes Stream.in_processor =
-    let read_len = 1 * 1024 * 1024 (* 1 MiB *) in
     (fun in_file ->
        let rec hash_proc (stats:hash_stats) (hash_state:Multihash.Hash.ctx) (in_file:in_channel) : bytes =
          let open Read_chunk in
+         let read_len = 1024 * 1024 (* 1 MiB *) in
          Progress.report_hash ~start_time_src:() ~units_so_far_src:stats ~total_units_src:in_file;
          match read in_file ~len:read_len with
          | None           -> Multihash.Hash.get_raw_hash hash_state
