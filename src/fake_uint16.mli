@@ -1,6 +1,6 @@
 open Stdint
 
-type fuint16 = int64
+type fuint16
 
 val (&)       : fuint16     -> fuint16 -> fuint16
 
@@ -15,6 +15,8 @@ val (>>)      : fuint16     -> int     -> fuint16
 val add1      : fuint16 ref -> unit
 
 val sub1      : fuint16 ref -> unit
+
+val of_int    : int         -> fuint16
 
 val to_int    : fuint16     -> int
 

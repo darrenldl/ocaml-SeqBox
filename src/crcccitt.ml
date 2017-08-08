@@ -41,20 +41,20 @@
 open Stdint
 open Fake_uint16
 
-let crc_poly_ccitt = 0x1021L;;
+let crc_poly_ccitt = of_int 0x1021;;
 
 let make_crcccitt_tab () : fuint16 array =
-  let tab : fuint16 array = Array.make 256 0L in
-  let i   : fuint16 ref   = ref 0L in
-  let crc : fuint16 ref   = ref 0L in
-  let c   : fuint16 ref   = ref 0L in
+  let tab : fuint16 array = Array.make 256 (of_int 0) in
+  let i   : fuint16 ref   = ref (of_int 0) in
+  let crc : fuint16 ref   = ref (of_int 0) in
+  let c   : fuint16 ref   = ref (of_int 0) in
 
-  while !i < 256L do
-    crc := 0L;
+  while !i < (of_int 256) do
+    crc := of_int 0;
     c   := !i << 8;
 
     for _ = 0 to 7 do
-      if ((!crc ^ !c) & 0x8000L) > 0L then
+      if ((!crc ^ !c) & (of_int 0x8000)) > (of_int 0) then
         crc := (!crc << 1) ^ crc_poly_ccitt
       else
         crc :=  !crc << 1;
@@ -74,9 +74,10 @@ let make_crcccitt_tab () : fuint16 array =
 let crc_tabccitt = make_crcccitt_tab ();;
 
 let crc_ccitt_generic ~(input:bytes) ~(start_val:fuint16) : fuint16 =
-  let crc   : fuint16 ref = ref start_val in
-  let index : int     ref = ref 0 in
-  let len   : int         = Bytes.length input in
+  let crc         : fuint16 ref = ref start_val in
+  let index       : int     ref = ref 0 in
+  let len         : int         = Bytes.length input in
+  let mask_0x00FF : fuint16     = of_int 0x00FF in
 
   for _ = 0 to len - 1 do
     crc := (!crc << 8)
@@ -85,7 +86,7 @@ let crc_ccitt_generic ~(input:bytes) ~(start_val:fuint16) : fuint16 =
              to_int (
                ((!crc >> 8) ^ (of_char (Bytes.get input !index)))
                &
-               0x00FFL
+               mask_0x00FF
              )
            );
 
