@@ -1,4 +1,10 @@
-## 1.2.0  (development version, will be published on OPAM at some point)
+## 1.2.1  (development version)
+  - Optmized CRC-CCITT
+    - Changed fake\_uint16 to use int instead of int64
+    - This makes encoding and decoding significantly faster
+    - Other block related operations are also faster in general
+
+## 1.2.0  (being published on OPAM)
   - Fixed slightly off progress counting in Decode
   - Optimized decoding code to avoid searching for a reference block twice
   - Added command line option for decode and show
@@ -13,7 +19,7 @@
     - General overhaul to improve quality
   - Optimized performance of progress printing code and log writing code
 
-## 1.1.1  (newest version on OPAM)
+## 1.1.1  (current version on OPAM)
   - Removed dependency on Core\_kernel
     - 1.1.1 uses a custom replacement of Core\_kernel.protect and OCaml Pervasives channels
 
