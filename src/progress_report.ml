@@ -47,34 +47,6 @@ module Helper = struct
                     total_units) 
   ;;
 
-  (* let make_readable_rate ~(rate:float) ~(unit:string) : string =
-    let (rate, multiplier) : string * string =
-      if      rate >  1_000_000_000_000. then
-        let adjusted_rate =
-          rate     /. 1_000_000_000_000. in
-        let rate_str    = Printf.sprintf "%6.2f" adjusted_rate in
-        (rate_str, "T")
-      else if rate >      1_000_000_000. then
-        let adjusted_rate =
-          rate     /.     1_000_000_000. in
-        let rate_str    = Printf.sprintf "%6.2f" adjusted_rate in
-        (rate_str, "G")
-      else if rate >          1_000_000. then
-        let adjusted_rate =
-          rate     /.         1_000_000. in
-        let rate_str    = Printf.sprintf "%6.2f" adjusted_rate in
-        (rate_str, "M")
-      else if rate >              1_000. then
-        let adjusted_rate =
-          rate     /.             1_000. in
-        let rate_str    = Printf.sprintf "%6.0f"   adjusted_rate in
-        (rate_str, "K")
-      else
-        let rate_str    = Printf.sprintf "%7.0f"   rate          in
-        (rate_str,  "") in
-    String.concat "" [rate; multiplier; " "; unit; "/s"]
-  ;; *)
-
   let make_readable_rate ~(rate:float) ~(unit:string) : string =
     let rate_string : string =
       if      rate >  1_000_000_000_000. then
