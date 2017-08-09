@@ -388,7 +388,7 @@ module Processor = struct
   let make_ref_block_fetcher ~(prefer:Block.block_type) : (Block.t option) Stream.in_processor =
     (fun in_file ->
        Printf.printf "Scanning for reference block\n";
-       match find_first_both_proc ~prefer:`Meta in_file with
+       match find_first_both_proc ~prefer in_file with
        | { meta = Some block; data = _          } ->
          begin
            Printf.printf "Metadata block found\n";
