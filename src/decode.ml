@@ -396,7 +396,11 @@ module Processor = struct
          end
        | { meta = None      ; data = Some block } ->
          begin
-           Printf.printf "No metadata blocks were found, resorting to data block\n";
+           begin
+             match prefer with
+             | `Meta        -> Printf.printf "No metadata blocks were found, resorting to data block\n"
+             | `Data | `Any -> Printf.printf "Data block found\n"
+           end;
            Some block
          end
        | { meta = None      ; data = None       } -> None
