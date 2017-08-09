@@ -64,7 +64,7 @@ Hashing libraries
   - Digestif for BLAKE2B\_512
 
 ## Tips
-Enabling silent mode will likely speed things up
+Enabling silent mode is likely to speed things up
   - This is due to progress text printing does quite a lot of formatting, and checking time interval has some overhead
 
 ## Links
