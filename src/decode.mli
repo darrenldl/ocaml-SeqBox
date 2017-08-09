@@ -20,7 +20,7 @@ end
 type stats = Stats.t
 
 module Process : sig
-  val fetch_ref_block : in_filename:string -> (Block.t option, string) result
+  val fetch_ref_block : prefer:Block.block_type -> in_filename:string -> (Block.t option, string) result
 
   val decode_file     : ref_block:Block.t option -> in_filename:string -> out_filename:string option -> (stats, string)         result
 end

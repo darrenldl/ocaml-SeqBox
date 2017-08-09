@@ -432,7 +432,7 @@ module Block : sig
 
   type t
 
-  type block_type = [ `Meta | `Data ]
+  type block_type = [ `Meta | `Data | `Any ]
 
   val make_metadata_block : Header.common_fields   -> fields:Metadata.t list -> t
 
@@ -470,7 +470,7 @@ end = struct
               ; fields : Metadata.t list
               ; data   : bytes }
 
-  type block_type = [ `Meta | `Data ]
+  type block_type = [ `Meta | `Data | `Any ]
 
   let make_metadata_block (common:Header.common_fields) ~(fields:Metadata.t list) : t =
     (* encode once to make sure the size is okay *)

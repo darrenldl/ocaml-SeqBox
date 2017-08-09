@@ -3,12 +3,13 @@ open Decode
 
 exception Packaged_exn of string
 
-let decode (silent:Progress_report.silence_level option) (force_out:bool) (show_max:int64 option) (in_filename:string) (provided_out_filename:string option) : unit =
+let decode (silent:Progress_report.silence_level option) (force_out:bool) (no_meta:bool) (show_max:int64 option) (in_filename:string) (provided_out_filename:string option) : unit =
   Param.Decode.set_failure_list_max_length_possibly show_max;
   Param.Common.set_silence_settings silent;
   try
     let ref_block =
-      match Process.fetch_ref_block in_filename with
+      let prefer = if no_meta then `Any else `Meta in
+      match Process.fetch_ref_block ~prefer ~in_filename with
       | Ok res    -> res
       | Error msg -> raise (Packaged_exn msg) in
     let stored_out_filename =
@@ -52,6 +53,11 @@ let decode (silent:Progress_report.silence_level option) (force_out:bool) (show_
 let show_max =
   let doc = Printf.sprintf "Show up to $(docv)(defaults to %Ld) failing positions" !Param.Decode.failure_list_max_length in
   Arg.(value & opt (some int64) None & info ["show-fail-max"] ~docv:"SHOW-FAIL-MAX" ~doc)
+;;
+
+let no_meta =
+  let doc = "Use first whatever valid block as reference block. Use this when the container does not have metadata block or when you are okay with using a data block as reference." in
+  Arg.(value & flag & info ["no-meta"] ~doc)
 ;;
 
 let in_file =

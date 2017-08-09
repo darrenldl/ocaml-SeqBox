@@ -283,10 +283,10 @@ module Processor = struct
       (* report progress *)
       Progress.report_scan ~start_time_src:() ~units_so_far_src:stats ~total_units_src:in_file;
       match result_so_far with
-      | { meta = Some _; data = Some _ }                     -> (stats, result_so_far)
-      | { meta = Some _; data = _      } when prefer = `Meta -> (stats, result_so_far)
-      | { meta = _;      data = Some _ } when prefer = `Data -> (stats, result_so_far)
-      | _                                                    ->
+      | { meta = Some _; data = Some _ }                                      -> (stats, result_so_far)
+      | { meta = Some _; data = _      } when prefer = `Meta || prefer = `Any -> (stats, result_so_far)
+      | { meta = _;      data = Some _ } when prefer = `Data || prefer = `Any -> (stats, result_so_far)
+      | _                                                                     ->
         let raw_header_pred = gen_raw_header_pred result_so_far in
         let (read_len, block) = Processor_components.try_get_block_from_in_channel ~raw_header_pred in_file in
         if read_len = 0L then
@@ -385,20 +385,22 @@ module Processor = struct
     decode_and_output_proc_internal (Stats.make_blank_stats ~ver:(Block.block_to_ver ref_block))
   ;;
 
-  let ref_block_fetcher (in_file:in_channel) : Block.t option =
-    Printf.printf "Scanning for reference block\n";
-    match find_first_both_proc ~prefer:`Meta in_file with
-    | { meta = Some block; data = _          } ->
-      begin
-        Printf.printf "Metadata block found\n";
-        Some block
-      end
-    | { meta = None      ; data = Some block } ->
-      begin
-        Printf.printf "No metadata blocks were found, resorting to data block\n";
-        Some block
-      end
-    | { meta = None      ; data = None       } -> None
+  let make_ref_block_fetcher ~(prefer:Block.block_type) : (Block.t option) Stream.in_processor =
+    (fun in_file ->
+       Printf.printf "Scanning for reference block\n";
+       match find_first_both_proc ~prefer:`Meta in_file with
+       | { meta = Some block; data = _          } ->
+         begin
+           Printf.printf "Metadata block found\n";
+           Some block
+         end
+       | { meta = None      ; data = Some block } ->
+         begin
+           Printf.printf "No metadata blocks were found, resorting to data block\n";
+           Some block
+         end
+       | { meta = None      ; data = None       } -> None
+    )
   ;;
 
   let make_decoder ~(ref_block:Block.t option) : (stats * (int64 option)) Stream.in_out_processor =
@@ -406,7 +408,7 @@ module Processor = struct
        let ref_block : Block.t option =
          match ref_block with
          | Some _ as x -> x
-         | None        -> ref_block_fetcher in_file in
+         | None        -> (make_ref_block_fetcher ~prefer:`Meta) in_file in
        match ref_block with
        | None           -> raise (Packaged_exn "No usable blocks in file")
        | Some ref_block ->
@@ -460,8 +462,9 @@ module Processor = struct
 end
 
 module Process = struct
-  let fetch_ref_block ~(in_filename:string) : (Block.t option, string) result =
-    Stream.process_in ~in_filename Processor.ref_block_fetcher
+  let fetch_ref_block ~(prefer:Block.block_type) ~(in_filename:string) : (Block.t option, string) result =
+    let processor = Processor.make_ref_block_fetcher ~prefer in
+    Stream.process_in ~in_filename processor
   ;;
 
   let hash_file ~(hash_type:Multihash.hash_type) ~(in_filename:string) : (bytes, string) result =

@@ -55,7 +55,7 @@ let encode_cmd =
 let decode_cmd =
   let open Osbx_decode in
   let doc = "Decode sbx container" in
-  (Term.(const decode $ silent $ force $ show_max $ in_file $ out_file),
+  (Term.(const decode $ silent $ force $ no_meta $ show_max $ in_file $ out_file),
    Term.info "decode" ~doc
   )
 ;;
