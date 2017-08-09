@@ -270,9 +270,8 @@ module Processor = struct
   let find_first_both_proc ~(prefer:Block.block_type) (in_file:in_channel) : find_both_result =
     let open Read_chunk in
     let gen_raw_header_pred : find_both_result -> (Header.raw_header -> bool) =
-      let uint32_0 = Stdint.Uint32.of_int 0 in
-      let get_meta     = (fun x -> x.Header.seq_num  = uint32_0)
-      and get_data     = (fun x -> x.Header.seq_num <> uint32_0)
+      let get_meta     = Header.raw_header_is_meta
+      and get_data     = Header.raw_header_is_data
       and get_nothing  = (fun _ -> false)
       and get_anything = (fun _ -> true) in
       (function
