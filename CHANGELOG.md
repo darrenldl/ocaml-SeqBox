@@ -3,8 +3,10 @@
     - Changed fake\_uint16 to use int instead of int64
     - This makes encoding and decoding significantly faster
     - Other block related operations are also faster in general
+  - Added silent option to all modes
+    - Only affects progress text printing
 
-## 1.2.0  (being published on OPAM)
+## 1.2.0  (superseded by 1.2.1, not published on OPAM)
   - Fixed slightly off progress counting in Decode
   - Optimized decoding code to avoid searching for a reference block twice
   - Added command line option for decode and show

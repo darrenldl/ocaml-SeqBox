@@ -13,6 +13,7 @@ Table of Contents
       * [Acknowledgement](#acknowledgement)
       * [Getting started](#getting-started)
       * [Notes](#notes)
+      * [Tips](#tips)
       * [Links](#links)
       * [Possibly useful additional features of ocaml-SeqBox(possibly not yet in official SeqBox)](#possibly-useful-additional-features-of-ocaml-seqboxpossibly-not-yet-in-official-seqbox)
       * [Technical Specification](#technical-specification)
@@ -61,6 +62,10 @@ Exact behaviours in non-standard cases are not specified in official SeqBox tech
 Hashing libraries
   - Nocrypto for SHA1, SHA256, SHA512
   - Digestif for BLAKE2B\_512
+
+## Tips
+Enabling silent mode will likely speed things up
+  - This is due to progress text printing does quite a lot of formatting, and checking time interval has some overhead
 
 ## Links
 [Wiki](https://github.com/darrenldl/ocaml-SeqBox/wiki)
