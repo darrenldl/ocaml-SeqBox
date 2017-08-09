@@ -56,7 +56,7 @@ let show_max =
 ;;
 
 let no_meta =
-  let doc = "Use first whatever valid block as reference block. Use this when the container does not have metadata block or when you are okay with using a data block as reference." in
+  let doc = "Use first whatever valid block as reference block. Use this when the container does not have metadata block or when you are okay with using a data block as reference block." in
   Arg.(value & flag & info ["no-meta"] ~doc)
 ;;
 

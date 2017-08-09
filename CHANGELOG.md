@@ -1,6 +1,8 @@
 ## 1.2.2  (development version)
   - Optimized decoding code to speed up reference block scanning
     - Avoids decoding the sbx block in full when already has a block of that type
+  - Added no-meta option to decode mode
+    - If enabled, saves time by not looking for metadata block actively
 
 ## 1.2.1  (currently being published on OPAM)
   - Optmized CRC-CCITT
