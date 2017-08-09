@@ -1,4 +1,8 @@
-## 1.2.1  (development version)
+## 1.2.2  (development version)
+  - Optimized decoding code to speed up reference block scanning
+    - Avoids decoding the sbx block in full when already has a block of that type
+
+## 1.2.1  (currently being published on OPAM)
   - Optmized CRC-CCITT
     - Changed fake\_uint16 to use int instead of int64
     - This makes encoding and decoding significantly faster
@@ -21,7 +25,7 @@
     - General overhaul to improve quality
   - Optimized performance of progress printing code and log writing code
 
-## 1.1.1  (current version on OPAM)
+## 1.1.1  (newest version on OPAM)
   - Removed dependency on Core\_kernel
     - 1.1.1 uses a custom replacement of Core\_kernel.protect and OCaml Pervasives channels
 
