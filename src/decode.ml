@@ -269,15 +269,27 @@ module Processor = struct
 
   let find_first_both_proc ~(prefer:Block.block_type) (in_file:in_channel) : find_both_result =
     let open Read_chunk in
+    let gen_raw_header_pred : find_both_result -> (Header.raw_header -> bool) =
+      let uint32_0 = Stdint.Uint32.of_int 0 in
+      let get_meta     = (fun x -> x.Header.seq_num  = uint32_0)
+      and get_data     = (fun x -> x.Header.seq_num <> uint32_0)
+      and get_nothing  = (fun _ -> false)
+      and get_anything = (fun _ -> true) in
+      (function
+        | { meta = Some _; data = Some _ } -> get_nothing
+        | { meta = Some _; data = None   } -> get_data
+        | { meta = None  ; data = Some _ } -> get_meta
+        | { meta = None  ; data = None   } -> get_anything ) in
     let rec find_first_both_proc_internal (result_so_far:find_both_result) (stats:scan_stats) : scan_stats * find_both_result =
       (* report progress *)
       Progress.report_scan ~start_time_src:() ~units_so_far_src:stats ~total_units_src:in_file;
       match result_so_far with
       | { meta = Some _; data = Some _ }                     -> (stats, result_so_far)
-      | { meta = Some _; data = _ }      when prefer = `Meta -> (stats, result_so_far)
+      | { meta = Some _; data = _      } when prefer = `Meta -> (stats, result_so_far)
       | { meta = _;      data = Some _ } when prefer = `Data -> (stats, result_so_far)
       | _                                                    ->
-        let (read_len, block) = Processor_components.try_get_block_from_in_channel in_file in
+        let raw_header_pred = gen_raw_header_pred result_so_far in
+        let (read_len, block) = Processor_components.try_get_block_from_in_channel ~raw_header_pred in_file in
         if read_len = 0L then
           (stats, result_so_far)
         else
