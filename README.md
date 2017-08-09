@@ -167,4 +167,7 @@ The following files translated from libcrc source code are under the same MIT Li
   - src/crcccitt.ml
   - src/crcccitt.mli
 
+The files in tests folder copied from official SeqBox are under its license, which is AGPL as of time of writing
+  - tests/SeqBox/*
+
 All remaining files are distributed under the 3-Clause BSD license as stated in the LICENSE file
