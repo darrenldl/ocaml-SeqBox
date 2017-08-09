@@ -72,9 +72,7 @@ module Processor = struct
         let actual_offset = min target (Int64.pred in_length) in
         LargeFile.seek_in in_file actual_offset;
         actual_offset in
-    let raw_header_pred =
-      let uint32_0 = Stdint.Uint32.of_int 0 in
-      (fun x -> x.Header.seq_num = uint32_0) in
+    let raw_header_pred = Header.raw_header_is_meta in
     let rec find_meta_blocks_proc_internal (stats:stats) (acc:(Block.t * int64) list) : stats * ((Block.t * int64) list) =
       (* report progress *)
       Progress.report_scan ~start_time_src:() ~units_so_far_src:stats ~total_units_src:in_file;
