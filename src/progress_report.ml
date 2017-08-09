@@ -248,6 +248,11 @@ let gen_print_generic
          let { silent_when_done; _ } = !silence_settings in
          if not silent_when_done then
            begin
+             (* should be already initialised if the functions are used properly
+              * but putting it here to avoid exception in case the functions are not used appropriately
+              *)
+             if !start_time = None then start_time := Some (eval_start_time start_time_src);
+
              let start_time =
                match !start_time with
                | Some n -> n
