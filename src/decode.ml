@@ -364,7 +364,7 @@ module Processor = struct
     else
       (* determine position to write to using reference block and block's sequence number *)
       let ref_ver           = Block.block_to_ver ref_block in
-      let data_len  : int64 = Int64.of_int    (ver_to_data_size ref_ver) in
+      let data_len  : int64 = Int64.of_int (ver_to_data_size ref_ver) in
       match Block.block_to_seq_num block with
       | None         -> assert false
       | Some seq_num ->

@@ -211,8 +211,11 @@ end = struct
     | Error _   -> raise Invalid_bytes
   ;;
 
-  let raw_header_is_meta (raw_header:raw_header) : bool =
-    (Uint32.to_int raw_header.seq_num) = 0
+  let raw_header_is_meta : raw_header -> bool =
+    let uint32_0 : uint32 = Uint32.of_int 0 in
+    (fun raw_header ->
+       raw_header.seq_num = uint32_0
+    )
   ;;
 
   let raw_header_is_data (raw_header:raw_header) : bool =
