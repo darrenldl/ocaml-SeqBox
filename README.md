@@ -35,7 +35,7 @@ I would like to thank [Marco](https://github.com/MarcoPon) (author of the offici
 I would like to thank [Ming](https://github.com/mdchia/) for his feedback on the documentation, UX design, and several other general aspects of this project. And also his help on testing the building and installation of osbx on macOS.
 
 ## Getting started
-Osbx 1.1.1 is currently on OPAM, 1.2.0 is currently in the process of being published
+Osbx 1.2.1 is currently on OPAM, 1.2.2 will be published shortly
 ```
 opam install osbx
 ```
