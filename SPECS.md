@@ -40,8 +40,11 @@ Data block is valid if and only if
 
   1. A reference block is retrieved first(which is used for guidance on alignment, version, and uid)
     - the entire sbx container is scanned using alignment of 128 bytes, 128 is used as it is the largest common divisor of 512(block size for version 1), 128(block size for verion 2), and 4096(block size for version 3)
-    - if there is any valid metadata block in sbx container, then the first one will be used as reference block
-    - else the first valid data block will be used as reference block
+    - if no-meta flag is specified
+      - the first whatever valid block(i.e. valid metadata or data block) will be used as reference block
+    - else
+      - if there is any valid metadata block in sbx container, then the first one will be used as reference block
+      - else the first valid data block will be used as reference block
   2. Scan for valid blocks from start of sbx container to decode and output using reference block's block size as alignment
     - if a block is invalid, nothing is done
     - if a block is valid, and is a metadata block, nothing is done
