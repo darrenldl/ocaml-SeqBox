@@ -59,7 +59,8 @@ module Stats = struct
   let make_stats (bytes_processed:int64) (blocks_processed:int64) (meta_blocks_processed:int64) (data_blocks_processed:int64) : t =
     { bytes_processed =
         begin
-          let alignment = Int64.of_int Param.Common.block_scan_alignment in
+          let alignment       = Int64.of_int Param.Common.block_scan_alignment in
+          let bytes_processed = max bytes_processed 0L in
           (bytes_processed </> alignment ) <*> alignment
         end
     ; blocks_processed
