@@ -2,41 +2,33 @@
 
 truncate -s 1M dummy
 
-echo "decode using 0 show-fail-max"
-echo "========================================"
+./osbx encode dummy -f
 
-./osbx decode --show-fail-max=0 dummy
+VALS=(1 0 -1)
 
-echo ""
-echo "decode using -1 show-fail-max"
-echo "========================================"
+for v in ${VALS[*]}; do
+  echo "decode using $v show-fail-max"
+  echo "========================================"
 
-./osbx decode --show-fail-max=-1 dummy
+  ./osbx decode --show-fail-max=$v dummy.sbx -f
 
-echo ""
+  echo ""
+done
 
-echo "show using 0 find-max"
-echo "========================================"
+for v in ${VALS[*]}; do
+  echo "show using $v find-max"
+  echo "========================================"
 
-./osbx show --find-max=0 dummy
+  ./osbx show --find-max=$v dummy.sbx
 
-echo ""
-echo "show using -1 find-max"
-echo "========================================"
+  echo ""
+done
 
-./osbx show --find-max=-1 dummy
+for v in ${VALS[*]}; do
+  echo "show using $v skip-to"
+  echo "========================================"
 
-echo ""
+  ./osbx show --skip-to=$v dummy
 
-echo "show using 0 skip-to"
-echo "========================================"
-
-./osbx show --skip-to=0 dummy
-
-echo ""
-echo "show using -1 skip-to"
-echo "========================================"
-
-./osbx show --skip-to=-1 dummy
-
-echo ""
+  echo ""
+done
