@@ -69,7 +69,7 @@ Data block is valid if and only if
   1. Scan for valid blocks from start of the provided file using 128 bytes alignment
     - rescue mode rescues all 3 versions of sbx blocks
     - if log file is specified, then
-      - the log file will be used to initialize the scan's starting position
+      - if the log file exists, then it will be used to initialize the scan's starting position
         - bytes_processed field will be rounded down to closest multiple of 128 automatically
       - the log file will be updated on every ~1.0 second
     - each block is appended to OUTDIR/uid, where :
