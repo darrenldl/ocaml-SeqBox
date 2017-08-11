@@ -63,9 +63,9 @@ module Stats = struct
           let bytes_processed = max bytes_processed 0L in
           (bytes_processed </> alignment ) <*> alignment
         end
-    ; blocks_processed
-    ; meta_blocks_processed
-    ; data_blocks_processed
+    ; blocks_processed      = max blocks_processed      0L
+    ; meta_blocks_processed = max meta_blocks_processed 0L
+    ; data_blocks_processed = max data_blocks_processed 0L
     ; start_time = Sys.time ()
     }
   ;;
