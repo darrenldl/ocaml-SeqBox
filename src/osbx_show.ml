@@ -106,7 +106,7 @@ let show (silent:Progress_report.silence_level option) (find_max:int64 option) (
   Param.Common.set_silence_settings silent;
   try
     match find_max with
-    | Some 0L ->
+    | Some n when n <= 0L ->
       ()
     | None    ->
       begin
@@ -140,12 +140,14 @@ let show (silent:Progress_report.silence_level option) (find_max:int64 option) (
 let find_max =
   let doc = "Find first up to $(docv)(defaults to 1) metadata blocks.
   If the default is used(this option not specified), total block number and block number indicators are not shown.
-  If a number is provided, then all the indicators are shown, regardless of the value of $(docv)" in
+  If a number is provided, then all the indicators are shown, regardless of the value of $(docv).
+  Negative values are treated as 0." in
   Arg.(value & opt (some int64) None & info ["find-max"] ~docv:"FIND-MAX" ~doc)
 ;;
 
 let skip_to_byte =
-  let doc = Printf.sprintf "Skip to byte $(docv), the position is automatically rounded down to closest multiple of %d bytes"
+  let doc = Printf.sprintf "Skip to byte $(docv), the position is automatically rounded down to closest multiple of %d bytes
+  Negative values are treated as 0."
       Param.Common.block_scan_alignment in
   Arg.(value & opt (some int64) None & info ["skip-to"] ~docv:"BYTE" ~doc)
 ;;

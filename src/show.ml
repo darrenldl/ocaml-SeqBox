@@ -61,10 +61,12 @@ end
 module Processor = struct
   let find_meta_blocks_proc ~(skip_to_byte:int64 option) ~(get_at_most:int64) (in_file:in_channel) : (Block.t * int64) list =
     let open Read_chunk in
+    let get_at_most = max get_at_most 0L (* handle negative get_at_most *) in
     let offset : int64 =
       match skip_to_byte with
-      | None   -> 0L
-      | Some n ->
+      | None                -> 0L
+      | Some n when n <= 0L -> 0L (* handle negative skip_to_byte *)
+      | Some n              ->
         (* skip to some byte *)
         let alignment     = Int64.of_int Param.Common.block_scan_alignment in
         let target        = (n </> alignment) <*> alignment in
