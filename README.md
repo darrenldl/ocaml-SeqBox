@@ -147,7 +147,7 @@ N.B. Current versions differs only by blocksize.
 | HSH | crypto hash (using [Multihash](http://multiformats.io) protocol) |
 | PID | parent UID (*not used at the moment*)|
 
-Supported crypto hashes in 1.1.0 are
+Supported crypto hashes since 1.1.0 are
   - SHA1
   - SHA256
   - SHA512
