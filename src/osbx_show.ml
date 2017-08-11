@@ -146,7 +146,7 @@ let find_max =
 ;;
 
 let skip_to_byte =
-  let doc = Printf.sprintf "Skip to byte $(docv), the position is automatically rounded down to closest multiple of %d bytes
+  let doc = Printf.sprintf "Skip to byte $(docv), the position is automatically rounded down to closest multiple of %d bytes.
   Negative values are treated as 0."
       Param.Common.block_scan_alignment in
   Arg.(value & opt (some int64) None & info ["skip-to"] ~docv:"BYTE" ~doc)

@@ -51,7 +51,8 @@ let decode (silent:Progress_report.silence_level option) (force_out:bool) (no_me
 ;;
 
 let show_max =
-  let doc = Printf.sprintf "Show up to $(docv)(defaults to %Ld) failing positions" !Param.Decode.failure_list_max_length in
+  let doc = Printf.sprintf "Show up to $(docv)(defaults to %Ld) failing positions.
+  Negative values are treated as 0." !Param.Decode.failure_list_max_length in
   Arg.(value & opt (some int64) None & info ["show-fail-max"] ~docv:"SHOW-FAIL-MAX" ~doc)
 ;;
 
