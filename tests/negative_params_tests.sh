@@ -28,7 +28,7 @@ for v in ${VALS[*]}; do
   echo "show using $v skip-to"
   echo "========================================"
 
-  ./osbx show --skip-to=$v dummy
+  ./osbx show --skip-to=$v dummy.sbx
 
   echo ""
 done
