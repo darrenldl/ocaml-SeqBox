@@ -68,7 +68,7 @@ let uid =
 ;;
 
 let no_meta =
-  let doc = "No metadata block" in
+  let doc = "Do not put metadata block in the sbx container" in
   Arg.(value & flag & info ["no-meta"] ~doc)
 ;;
 
