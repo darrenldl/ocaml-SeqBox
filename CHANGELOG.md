@@ -3,6 +3,12 @@
     - Avoids decoding the sbx block in full when already has a block of that type
   - Added no-meta option to decode mode
     - If enabled, saves time by not looking for metadata block actively
+  - Added code to handle negative parameters
+    - decode
+      - show-fail-max
+    - show
+      - find-max
+      - skip-to
 
 ## 1.2.1  (newest version on OPAM)
   - Optmized CRC-CCITT
