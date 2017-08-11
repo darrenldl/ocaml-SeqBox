@@ -108,7 +108,7 @@ let show (silent:Progress_report.silence_level option) (find_max:int64 option) (
     match find_max with
     | Some n when n <= 0L ->
       ()
-    | None    ->
+    | None                ->
       begin
         match Process.fetch_single_meta ~skip_to_byte ~in_filename with
         | Ok res    ->
@@ -119,7 +119,7 @@ let show (silent:Progress_report.silence_level option) (find_max:int64 option) (
           end
         | Error str -> raise (Packaged_exn str)
       end
-    | _       ->
+    | _                   ->
       match Process.fetch_multi_meta ~skip_to_byte ~in_filename with
       | Ok res    ->
         begin
