@@ -35,7 +35,7 @@ I would like to thank [Marco](https://github.com/MarcoPon) (author of the offici
 I would like to thank [Ming](https://github.com/mdchia/) for his feedback on the documentation, UX design, and several other general aspects of this project. And also his help on testing the building and installation of osbx on macOS.
 
 ## Getting started
-Osbx 1.2.1 is currently on OPAM, 1.2.2 will be published shortly
+Osbx 1.2.2 is available through OPAM.
 ```
 opam install osbx
 ```
@@ -51,6 +51,8 @@ osbx show   --help
 ```
 
 ## Notes
+Version 1.2.2 is considered to be feature complete and mature enough for production use, but any bug reports or suggestions are very welcome - just open an issue!
+
 CRC-CCITT is currently implemented in pure OCaml and is translated from implementation in [libcrc](https://github.com/lammertb/libcrc)
   - See src/crcccitt.ml, src/crcccitt.mli for the OCaml implementation
     - The translated source code is under the same MIT license used by and stated in libcrc source code
