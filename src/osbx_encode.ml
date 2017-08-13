@@ -53,8 +53,6 @@ let encode (silent:Progress_report.silence_level option) (force_out:bool) (no_me
       match hash_type with
       | Some str -> str
       | None     -> "SHA256" in
-
-
     match Process.encode_file ~uid ~want_meta:(not no_meta) ~ver ~hash ~in_filename ~out_filename with
     | Ok stats  -> Stats.print_stats stats
     | Error msg -> raise (Packaged_exn msg)

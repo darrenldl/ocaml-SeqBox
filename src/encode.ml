@@ -62,7 +62,6 @@ module Stats = struct
     let (hour, minute, second) = Progress_report.Helper.seconds_to_hms (int_of_float (Sys.time() -. stats.start_time)) in
     Printf.printf "Time elapsed                      : %02d:%02d:%02d\n" hour minute second
   ;;
-
 end
 
 type stats = Stats.t
