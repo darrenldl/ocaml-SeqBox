@@ -19,7 +19,7 @@ let decode (silent:Progress_report.silence_level option) (force_out:bool) (no_me
       | None     -> (
           match stored_out_filename with
           | None     ->
-            raise (Packaged_exn "No original filename was found in sbx container and no output file name/path was provided")
+            raise (Packaged_exn "No original file name was found in sbx container and no output file name/path was provided")
           | Some str ->
             str
         )
@@ -35,7 +35,10 @@ let decode (silent:Progress_report.silence_level option) (force_out:bool) (no_me
             Misc_utils.make_path [provided_path; stored_out_filename_no_path]
           |     (true                , true                , None               )
             -> raise (Packaged_exn
-                        (Printf.sprintf "No original filename was found in sbx container and %s is a directory" provided_path))
+                        (Printf.sprintf
+                           "No original file name was found in sbx container and %s is a directory
+Please provide a file name"
+                           provided_path))
           |     (false               , _                   , _                  )
             -> provided_path in
     if Sys.file_exists final_out_path && not force_out then
