@@ -1,4 +1,7 @@
-## 1.2.2  (development version)
+## 1.2.3  (development version)
+  - Message text polishing
+
+## 1.2.2  (newest version on OPAM)
   - Optimized decoding code to speed up reference block scanning
     - Avoids decoding the sbx block in full when already has a block of that type
   - Added no-meta option to decode mode
@@ -10,7 +13,7 @@
       - find-max
       - skip-to
 
-## 1.2.1  (newest version on OPAM)
+## 1.2.1  (published on OPAM)
   - Optmized CRC-CCITT
     - Changed fake\_uint16 to use int instead of int64
     - This makes encoding and decoding significantly faster
