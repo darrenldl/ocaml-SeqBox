@@ -37,7 +37,7 @@ let decode (silent:Progress_report.silence_level option) (force_out:bool) (no_me
             -> raise (Packaged_exn
                         (Printf.sprintf
                            "No original file name was found in sbx container and %s is a directory
-Please provide a file name"
+Please provide an output file name/path that is not a directory"
                            provided_path))
           |     (false               , _                   , _                  )
             -> provided_path in
