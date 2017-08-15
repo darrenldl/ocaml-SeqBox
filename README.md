@@ -12,6 +12,8 @@ Table of Contents
    * [ocaml-SeqBox](#ocaml-seqbox)
       * [Acknowledgement](#acknowledgement)
       * [Getting started](#getting-started)
+         * [Recordings](#recordings)
+         * [Installation](#installation)
       * [Notes](#notes)
       * [Tips](#tips)
       * [Links](#links)
