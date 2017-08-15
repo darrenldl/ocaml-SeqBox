@@ -16,6 +16,7 @@ Table of Contents
          * [Installation](#installation)
       * [Notes](#notes)
       * [Tips](#tips)
+      * [Gotchas](#gotchas)
       * [Links](#links)
       * [Possibly useful additional features of ocaml-SeqBox(possibly not yet in official SeqBox)](#possibly-useful-additional-features-of-ocaml-seqboxpossibly-not-yet-in-official-seqbox)
       * [Technical Specification](#technical-specification)
@@ -76,6 +77,9 @@ Hashing libraries
 ## Tips
 Enabling silent mode is likely to speed things up
   - This is due to progress text printing does quite a lot of formatting, and checking time interval has some overhead
+
+## Gotchas
+See wiki
 
 ## Links
 [Wiki](https://github.com/darrenldl/ocaml-SeqBox/wiki)
