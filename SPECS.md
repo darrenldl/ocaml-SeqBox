@@ -4,6 +4,7 @@ Table of Contents
 =================
 
    * [Specification of ocaml-SeqBox](#specification-of-ocaml-seqbox)
+      * [Error handling behaviour in general](#error-handling-behaviour-in-general)
       * [Encoding workflow](#encoding-workflow)
       * [Decoding workflow](#decoding-workflow)
             * [Handling of duplicate metadata/data blocks](#handling-of-duplicate-metadatadata-blocks)
@@ -15,6 +16,11 @@ Table of Contents
       * [To successfully rescue your sbx container](#to-successfully-rescue-your-sbx-container)
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
+
+## Error handling behaviour in general
+  - Osbx does **not** remove the generated file even in case of failure
+    - This applies to encoding, decoding, rescuing (showing does not generate any files)
+    - This is mainly for in case the partial data is useful to the user
 
 ## Encoding workflow
   1. If metadata is enabled, the following file metadata are gathered from file or retrieved from user input : file name, sbx file name, file size, file last modification time, encoding start time
