@@ -283,7 +283,7 @@ end = struct
     let rec length_distribution_helper (lst:(id * bytes) list) (acc:string list) : string =
       match lst with
       | []              -> (String.concat "\n" (List.rev acc))
-      | (id, data) :: vs -> let str = Printf.sprintf "id : %s, len : %d" (id_to_string id) (Bytes.length data) in
+      | (id, data) :: vs -> let str = Printf.sprintf "id : %s, len : %3d" (id_to_string id) (Bytes.length data) in
         length_distribution_helper vs (str :: acc) in
     let distribution_str = length_distribution_helper lst [] in
     String.concat "\n" ["The length distribution of the metadata:"; distribution_str]
