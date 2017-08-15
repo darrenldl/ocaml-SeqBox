@@ -79,7 +79,7 @@ Enabling silent mode is likely to speed things up
   - This is due to progress text printing does quite a lot of formatting, and checking time interval has some overhead
 
 ## Gotchas
-See wiki
+See [wiki page](https://github.com/darrenldl/ocaml-SeqBox/wiki/Gotchas)
 
 ## Links
 [Wiki](https://github.com/darrenldl/ocaml-SeqBox/wiki)
