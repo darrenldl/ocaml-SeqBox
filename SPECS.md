@@ -18,7 +18,7 @@ Table of Contents
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
 ## Error handling behaviour in general
-  - Osbx does **not** remove the generated file even in case of failure
+  - Osbx does **not** remove the generated file(s) even in case of failure
     - This applies to encoding, decoding, rescuing (showing does not generate any files)
     - This is mainly for in case the partial data is useful to the user
 
