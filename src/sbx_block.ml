@@ -556,7 +556,7 @@ end = struct
     Checker.check_crc_ccitt   raw_block;
     let {header = raw_header; data = raw_data} = raw_block in
     let common = Header.make_common_fields ~uid:raw_header.file_uid raw_header.version in
-    if raw_header.seq_num = (Uint32.of_int 0) then
+    if Header.raw_header_is_meta raw_header then
       let fields = Metadata.of_bytes raw_data in
       make_metadata_block common ~fields
     else
