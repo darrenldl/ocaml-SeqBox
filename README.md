@@ -35,6 +35,10 @@ I would like to thank [Marco](https://github.com/MarcoPon) (author of the offici
 I would like to thank [Ming](https://github.com/mdchia/) for his feedback on the documentation, UX design, and several other general aspects of this project. And also his help on testing the building and installation of osbx on macOS.
 
 ## Getting started
+### Screenshots/Recordings
+You can view the screenshots [here](https://github.com/darrenldl/ocaml-SeqBox/wiki/Screenshots) and the recordings [here](https://github.com/darrenldl/ocaml-SeqBox/wiki/Recordings)
+
+### Installation
 Osbx 1.2.2 is available through OPAM.
 ```
 opam install osbx
