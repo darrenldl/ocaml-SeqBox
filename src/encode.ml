@@ -60,7 +60,7 @@ module Stats = struct
     Printf.printf "Number of blocks written (data)     : %Ld\n" stats.data_blocks_written;
     Printf.printf "Amount of data encoded (in bytes)   : %Ld\n" stats.total_data_encoded;
     let (hour, minute, second) = Progress_report.Helper.seconds_to_hms (int_of_float (Sys.time() -. stats.start_time)) in
-    Printf.printf "Time elapsed                      : %02d:%02d:%02d\n" hour minute second
+    Printf.printf "Time elapsed                        : %02d:%02d:%02d\n" hour minute second
   ;;
 end
 
