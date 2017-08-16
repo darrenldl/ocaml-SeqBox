@@ -13,7 +13,16 @@ let help_secs = [ `S Manpage.s_common_options
 
 let sbx_version =
   let doc = "Sbx container version, one of : 1(bs=512 bytes, default) 2(bs=128 bytes) 3(bs=4096 bytes) where bs=sbx block size" in
-  Arg.(value & opt (some string) None & info ["sbx-version"] ~docv:"SBX-VERSION" ~doc)
+  let open Sbx_specs in
+  Arg.(value
+       & opt
+         (enum [("1", (`V1:version));
+                ("2", (`V2:version));
+                ("3", (`V3:version))])
+         (`V1:version)
+       & info ["sbx-version"]
+         ~docv:"SBX-VERSION"
+         ~doc)
 ;;
 
 let silent =
