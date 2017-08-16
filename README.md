@@ -33,7 +33,7 @@ Table of Contents
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
 ## Acknowledgement
-I would like to thank [Marco](https://github.com/MarcoPon) (author of the official SeqBox) for discussing and clarifying several aspects of his project, and providing me with test data
+I would like to thank [Marco](https://github.com/MarcoPon/) (author of the official SeqBox) for discussing and clarifying several aspects of his project, and providing me with test data
 
 I would like to thank [Ming](https://github.com/mdchia/) for his feedback on the documentation, UX design, and several other general aspects of this project. And also his help on testing the building and installation of osbx on macOS.
 
