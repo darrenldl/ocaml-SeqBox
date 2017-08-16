@@ -5,7 +5,7 @@ module Common = struct
 
   let silence_settings         = ref default_silence_settings
 
-  let set_silence_settings (level:silence_level option) : unit =
+  let set_silence_settings (level:silence_level) : unit =
     silence_settings := Progress_report.Helper.silence_level_to_silence_settings level
   ;;
 end

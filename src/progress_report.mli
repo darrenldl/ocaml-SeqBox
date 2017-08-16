@@ -1,4 +1,4 @@
-type silence_level = L0 | L1
+type silence_level = L0 | L1 | L2
 
 type silence_settings
 
@@ -29,7 +29,7 @@ type progress_element = Percentage
 module Helper : sig
   val seconds_to_hms : int -> int * int * int
 
-  val silence_level_to_silence_settings : silence_level option -> silence_settings
+  val silence_level_to_silence_settings : silence_level -> silence_settings
 end
 
 val default_silence_settings : silence_settings

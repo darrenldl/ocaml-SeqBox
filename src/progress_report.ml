@@ -1,4 +1,4 @@
-type silence_level = L0 | L1
+type silence_level = L0 | L1 | L2
 
 type silence_settings =
   { silent_while_active : bool
@@ -91,15 +91,15 @@ module Helper = struct
     String.concat "" ["["; filled_part; empty_part; "]"]
   ;;
 
-  let silence_level_to_silence_settings (level:silence_level option) : silence_settings =
+  let silence_level_to_silence_settings (level:silence_level) : silence_settings =
     match level with
-    | None    -> { silent_while_active = false; silent_when_done = false }
-    | Some L0 -> { silent_while_active = true ; silent_when_done = false }
-    | Some L1 -> { silent_while_active = true ; silent_when_done = true  }
+    | L0 -> { silent_while_active = false; silent_when_done = false }
+    | L1 -> { silent_while_active = true ; silent_when_done = false }
+    | L2 -> { silent_while_active = true ; silent_when_done = true  }
   ;;
 end
 
-let default_silence_settings = Helper.silence_level_to_silence_settings None;;
+let default_silence_settings = Helper.silence_level_to_silence_settings L0;;
 
 let make_message ~(info:info) ~(elements:progress_element list) : string =
   let { percent; cur_time; cur_rate; avg_rate; unit; time_used; time_left } = info in
