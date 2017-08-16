@@ -17,7 +17,9 @@ let sbx_version =
 ;;
 
 let silent =
-  let doc = "One of : 0(only show progress stats when done) 1(show nothing). This only affects progress text printing." in
+  let doc = "One of : 0(only show progress stats when done) 1(show nothing).
+  This only affects progress text printing.
+  Progress text is shown as normal if this is not specified." in
   let open Progress_report in
   Arg.(value & opt (some (enum [("0", L0); ("1", L1)])) None & info ["s"; "silent"] ~docv:"LEVEL" ~doc)
 ;;
@@ -63,7 +65,7 @@ let decode_cmd =
 let rescue_cmd =
   let open Osbx_rescue in
   let doc = "Rescue sbx data from file" in
-  (Term.(const rescue $ silent $ in_file $ out_dir $ log_file),
+  (Term.(const rescue $ silent $ only_pick $ in_file $ out_dir $ log_file),
    Term.info "rescue" ~doc
   )
 ;;
