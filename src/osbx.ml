@@ -12,7 +12,7 @@ let help_secs = [ `S Manpage.s_common_options
 ;;
 
 let sbx_version =
-  let doc = "Sbx container version, one of : 1(bs=512 bytes, default) 2(bs=128 bytes) 3(bs=4096 bytes) where bs=sbx block size" in
+  let doc = "Sbx container version, one of : 1(bs=512 bytes) 2(bs=128 bytes) 3(bs=4096 bytes) where bs=sbx block size" in
   let open Sbx_specs in
   Arg.(value
        & opt
