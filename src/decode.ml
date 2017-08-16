@@ -242,7 +242,7 @@ module Progress = struct
       }
     : (unit, stats, stats * in_channel) Progress_report.progress_print_functions =
     Progress_report.gen_print_generic
-      ~header:"Decode progress"
+      ~header:"Data decoding progress"
       ~silence_settings:Param.Common.silence_settings
       ~display_while_active:Param.Decode.Decode_progress.display_while_active
       ~display_on_finish:Param.Decode.Decode_progress.display_on_finish
