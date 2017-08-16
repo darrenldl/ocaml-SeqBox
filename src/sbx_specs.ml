@@ -101,5 +101,5 @@ let string_to_ver       (str:string)  : (version, string) result =
 ;;
 
 let ver_to_string       (ver:version) : string =
-  Printf.sprintf "%d" (ver_to_int ver)
+  string_of_int (ver_to_int ver)
 ;;
