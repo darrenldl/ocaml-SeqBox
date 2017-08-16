@@ -73,6 +73,8 @@ module Block : sig
 
   val block_to_meta       : t -> Metadata.t list
 
+  val block_to_block_type : t -> block_type
+
   val is_meta             : t -> bool
 
   val is_data             : t -> bool
