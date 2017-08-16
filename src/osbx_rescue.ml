@@ -13,8 +13,9 @@ let only_pick =
   let open Sbx_block.Block in
   Arg.(value
        & opt
-         (enum
-            [("any", (`Any:block_type)); ("meta", (`Meta:block_type)); ("data", (`Data:block_type))])
+         (enum [("any",  (`Any:block_type));
+                ("meta", (`Meta:block_type));
+                ("data", (`Data:block_type))])
          (`Any:block_type)
        & info
          ["only-pick"]

@@ -29,7 +29,15 @@ let silent =
   let doc = "One of : 0(show everything), 1(only show progress stats when done) 2(show nothing).
   This only affects progress text printing." in
   let open Progress_report in
-  Arg.(value & opt (enum [("0", L0); ("1", L1); ("2", L2)]) L0 & info ["s"; "silent"] ~docv:"LEVEL" ~doc)
+  Arg.(value
+       & opt
+         (enum [("0", L0);
+                ("1", L1);
+                ("2", L2)])
+         L0
+       & info ["s"; "silent"]
+         ~docv:"LEVEL"
+         ~doc)
 ;;
 
 let force =
