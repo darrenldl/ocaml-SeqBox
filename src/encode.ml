@@ -53,12 +53,12 @@ module Stats = struct
     }
 
   let print_stats (stats:t) : unit =
-    Printf.printf "Block size used in encoding       : %d\n"  stats.block_size;
-    Printf.printf "Data  size used in encoding       : %d\n"  stats.data_size;
-    Printf.printf "Number of          blocks written : %Ld\n" stats.blocks_written;
-    Printf.printf "Number of metadata blocks written : %Ld\n" stats.meta_blocks_written;
-    Printf.printf "Number of data     blocks written : %Ld\n" stats.data_blocks_written;
-    Printf.printf "Amount of data encoded (in bytes) : %Ld\n" stats.total_data_encoded;
+    Printf.printf "Block size used in encoding         : %d\n"  stats.block_size;
+    Printf.printf "Data  size used in encoding         : %d\n"  stats.data_size;
+    Printf.printf "Number of blocks written            : %Ld\n" stats.blocks_written;
+    Printf.printf "Number of blocks written (metadata) : %Ld\n" stats.meta_blocks_written;
+    Printf.printf "Number of blocks written (data)     : %Ld\n" stats.data_blocks_written;
+    Printf.printf "Amount of data encoded (in bytes)   : %Ld\n" stats.total_data_encoded;
     let (hour, minute, second) = Progress_report.Helper.seconds_to_hms (int_of_float (Sys.time() -. stats.start_time)) in
     Printf.printf "Time elapsed                      : %02d:%02d:%02d\n" hour minute second
   ;;
