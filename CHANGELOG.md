@@ -2,6 +2,8 @@
   - Message text polishing
   - Fixed division by zero error/exception in progress reporting when number of total units is 0
     - The error/exception affects all four modes when dealing with files of size 0 bytes
+  - Added only-pick option to rescue mode
+    - This allows asking osbx to only pick some type(s) of blocks during rescuing
 
 ## 1.2.2  (newest version on OPAM)
   - Optimized decoding code to speed up reference block scanning
