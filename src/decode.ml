@@ -331,7 +331,7 @@ module Processor = struct
       match result_so_far with
       | Some _ as x -> (stats, x)
       | None        ->
-        let (read_len, block) = Processor_components.try_get_block_from_in_channel ~fixed_len:ref_block_size in_file in
+        let (read_len, block) = Processor_components.try_get_block_from_in_channel ~fixed_ver:ref_ver in_file in
         if read_len = 0L then
           (stats, result_so_far)
         else
