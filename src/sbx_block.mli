@@ -30,7 +30,6 @@ end
 
 module Metadata : sig
   exception Too_much_data of string
-  (* exception Invalid_entry of string *)
   exception Invalid_bytes
 
   type t =

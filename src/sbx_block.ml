@@ -225,7 +225,6 @@ end
 
 module Metadata : sig
   exception Too_much_data of string
-  (* exception Invalid_entry of string *)
   exception Invalid_bytes
 
   type t =
@@ -575,8 +574,8 @@ end = struct
         | (None,   _)     ->
           let header_bytes = Misc_utils.get_bytes raw_data ~pos:0 ~len:16 in
           (Header.of_bytes header_bytes, 16) in
-      let data         = Misc_utils.get_bytes_exc_range raw_data ~start_at:data_offset ~end_before:(Bytes.length raw_data) in
-      let raw_block    = {header; data} in
+      let data      = Misc_utils.get_bytes_exc_range raw_data ~start_at:data_offset ~end_before:(Bytes.length raw_data) in
+      let raw_block = {header; data} in
       raw_block_to_block raw_block
     with
     | Misc_utils.Invalid_range -> raise Invalid_size
