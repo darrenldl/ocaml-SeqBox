@@ -23,3 +23,7 @@ val path_to_file : string -> string
 val get_option_ref_init_if_none : (unit -> 'a) -> 'a option ref -> 'a
 
 val pad_string : string -> int -> char -> string
+
+val round_down_to_multiple_int64 : multiple_of:int64 -> int64 -> int64
+
+val round_down_to_multiple       : multiple_of:int   -> int   -> int
