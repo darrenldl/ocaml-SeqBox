@@ -296,10 +296,21 @@ module Processor = struct
        match possibly_stats with
        | Error msg -> Error msg (* just exit due to error *)
        | Ok stats  ->
-         (* seek to last position read *)
-         LargeFile.seek_in in_file stats.bytes_processed;
-         (* start scan and output process *)
-         Ok (scan_and_output in_file ~only_pick ~stats ~out_dirname ~log_filename)
+         let seek_to   = stats.bytes_processed in
+         let file_size = LargeFile.in_channel_length in_file in
+         (* check if last position read is within valid range *)
+         if      seek_to < file_size then
+           begin
+             (* seek to last position read *)
+             LargeFile.seek_in in_file seek_to;
+             (* start scan and output process *)
+             Ok (scan_and_output in_file ~only_pick ~stats ~out_dirname ~log_filename)
+           end
+         else if seek_to = file_size then
+           (* do nothing *)
+           Ok stats
+         else
+           Error "Logged bytes processed exceeds file size"
     )
   ;;
 end
