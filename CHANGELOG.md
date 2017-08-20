@@ -4,6 +4,8 @@
     - The error/exception affects all four modes when dealing with files of size 0 bytes
   - Added only-pick option to rescue mode
     - This allows asking osbx to only pick some type(s) of blocks during rescuing
+  - Added seek position checking code for rescue log file
+    - This prevents showing "Unknown error" in rescue mode when logged bytes processed field exceeds the file size
 
 ## 1.2.2  (newest version on OPAM)
   - Optimized decoding code to speed up reference block scanning
