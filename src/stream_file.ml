@@ -193,7 +193,7 @@ module Stream = struct
     | Write_from_buf.Invalid_offset   -> Error "Invalid offset provided to Write_from_buf.write"
     | Write_from_buf.Invalid_length   -> Error "Invalid length provided to Write_from_buf.write"
     | Sys_error msg                   -> Error (Sprintf_helper.sprintf_failed_to_rw ~in_filename ~out_filename ~msg)
-    | _ when Debug_param.Stream_file.capture_all_exn_in_unknown_err -> Error "Unknown failure"
+    | _ when Debug_param.Stream_file.capture_all_exn_in_unknown_err -> Error "Unknown error"
   ;;
 
   let process_in ?(pack_break_into_error:bool = true) ~(in_filename:string) (processor:('a in_processor))   : ('a, string) result =
@@ -219,7 +219,7 @@ module Stream = struct
     | Read_into_buf.Invalid_offset    -> Error "Invalid offset provided to Read_into_buf.read"
     | Read_into_buf.Invalid_length    -> Error "Invalid length provided to Read_into_buf.read"
     | Sys_error msg                   -> Error (Sprintf_helper.sprintf_failed_to_read ~in_filename ~msg)
-    | _ when Debug_param.Stream_file.capture_all_exn_in_unknown_err -> Error "Unknown failure"
+    | _ when Debug_param.Stream_file.capture_all_exn_in_unknown_err -> Error "Unknown error"
   ;;
 
   let process_out ?(pack_break_into_error:bool = true) ~(append:bool) ~(out_filename:string) (processor:('a out_processor)) : ('a, string) result =
@@ -245,6 +245,6 @@ module Stream = struct
     | Write_from_buf.Invalid_offset   -> Error "Invalid offset provided to Write_from_buf.write"
     | Write_from_buf.Invalid_length   -> Error "Invalid length provided to Write_from_buf.write"
     | Sys_error msg                   -> Error (Sprintf_helper.sprintf_failed_to_write ~out_filename ~msg)
-    | _ when Debug_param.Stream_file.capture_all_exn_in_unknown_err -> Error "Unknown failure"
+    | _ when Debug_param.Stream_file.capture_all_exn_in_unknown_err -> Error "Unknown error"
   ;;
 end
