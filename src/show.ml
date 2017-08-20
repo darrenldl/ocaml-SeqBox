@@ -69,7 +69,7 @@ module Processor = struct
       | Some n              ->
         (* skip to some byte *)
         let alignment     = Int64.of_int Param.Common.block_scan_alignment in
-        let target        = (n </> alignment) <*> alignment in
+        let target        = Misc_utils.round_down_to_multiple_int64 ~multiple_of:alignment n in
         let in_length     = LargeFile.in_channel_length in_file in
         let actual_offset = min target (Int64.pred in_length) in
         LargeFile.seek_in in_file actual_offset;
