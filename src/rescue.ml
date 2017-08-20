@@ -57,12 +57,7 @@ module Stats = struct
    * by rounding down to closest multiple of block scan alignment
    *)
   let make_stats (bytes_processed:int64) (blocks_processed:int64) (meta_blocks_processed:int64) (data_blocks_processed:int64) : t =
-    { bytes_processed =
-        begin
-          let alignment       = Int64.of_int Param.Common.block_scan_alignment in
-          let bytes_processed = max bytes_processed 0L in
-          (bytes_processed </> alignment ) <*> alignment
-        end
+    { bytes_processed       = bytes_processed
     ; blocks_processed      = max blocks_processed      0L
     ; meta_blocks_processed = max meta_blocks_processed 0L
     ; data_blocks_processed = max data_blocks_processed 0L
@@ -301,8 +296,9 @@ module Processor = struct
          (* check if last position read is within valid range *)
          if      seek_to < file_size then
            begin
+             let multiple_of = Int64.of_int Param.Common.block_scan_alignment in
              (* seek to last position read *)
-             LargeFile.seek_in in_file seek_to;
+             LargeFile.seek_in in_file (Misc_utils.round_down_to_multiple_int64 ~multiple_of seek_to);
              (* start scan and output process *)
              Ok (scan_and_output in_file ~only_pick ~stats ~out_dirname ~log_filename)
            end
