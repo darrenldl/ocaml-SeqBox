@@ -65,8 +65,8 @@ let print_meta ((block, pos):Block.t * int64) : unit =
              )
       | None         -> None
       | _            -> assert false in
-    Printf.printf "Found at byte          : %Ld\n"
-      pos;
+    Printf.printf "Found at byte          : %Ld - 0x%LX\n"
+      pos pos;
     print_newline ();
     Printf.printf "File UID               : %s\n"
       uid;
