@@ -3,6 +3,8 @@ open Nocrypto.Hash
 
 type date_time_mode = [ `UTC | `Local ]
 
+type case = [ `Upper | `Lower ]
+
 let uint64_to_bytes (v:uint64) : bytes =
   let buf = Bytes.create 8 in
   Uint64.to_bytes_big_endian v buf 0;
@@ -31,9 +33,19 @@ let string_to_bytes (str:string) : bytes =
   Bytes.of_string str
 ;;
 
-let bytes_to_hex_string (data:bytes) : string =
+let bytes_to_hex_string ~(case:case) (data:bytes) : string =
   let `Hex str = Hex.of_cstruct (Cstruct.of_bytes data) in
-  str
+  match case with
+  | `Upper -> String.uppercase_ascii str
+  | `Lower -> String.lowercase_ascii str
+;;
+
+let bytes_to_hex_string_uid  (data:bytes) : string =
+  bytes_to_hex_string ~case:`Upper data
+;;
+
+let bytes_to_hex_string_hash (data:bytes) : string =
+  bytes_to_hex_string ~case:`Lower data
 ;;
 
 let hex_string_to_bytes (str:string) : (bytes, string) result =

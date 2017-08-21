@@ -28,7 +28,7 @@ let print_meta ((block, pos):Block.t * int64) : unit =
     assert false
   else
     let open Metadata in
-    let uid : string  = Conv_utils.bytes_to_hex_string (Block.block_to_file_uid block) in
+    let uid : string  = Conv_utils.bytes_to_hex_string_uid (Block.block_to_file_uid block) in
     let ver : string  = Sbx_specs.ver_to_string (Block.block_to_ver block) in
     let metadata_list = dedup (Block.block_to_meta block) in
     let fnm : string option =
@@ -61,7 +61,7 @@ let print_meta ((block, pos):Block.t * int64) : unit =
       | Some (HSH v) ->
         Some (Printf.sprintf "%s - %s"
                 (Multihash.hash_bytes_to_hash_type_string v)
-                (Conv_utils.bytes_to_hex_string (Multihash.hash_bytes_to_raw_hash v))
+                (Conv_utils.bytes_to_hex_string_hash (Multihash.hash_bytes_to_raw_hash v))
              )
       | None         -> None
       | _            -> assert false in

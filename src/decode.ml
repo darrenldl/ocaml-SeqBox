@@ -154,7 +154,7 @@ module Stats = struct
        | Some hsh ->
          Printf.sprintf "%s - %s"
            (Multihash.hash_bytes_to_hash_type_string hsh)
-           (Conv_utils.bytes_to_hex_string (Multihash.hash_bytes_to_raw_hash hsh))
+           (Conv_utils.bytes_to_hex_string_hash (Multihash.hash_bytes_to_raw_hash hsh))
        | None     ->
          "N/A"
       );
@@ -163,7 +163,7 @@ module Stats = struct
        | (Some hsh, _     )     ->
          Printf.sprintf "%s - %s"
            (Multihash.hash_bytes_to_hash_type_string hsh)
-           (Conv_utils.bytes_to_hex_string (Multihash.hash_bytes_to_raw_hash hsh))
+           (Conv_utils.bytes_to_hex_string_hash (Multihash.hash_bytes_to_raw_hash hsh))
        | (None    , Some _)     ->
          "N/A - recorded hash type is not supported by osbx"
        | (None    , None  )     ->

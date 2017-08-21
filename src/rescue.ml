@@ -249,7 +249,7 @@ module Processor = struct
     let (block, chunk) = block_and_chunk in
     let out_filename =
       let uid_hex =
-        Conv_utils.bytes_to_hex_string (Block.block_to_file_uid block) in
+        Conv_utils.bytes_to_hex_string_uid (Block.block_to_file_uid block) in
       Misc_utils.make_path [out_dirname; uid_hex] in
     let output_proc_internal_processor (out_file:out_channel) : unit =
       let open Write_chunk in
