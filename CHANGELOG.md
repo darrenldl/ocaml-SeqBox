@@ -6,6 +6,7 @@
     - This allows asking osbx to only pick some type(s) of blocks during rescuing
   - Added seek position checking code for rescue log file
     - This prevents showing "Unknown error" in rescue mode when logged bytes processed field exceeds the file size
+  - File UID hex is printed in upper case
 
 ## 1.2.2  (newest version on OPAM)
   - Optimized decoding code to speed up reference block scanning
