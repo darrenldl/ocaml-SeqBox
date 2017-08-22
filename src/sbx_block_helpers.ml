@@ -14,3 +14,10 @@ let try_block_to_filename (block:Block.t option) : string option =
   | Some block -> block_to_filename block
   | None       -> None
 ;;
+
+let block_type_to_raw_header_pred (block_type:Block.block_type) : (Header.raw_header -> bool) =
+  match block_type with
+  | `Meta -> Header.raw_header_is_meta
+  | `Data -> Header.raw_header_is_data
+  | `Any  -> (fun _ -> true) in
+;;
