@@ -207,11 +207,7 @@ module Processor = struct
   (* scan for valid block *)
   let scan_proc ~(only_pick:Block.block_type) ~(stats:stats) ~(log_filename:string option) (in_file:in_channel) : stats * ((Block.t * bytes) option) =
     let open Read_chunk in
-    let raw_header_pred =
-      match only_pick with
-      | `Meta -> Header.raw_header_is_meta
-      | `Data -> Header.raw_header_is_data
-      | `Any  -> (fun _ -> true) in
+    let raw_header_pred = Sbx_block_helpers.block_type_to_raw_header_pred only_pick in
     let rec scan_proc_internal (stats:stats) (result_so_far:(Block.t * bytes) option) : stats * ((Block.t * bytes) option) =
       (* report progress *)
       Progress.report_encode ~start_time_src:() ~units_so_far_src:stats ~total_units_src:in_file;
