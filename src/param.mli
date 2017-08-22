@@ -54,6 +54,16 @@ module Rescue : sig
   val log_write_interval       : float
 end
 
+module Scan : sig
+  val progress_report_interval : float
+
+  module Scan_progress : sig
+    val display_while_active    : Progress_report.progress_element list
+    val display_on_finish       : Progress_report.progress_element list
+    val display_on_finish_early : Progress_report.progress_element list
+  end
+end
+
 module Show : sig
   val progress_report_interval : float
 
