@@ -17,6 +17,7 @@ Table of Contents
       * [Notes](#notes)
       * [Tips](#tips)
       * [Gotchas](#gotchas)
+      * [Helpers](#helpers)
       * [Links](#links)
       * [Possibly useful additional features of ocaml-SeqBox(possibly not yet in official SeqBox)](#possibly-useful-additional-features-of-ocaml-seqboxpossibly-not-yet-in-official-seqbox)
       * [Technical Specification](#technical-specification)
@@ -79,6 +80,9 @@ See [wiki page](https://github.com/darrenldl/ocaml-SeqBox/wiki/Tips)
 
 ## Gotchas
 See [wiki page](https://github.com/darrenldl/ocaml-SeqBox/wiki/Gotchas)
+
+## Helpers
+See [helpers](https://github.com/darrenldl/osbx-helpers)
 
 ## Links
 [Wiki](https://github.com/darrenldl/ocaml-SeqBox/wiki)
