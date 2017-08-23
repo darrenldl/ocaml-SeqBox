@@ -19,5 +19,5 @@ let block_type_to_raw_header_pred (block_type:Block.block_type) : (Header.raw_he
   match block_type with
   | `Meta -> Header.raw_header_is_meta
   | `Data -> Header.raw_header_is_data
-  | `Any  -> (fun _ -> true) in
+  | `Any  -> (fun _ -> true)
 ;;
