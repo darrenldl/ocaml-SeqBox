@@ -66,12 +66,12 @@ module Processor = struct
       match skip_to_byte with
       | None                -> 0L
       | Some n when n <= 0L -> 0L (* handle negative skip_to_byte *)
-      | Some n              ->
+      | Some target         ->
         (* skip to some byte *)
         let alignment     = Int64.of_int Param.Common.block_scan_alignment in
-        let target        = Misc_utils.round_down_to_multiple_int64 ~multiple_of:alignment n in
         let in_length     = LargeFile.in_channel_length in_file in
-        let actual_offset = min target (Int64.pred in_length) in
+        let actual_offset =
+          Misc_utils.round_down_to_multiple_int64 ~multiple_of:alignment (min target (Int64.pred in_length)) in
         LargeFile.seek_in in_file actual_offset;
         actual_offset in
     let raw_header_pred = Header.raw_header_is_meta in
