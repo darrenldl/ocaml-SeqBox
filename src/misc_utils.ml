@@ -44,7 +44,8 @@ let list_find_option (pred:('a -> bool)) (lst:'a list) : 'a option =
 
 let make_path (path_parts:string list) : string =
   let strip_slash str =
-    match String.length str with
+    let str_len = String.length str in
+    match str_len with
     | 0 -> str
     | 1 ->
       begin
@@ -52,10 +53,10 @@ let make_path (path_parts:string list) : string =
       end
     | _ ->
       begin
-        let char_last     = String.get str ((String.length str) - 1) in
-        let char_2nd_last = String.get str ((String.length str) - 2) in
+        let char_last     = String.get str (str_len - 1) in
+        let char_2nd_last = String.get str (str_len - 2) in
         if char_last = '/' && char_2nd_last <> '\\' then
-          get_bytes str ~pos:0 ~len:((String.length str) - 1)
+          get_bytes str ~pos:0 ~len:(str_len - 1)
         else
           str
       end in
