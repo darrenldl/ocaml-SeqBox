@@ -31,3 +31,7 @@ val round_down_to_multiple       : multiple_of:int   -> int   -> int
 val round_up_to_multiple_int64   : multiple_of:int64 -> int64 -> int64
 
 val round_up_to_multiple         : multiple_of:int   -> int   -> int
+
+val ensure_at_least              : at_least:'a       -> 'a    -> 'a
+
+val ensure_at_most               : at_most:'a        -> 'a    -> 'a

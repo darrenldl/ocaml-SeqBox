@@ -134,3 +134,11 @@ let round_up_to_multiple_int64 ~(multiple_of:int64) (x:int64) : int64 =
 let round_up_to_multiple ~(multiple_of:int) (x:int) : int =
   ((x + (pred multiple_of)) / multiple_of) * multiple_of
 ;;
+
+let ensure_at_least (type a) ~(at_least:a) (x:a) =
+  max at_least x
+;;
+
+let ensure_at_most (type a) ~(at_most:a) (x:a) =
+  min at_most x
+;;
