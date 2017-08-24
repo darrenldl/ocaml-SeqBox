@@ -81,7 +81,7 @@ let decode_cmd =
 let rescue_cmd =
   let open Osbx_rescue in
   let doc = "Rescue sbx data from file" in
-  (Term.(const rescue $ silent $ only_pick $ in_file $ out_dir $ log_file),
+  (Term.(const rescue $ silent $ only_pick $ from_byte $ to_byte $ in_file $ out_dir $ log_file),
    Term.info "rescue" ~doc
   )
 ;;

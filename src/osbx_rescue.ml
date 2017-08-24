@@ -1,9 +1,9 @@
 open Cmdliner
 open Rescue
 
-let rescue (silent:Progress_report.silence_level) (only_pick:Sbx_block.Block.block_type) (in_filename:string) (out_dirname:string) (log_filename:string option) : unit =
+let rescue (silent:Progress_report.silence_level) (only_pick:Sbx_block.Block.block_type) (from_byte:int64 option) (to_byte:int64 option) (in_filename:string) (out_dirname:string) (log_filename:string option) : unit =
   Param.Common.set_silence_settings silent;
-  match Process.rescue_from_file ~only_pick ~in_filename ~out_dirname ~log_filename with
+  match Process.rescue_from_file ~only_pick ~from_byte ~to_byte ~in_filename ~out_dirname ~log_filename with
   | Ok stats  -> Stats.print_stats stats
   | Error msg -> Printf.printf "%s\n" msg
 ;;
@@ -21,6 +21,22 @@ let only_pick =
          ["only-pick"]
          ~docv:"TYPE"
          ~doc)
+;;
+
+let from_byte =
+  let doc = Printf.sprintf "Start from byte $(docv), the position is automatically rounded down to closest multiple of %d bytes.
+  If not specified, defaults to start of file.
+  Negative values are treated as 0."
+      Param.Common.block_scan_alignment in
+  Arg.(value & opt (some int64) None & info ["from"] ~docv:"FROM-BYTE" ~doc)
+;;
+
+let to_byte =
+  let doc = "Last position to try to decode a block.
+  If not specified, defaults to end of file.
+  Negative values are treated as 0.
+  If $(docv) is smaller than FROM-BYTE, then it will be treated as FROM-BYTE." in
+  Arg.(value & opt (some int64) None & info ["to"] ~docv:"TO-BYTE" ~doc)
 ;;
 
 let in_file =
