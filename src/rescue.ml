@@ -288,18 +288,21 @@ module Processor = struct
        match possibly_stats with
        | Error msg -> Error msg (* just exit due to error *)
        | Ok stats  ->
+         let open Misc_utils in
          let file_size = LargeFile.in_channel_length in_file in
          let from_byte =
            match from_byte with
            | None   -> 0L
-           | Some n -> (max 0L n)
-                       |> min file_size in
+           | Some n -> n
+                       |> ensure_at_least ~at_least:0L
+                       |> ensure_at_most  ~at_most:file_size in
          let to_byte   =
-           let last_pos = Int64.pred file_size in
+           let last_possible_pos = Int64.pred file_size in
            match to_byte with
-           | None   -> last_pos
-           | Some n -> (max from_byte n)
-                       |> min last_pos in
+           | None   -> last_possible_pos
+           | Some n -> n
+                       |> ensure_at_least ~at_least:from_byte
+                       |> ensure_at_most  ~at_most:last_possible_pos in
          (* seek to last position read + from byte *)
          let seek_to   = stats.bytes_processed <+> from_byte in
          (* check if seek to position is within valid range *)
