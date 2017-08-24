@@ -78,7 +78,7 @@ end
 type stats = Stats.t
 
 module Progress = struct
-  let { print_progress = report_rescue; _ } : (unit, stats, in_channel) Progress_report.progress_print_functions =
+  let { print_progress = report_rescue; _ } : (unit, stats, int64) Progress_report.progress_print_functions =
     Progress_report.gen_print_generic
       ~header:"Data rescue progress"
       ~silence_settings:Param.Common.silence_settings
@@ -89,7 +89,7 @@ module Progress = struct
       ~print_interval:Param.Rescue.progress_report_interval
       ~eval_start_time:Sys.time
       ~eval_units_so_far:(fun stats -> stats.Stats.bytes_processed)
-      ~eval_total_units:(fun in_file -> LargeFile.in_channel_length in_file)
+      ~eval_total_units:(fun x -> x)
   ;;
 end
 
@@ -210,7 +210,7 @@ module Processor = struct
     let raw_header_pred = Sbx_block_helpers.block_type_to_raw_header_pred only_pick in
     let rec scan_proc_internal (stats:stats) (result_so_far:(Block.t * bytes) option) : stats * ((Block.t * bytes) option) =
       (* report progress *)
-      Progress.report_rescue ~start_time_src:() ~units_so_far_src:stats ~total_units_src:in_file;
+      Progress.report_rescue ~start_time_src:() ~units_so_far_src:stats ~total_units_src:max_len;
       match result_so_far with
       | Some _ as x                                       -> (stats, x)
       | None   as x when stats.bytes_processed >= max_len -> (stats, x)
@@ -295,10 +295,11 @@ module Processor = struct
            | Some n -> (max 0L n)
                        |> min file_size in
          let to_byte   =
+           let last_pos = Int64.pred file_size in
            match to_byte with
-           | None   -> Int64.pred file_size
+           | None   -> last_pos
            | Some n -> (max from_byte n)
-                       |> min file_size in
+                       |> min last_pos in
          (* seek to last position read + from byte *)
          let seek_to   = stats.bytes_processed <+> from_byte in
          (* check if seek to position is within valid range *)
