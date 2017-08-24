@@ -27,3 +27,7 @@ val pad_string : string -> int -> char -> string
 val round_down_to_multiple_int64 : multiple_of:int64 -> int64 -> int64
 
 val round_down_to_multiple       : multiple_of:int   -> int   -> int
+
+val round_up_to_multiple_int64   : multiple_of:int64 -> int64 -> int64
+
+val round_up_to_multiple         : multiple_of:int   -> int   -> int

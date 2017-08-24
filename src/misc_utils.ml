@@ -123,3 +123,14 @@ let round_down_to_multiple_int64 ~(multiple_of:int64) (x:int64) : int64 =
 let round_down_to_multiple ~(multiple_of:int) (x:int) : int =
   (x / multiple_of) * multiple_of
 ;;
+
+let round_up_to_multiple_int64 ~(multiple_of:int64) (x:int64) : int64 =
+  let (</>) = Int64.div in
+  let (<*>) = Int64.mul in
+  let (<+>) = Int64.add in
+  ((x <+> (Int64.pred multiple_of)) </> multiple_of) <*> multiple_of
+;;
+
+let round_up_to_multiple ~(multiple_of:int) (x:int) : int =
+  ((x + (pred multiple_of)) / multiple_of) * multiple_of
+;;
