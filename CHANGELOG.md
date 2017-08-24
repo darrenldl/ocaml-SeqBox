@@ -7,6 +7,8 @@
   - Added seek position checking code for rescue log file
     - This prevents showing "Unknown error" in rescue mode when logged bytes processed field exceeds the file size
   - File UID hex is printed in upper case
+  - Added from, to options to rescue mode
+    - This allows specifying range of file to scan for data rescuing
 
 ## 1.2.2  (newest version on OPAM)
   - Optimized decoding code to speed up reference block scanning
