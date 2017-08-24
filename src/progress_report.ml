@@ -50,11 +50,14 @@ module Helper = struct
     if total_units = 0L then
       100 (* just say 100% done if there is nothing to do (i.e. total units is 0) *)
     else
-      Int64.to_int (Int64.div
-                      (Int64.mul
-                         100L
-                         units_so_far)
-                      total_units) 
+      begin
+        Int64.to_int (Int64.div
+                        (Int64.mul
+                           100L
+                           units_so_far)
+                        total_units) 
+        |> min 100
+      end
   ;;
 
   let make_readable_rate ~(rate:float) ~(unit:string) : string =
