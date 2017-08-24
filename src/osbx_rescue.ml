@@ -33,7 +33,7 @@ let from_byte =
 
 let to_byte =
   let doc = "Last position to try to decode a block.
-  If not specified, defaults to end of file.
+  If not specified, defaults to the end of file.
   Negative values are treated as 0.
   If $(docv) is smaller than FROM-BYTE, then it will be treated as FROM-BYTE." in
   Arg.(value & opt (some int64) None & info ["to"] ~docv:"TO-BYTE" ~doc)

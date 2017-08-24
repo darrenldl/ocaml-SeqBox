@@ -296,7 +296,7 @@ module Processor = struct
                        |> min file_size in
          let to_byte   =
            match to_byte with
-           | None   -> file_size
+           | None   -> Int64.pred file_size
            | Some n -> (max from_byte n)
                        |> min file_size in
          (* seek to last position read + from byte *)
