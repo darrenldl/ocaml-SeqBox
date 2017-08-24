@@ -9,6 +9,8 @@
   - File UID hex is printed in upper case
   - Added from, to options to rescue mode
     - This allows specifying range of file to scan for data rescuing
+  - Added from, to options to show mode
+    - This allows specifying range of file to scan for metadata
 
 ## 1.2.2  (newest version on OPAM)
   - Optimized decoding code to speed up reference block scanning
