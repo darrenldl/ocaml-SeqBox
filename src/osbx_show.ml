@@ -101,7 +101,7 @@ let rec print_meta_blocks ?(cur:int64 = 0L) (lst:(Block.t * int64) list) : unit 
     end
 ;;
 
-let show (silent:Progress_report.silence_level) (find_max:int64 option) (skip_to_byte:int64 option) (in_filename:string) : unit =
+let show (silent:Progress_report.silence_level) (find_max:int64 option) (from_byte:int64 option) (to_byte:int64 option) (in_filename:string) : unit =
   Param.Show.set_meta_list_max_length_possibly find_max;
   Param.Common.set_silence_settings silent;
   try
@@ -110,7 +110,7 @@ let show (silent:Progress_report.silence_level) (find_max:int64 option) (skip_to
       ()
     | None                ->
       begin
-        match Process.fetch_single_meta ~skip_to_byte ~in_filename with
+        match Process.fetch_single_meta ~from_byte ~to_byte ~in_filename with
         | Ok res    ->
           begin
             match res with
@@ -120,7 +120,7 @@ let show (silent:Progress_report.silence_level) (find_max:int64 option) (skip_to
         | Error str -> raise (Packaged_exn str)
       end
     | _                   ->
-      match Process.fetch_multi_meta ~skip_to_byte ~in_filename with
+      match Process.fetch_multi_meta ~from_byte ~to_byte ~in_filename with
       | Ok res    ->
         begin
           match res with
@@ -143,13 +143,6 @@ let find_max =
   If a number is provided, then all the indicators are shown, regardless of the value of $(docv).
   Negative values are treated as 0." in
   Arg.(value & opt (some int64) None & info ["find-max"] ~docv:"FIND-MAX" ~doc)
-;;
-
-let skip_to_byte =
-  let doc = Printf.sprintf "Skip to byte $(docv), the position is automatically rounded down to closest multiple of %d bytes.
-  Negative values are treated as 0."
-      Param.Common.block_scan_alignment in
-  Arg.(value & opt (some int64) None & info ["skip-to"] ~docv:"BYTE" ~doc)
 ;;
 
 let in_file =

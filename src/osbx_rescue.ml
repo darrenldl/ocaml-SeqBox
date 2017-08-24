@@ -23,22 +23,6 @@ let only_pick =
          ~doc)
 ;;
 
-let from_byte =
-  let doc = Printf.sprintf "Start from byte $(docv), the position is automatically rounded down to closest multiple of %d bytes.
-  If not specified, defaults to start of file.
-  Negative values are treated as 0."
-      Param.Common.block_scan_alignment in
-  Arg.(value & opt (some int64) None & info ["from"] ~docv:"FROM-BYTE" ~doc)
-;;
-
-let to_byte =
-  let doc = "Last position to try to decode a block.
-  If not specified, defaults to the end of file.
-  Negative values are treated as 0.
-  If $(docv) is smaller than FROM-BYTE, then it will be treated as FROM-BYTE." in
-  Arg.(value & opt (some int64) None & info ["to"] ~docv:"TO-BYTE" ~doc)
-;;
-
 let in_file =
   let doc = "File to rescue sbx data from" in
   Arg.(required & pos 0 (some non_dir_file) None & info [] ~docv:"INFILE" ~doc)

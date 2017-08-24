@@ -43,7 +43,7 @@ module Progress = struct
   let { print_progress            = report_scan
       ; print_newline_if_not_done = report_scan_print_newline_if_not_done
       }
-    : (unit, stats, in_channel) Progress_report.progress_print_functions =
+    : (unit, stats, int64) Progress_report.progress_print_functions =
     Progress_report.gen_print_generic
       ~header:"Scan progress"
       ~silence_settings:Param.Common.silence_settings
@@ -54,32 +54,36 @@ module Progress = struct
       ~print_interval:Param.Show.progress_report_interval
       ~eval_start_time:Sys.time
       ~eval_units_so_far:(fun (stats:stats) -> stats.bytes_processed)
-      ~eval_total_units:(fun in_file -> LargeFile.in_channel_length in_file)
+      ~eval_total_units:(fun x -> x)
   ;;
 end
 
 module Processor = struct
-  let find_meta_blocks_proc ~(skip_to_byte:int64 option) ~(get_at_most:int64) (in_file:in_channel) : (Block.t * int64) list =
+  let find_meta_blocks_proc ~(from_byte:int64 option) ~(to_byte:int64 option) ~(get_at_most:int64) (in_file:in_channel) : (Block.t * int64) list =
     let open Read_chunk in
     let open Misc_utils in
-    let get_at_most = ensure_at_least ~at_least:0L get_at_most (* handle negative get_at_most *) in
-    let offset : int64 =
-      match skip_to_byte with
-      | None                -> 0L
-      | Some n when n <= 0L -> 0L (* handle negative skip_to_byte *)
-      | Some target         ->
-        (* skip to some byte *)
-        let alignment     = Int64.of_int Param.Common.block_scan_alignment in
-        let in_length     = LargeFile.in_channel_length in_file in
-        let actual_offset =
-          Misc_utils.round_down_to_multiple_int64 ~multiple_of:alignment (min target (Int64.pred in_length)) in
-        LargeFile.seek_in in_file actual_offset;
-        actual_offset in
+    let get_at_most     = ensure_at_least ~at_least:0L get_at_most in
+    let last_possible_pos = Int64.pred (LargeFile.in_channel_length in_file) in
+    let from_byte       =
+      match from_byte with
+      | None   -> 0L
+      | Some n -> n
+                  |> ensure_at_least ~at_least:0L
+                  |> ensure_at_most  ~at_most:last_possible_pos in
+    let to_byte         =
+      match to_byte with
+      | None   -> 0L
+      | Some n -> n
+                  |> ensure_at_least ~at_least:from_byte
+                  |> ensure_at_most  ~at_most:last_possible_pos in
+    let max_len         = to_byte <-> from_byte <+> 1L in
     let raw_header_pred = Header.raw_header_is_meta in
     let rec find_meta_blocks_proc_internal (stats:stats) (acc:(Block.t * int64) list) : stats * ((Block.t * int64) list) =
       (* report progress *)
-      Progress.report_scan ~start_time_src:() ~units_so_far_src:stats ~total_units_src:in_file;
-      if stats.meta_blocks_found >= get_at_most then
+      Progress.report_scan ~start_time_src:() ~units_so_far_src:stats ~total_units_src:max_len;
+      if (stats.meta_blocks_found >= get_at_most)
+      || (stats.bytes_processed   >= max_len)
+      then
         (stats, acc)
       else
         let (read_len, block) = Processor_components.try_get_block_from_in_channel ~raw_header_pred in_file in
@@ -94,38 +98,40 @@ module Processor = struct
                 (Stats.add_meta_block new_stats, (block, stats.bytes_processed) :: acc)
               else
                 (new_stats, acc)
-            | None -> (new_stats, acc) in
+            | None       -> (new_stats, acc) in
           find_meta_blocks_proc_internal new_stats new_acc in
-    let start_stats  = Stats.add_bytes_scanned (Stats.make_blank_scan_stats ()) ~num:offset in
+    let start_stats  = Stats.make_blank_scan_stats () in
+    let multiple_of = Int64.of_int Param.Common.block_scan_alignment in
+    LargeFile.seek_in in_file (Misc_utils.round_down_to_multiple_int64 ~multiple_of from_byte);
     let (stats, res) = find_meta_blocks_proc_internal start_stats [] in
-    Progress.report_scan_print_newline_if_not_done ~start_time_src:() ~units_so_far_src:stats ~total_units_src:in_file;
+    Progress.report_scan_print_newline_if_not_done ~start_time_src:() ~units_so_far_src:stats ~total_units_src:max_len;
     res
   ;;
 
-  let make_single_meta_fetcher ~(skip_to_byte:int64 option) : ((Block.t * int64) option) Stream.in_processor =
+  let make_single_meta_fetcher ~(from_byte:int64 option) ~(to_byte:int64 option) : ((Block.t * int64) option) Stream.in_processor =
     (fun in_file ->
-       match find_meta_blocks_proc ~skip_to_byte ~get_at_most:1L in_file with
+       match find_meta_blocks_proc ~from_byte ~to_byte ~get_at_most:1L in_file with
        | []       -> None
        | [x]      -> Some x
        | hd :: tl -> assert false
     )
   ;;
 
-  let make_multi_meta_fetcher ~(skip_to_byte:int64 option) : ((Block.t * int64) list) Stream.in_processor =
+  let make_multi_meta_fetcher ~(from_byte:int64 option) ~(to_byte:int64 option) : ((Block.t * int64) list) Stream.in_processor =
     (fun in_file ->
-       List.rev (find_meta_blocks_proc ~skip_to_byte ~get_at_most:!Param.Show.meta_list_max_length in_file)
+       List.rev (find_meta_blocks_proc ~from_byte ~to_byte ~get_at_most:!Param.Show.meta_list_max_length in_file)
     )
   ;;
 end
 
 module Process = struct
-  let fetch_single_meta ~(skip_to_byte:int64 option) ~(in_filename:string) : ((Block.t * int64) option, string) result =
-    let processor = Processor.make_single_meta_fetcher ~skip_to_byte in
+  let fetch_single_meta ~(from_byte:int64 option) ~(to_byte:int64 option) ~(in_filename:string) : ((Block.t * int64) option, string) result =
+    let processor = Processor.make_single_meta_fetcher ~from_byte ~to_byte in
     Stream.process_in ~in_filename processor
   ;;
 
-  let fetch_multi_meta ~(skip_to_byte:int64 option) ~(in_filename:string) : ((Block.t * int64) list, string) result =
-    let processor = Processor.make_multi_meta_fetcher  ~skip_to_byte in
+  let fetch_multi_meta ~(from_byte:int64 option) ~(to_byte:int64 option) ~(in_filename:string) : ((Block.t * int64) list, string) result =
+    let processor = Processor.make_multi_meta_fetcher  ~from_byte ~to_byte in
     Stream.process_in ~in_filename processor
   ;;
 end

@@ -52,6 +52,24 @@ let hash =
   Arg.(value & opt (some string) None & info ["hash"] ~docv:"HASH-TYPE" ~doc)
 ;;
 
+let from_byte =
+  let doc = Printf.sprintf "Start from byte $(docv), the position is automatically rounded down to the closest multiple of %d bytes.
+  If not specified, defaults to start of file.
+  Negative values are treated as 0.
+  If $(docv) exceeds largest possible position(file size - 1), then it will be treated as (file size - 1).
+  The rounding procedure is applied after all auto-adjustments."
+      Param.Common.block_scan_alignment in
+  Arg.(value & opt (some int64) None & info ["from"; "skip-to"] ~docv:"FROM-BYTE" ~doc)
+;;
+
+let to_byte =
+  let doc = "Last position to try to decode a block.
+  If not specified, defaults to the end of file.
+  Negative values are treated as 0.
+  If $(docv) is smaller than FROM-BYTE, then it will be treated as FROM-BYTE." in
+  Arg.(value & opt (some int64) None & info ["to"] ~docv:"TO-BYTE" ~doc)
+;;
+
 let default_cmd =
   let doc = "a SeqBox implementation written in OCaml" in
   let sdocs = Manpage.s_common_options in
@@ -89,7 +107,7 @@ let rescue_cmd =
 let show_cmd =
   let open Osbx_show in
   let doc = "Search for and print metadata in sbx container (or file)" in
-  (Term.(const show $ silent $ find_max $ skip_to_byte $ in_file),
+  (Term.(const show $ silent $ find_max $ from_byte $ to_byte $ in_file),
    Term.info "show" ~doc
   )
 ;;

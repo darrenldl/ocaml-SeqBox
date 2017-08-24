@@ -54,7 +54,7 @@ module Stats = struct
   ;;
 
   (* automatically correct bytes_processed alignment
-   * by rounding down to closest multiple of block scan alignment
+   * by rounding down to the closest multiple of block scan alignment
    *)
   let make_stats (bytes_processed:int64) (blocks_processed:int64) (meta_blocks_processed:int64) (data_blocks_processed:int64) : t =
     { bytes_processed       = bytes_processed
@@ -279,7 +279,7 @@ module Processor = struct
         *)
        let possibly_stats : (stats, string) result  =
          match log_filename with
-         | None      -> Ok (Stats.make_blank_stats ())
+         | None              -> Ok (Stats.make_blank_stats ())
          | Some log_filename ->
            match Logger.read ~log_filename with
            | Error msg       -> Error msg
@@ -289,15 +289,14 @@ module Processor = struct
        | Error msg -> Error msg (* just exit due to error *)
        | Ok stats  ->
          let open Misc_utils in
-         let file_size = LargeFile.in_channel_length in_file in
+         let last_possible_pos = Int64.pred (LargeFile.in_channel_length in_file) in
          let from_byte =
            match from_byte with
            | None   -> 0L
            | Some n -> n
                        |> ensure_at_least ~at_least:0L
-                       |> ensure_at_most  ~at_most:file_size in
+                       |> ensure_at_most  ~at_most:last_possible_pos in
          let to_byte   =
-           let last_possible_pos = Int64.pred file_size in
            match to_byte with
            | None   -> last_possible_pos
            | Some n -> n
@@ -306,7 +305,7 @@ module Processor = struct
          (* seek to last position read + from byte *)
          let seek_to   = stats.bytes_processed <+> from_byte in
          (* check if seek to position is within valid range *)
-         if      seek_to < file_size then
+         if      seek_to < last_possible_pos then
            begin
              let multiple_of = Int64.of_int Param.Common.block_scan_alignment in
              LargeFile.seek_in in_file (Misc_utils.round_down_to_multiple_int64 ~multiple_of seek_to);
@@ -314,7 +313,7 @@ module Processor = struct
              (* start scan and output process *)
              Ok (scan_and_output in_file ~only_pick ~stats ~max_len ~out_dirname ~log_filename)
            end
-         else if seek_to = file_size then
+         else if seek_to = last_possible_pos then
            (* do nothing *)
            Ok stats
          else
