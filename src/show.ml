@@ -72,7 +72,7 @@ module Processor = struct
                   |> ensure_at_most  ~at_most:last_possible_pos in
     let to_byte         =
       match to_byte with
-      | None   -> 0L
+      | None   -> last_possible_pos
       | Some n -> n
                   |> ensure_at_least ~at_least:from_byte
                   |> ensure_at_most  ~at_most:last_possible_pos in
@@ -100,7 +100,7 @@ module Processor = struct
                 (new_stats, acc)
             | None       -> (new_stats, acc) in
           find_meta_blocks_proc_internal new_stats new_acc in
-    let start_stats  = Stats.make_blank_scan_stats () in
+    let start_stats = Stats.make_blank_scan_stats () in
     let multiple_of = Int64.of_int Param.Common.block_scan_alignment in
     LargeFile.seek_in in_file (Misc_utils.round_down_to_multiple_int64 ~multiple_of from_byte);
     let (stats, res) = find_meta_blocks_proc_internal start_stats [] in
