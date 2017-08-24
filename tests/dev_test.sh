@@ -49,6 +49,14 @@ echo "========================================"
 
 echo ""
 
+echo "Starting rescue with specified range tests"
+echo "========================================"
+./rescue_from_to_tests.sh
+echo "========================================"
+
+echo ""
+
+
 # output file tests
 echo "Starting output file path logic tests"
 echo "========================================"
