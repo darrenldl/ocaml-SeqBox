@@ -78,7 +78,7 @@ end
 type stats = Stats.t
 
 module Progress = struct
-  let { print_progress = report_encode; _ } : (unit, stats, in_channel) Progress_report.progress_print_functions =
+  let { print_progress = report_rescue; _ } : (unit, stats, in_channel) Progress_report.progress_print_functions =
     Progress_report.gen_print_generic
       ~header:"Data rescue progress"
       ~silence_settings:Param.Common.silence_settings
@@ -210,7 +210,7 @@ module Processor = struct
     let raw_header_pred = Sbx_block_helpers.block_type_to_raw_header_pred only_pick in
     let rec scan_proc_internal (stats:stats) (result_so_far:(Block.t * bytes) option) : stats * ((Block.t * bytes) option) =
       (* report progress *)
-      Progress.report_encode ~start_time_src:() ~units_so_far_src:stats ~total_units_src:in_file;
+      Progress.report_rescue ~start_time_src:() ~units_so_far_src:stats ~total_units_src:in_file;
       match result_so_far with
       | Some _ as x                                       -> (stats, x)
       | None   as x when stats.bytes_processed >= max_len -> (stats, x)
