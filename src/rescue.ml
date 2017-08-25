@@ -134,12 +134,9 @@ module Logger = struct
     let last_write_time   : float        ref = ref (Sys.time ()) in
     let call_count        : int          ref = ref 0 in
     let call_per_interval : int          ref = ref 0 in
-    let total_bytes       : int64 option ref = ref None in
-    (fun ~(stats:stats) ~(log_filename:string) ~(in_file:in_channel) : unit ->
+    (fun ~(stats:stats) ~(log_filename:string) ~(total_bytes:int64) : unit ->
        call_count := succ !call_count;
-       let total_bytes =
-         Misc_utils.get_option_ref_init_if_none (fun () -> LargeFile.in_channel_length in_file) total_bytes in
-       if !call_count > !call_per_interval || stats.bytes_processed = total_bytes (* always write when 100% done *) then
+       if !call_count > !call_per_interval || stats.bytes_processed >= total_bytes (* always write when 100% done *) then
          begin
            let cur_time              : float = Sys.time () in
            let time_since_last_write : float = cur_time -. !last_write_time in
@@ -218,7 +215,7 @@ module Processor = struct
         begin
           match log_filename with
           | None              -> ()
-          | Some log_filename -> Logger.write ~stats ~log_filename ~in_file
+          | Some log_filename -> Logger.write ~stats ~log_filename ~total_bytes:max_len
         end;
         match result_so_far with
         | Some _ as x                                       -> (stats, x)
