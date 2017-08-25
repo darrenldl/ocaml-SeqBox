@@ -41,7 +41,7 @@ let silent =
 ;;
 
 let force =
-  let doc = "Force overwrites even if $(docv) exists" in
+  let doc = "Force overwrite even if $(docv) exists" in
   Arg.(value & flag & info ["f"; "force"] ~docv:"OUT" ~doc)
 ;;
 
