@@ -94,6 +94,8 @@ module Progress = struct
 end
 
 module Logger = struct
+  exception Write_fail of string
+
   let make_write_proc ~(stats:stats) : unit Stream.out_processor =
     (fun out_file ->
        let open Write_chunk in
@@ -133,7 +135,7 @@ module Logger = struct
     let call_count        : int          ref = ref 0 in
     let call_per_interval : int          ref = ref 0 in
     let total_bytes       : int64 option ref = ref None in
-    (fun ~(stats:stats) ~(log_filename:string) ~(in_file:in_channel) : bool ->
+    (fun ~(stats:stats) ~(log_filename:string) ~(in_file:in_channel) : unit ->
        call_count := succ !call_count;
        let total_bytes =
          Misc_utils.get_option_ref_init_if_none (fun () -> LargeFile.in_channel_length in_file) total_bytes in
@@ -147,11 +149,11 @@ module Logger = struct
            last_write_time   := cur_time;
 
            match write_helper ~stats ~log_filename with
-           | Error msg -> Printf.printf "%s\n" msg; false
-           | Ok _      -> true
+           | Error msg -> raise (Write_fail msg)
+           | Ok _      -> ()
          end
        else
-         true (* things are okay and do nothing *)
+         () (* things are okay and do nothing *)
     )
   ;;
 
@@ -211,31 +213,33 @@ module Processor = struct
     let rec scan_proc_internal (stats:stats) (result_so_far:(Block.t * bytes) option) : stats * ((Block.t * bytes) option) =
       (* report progress *)
       Progress.report_rescue ~start_time_src:() ~units_so_far_src:stats ~total_units_src:max_len;
-      match result_so_far with
-      | Some _ as x                                       -> (stats, x)
-      | None   as x when stats.bytes_processed >= max_len -> (stats, x)
-      | None                                              ->
-        let log_okay : bool =
+      try
+        (* write log possibly *)
+        begin
           match log_filename with
-          | None              -> true
-          | Some log_filename -> Logger.write ~stats ~log_filename ~in_file in
-        if not log_okay then
-          begin
-            (* just print and quit if cannot write log *)
-            print_newline ();
-            Printf.printf "Failed to write to log file";
-            print_newline ();
-            (stats, None)
-          end
-        else
-          begin
-            let (read_len, block_and_bytes) = Processor_components.try_get_block_and_bytes_from_in_channel ~raw_header_pred in_file in
-            if read_len = 0L then
-              (stats, result_so_far)
-            else
-              let new_stats = Stats.add_bytes stats ~num:read_len in
-              scan_proc_internal new_stats block_and_bytes
-          end in
+          | None              -> ()
+          | Some log_filename -> Logger.write ~stats ~log_filename ~in_file
+        end;
+        match result_so_far with
+        | Some _ as x                                       -> (stats, x)
+        | None   as x when stats.bytes_processed >= max_len -> (stats, x)
+        | None                                              ->
+          let (read_len, block_and_bytes) =
+            Processor_components.try_get_block_and_bytes_from_in_channel ~raw_header_pred in_file in
+          if read_len = 0L then
+            scan_proc_internal stats result_so_far
+          else
+            let new_stats = Stats.add_bytes stats ~num:read_len in
+            scan_proc_internal new_stats block_and_bytes
+      with
+      | Logger.Write_fail msg ->
+        begin
+          (* just print and quit if cannot write log *)
+          print_newline ();
+          Printf.printf "Failed to write to log file, error : %s" msg;
+          print_newline ();
+          (stats, None)
+        end in
     scan_proc_internal stats None
   ;;
 
