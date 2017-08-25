@@ -130,10 +130,10 @@ module Logger = struct
   ;;
 
   let write =
-    let write_interval    : float            = Param.Rescue.log_write_interval in
-    let last_write_time   : float        ref = ref (Sys.time ()) in
-    let call_count        : int          ref = ref 0 in
-    let call_per_interval : int          ref = ref 0 in
+    let write_interval    : float     = Param.Rescue.log_write_interval in
+    let last_write_time   : float ref = ref (Sys.time ()) in
+    let call_count        : int   ref = ref 0 in
+    let call_per_interval : int   ref = ref 0 in
     (fun ~(stats:stats) ~(log_filename:string) ~(total_bytes:int64) : unit ->
        call_count := succ !call_count;
        if !call_count > !call_per_interval || stats.bytes_processed >= total_bytes (* always write when 100% done *) then
@@ -152,6 +152,12 @@ module Logger = struct
        else
          () (* things are okay and do nothing *)
     )
+  ;;
+
+  let write_possibly ~(stats:stats) ~(log_filename:string option) ~(total_bytes:int64) : unit =
+    match log_filename with
+    | None              -> ()
+    | Some log_filename -> write ~stats ~log_filename ~total_bytes
   ;;
 
   module Parser = struct
@@ -212,11 +218,7 @@ module Processor = struct
       Progress.report_rescue ~start_time_src:() ~units_so_far_src:stats ~total_units_src:max_len;
       try
         (* write log possibly *)
-        begin
-          match log_filename with
-          | None              -> ()
-          | Some log_filename -> Logger.write ~stats ~log_filename ~total_bytes:max_len
-        end;
+        Logger.write_possibly ~stats ~log_filename ~total_bytes:max_len;
         match result_so_far with
         | Some _ as x                                       -> (stats, x)
         | None   as x when stats.bytes_processed >= max_len -> (stats, x)
