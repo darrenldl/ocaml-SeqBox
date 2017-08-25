@@ -53,10 +53,10 @@ let hash =
 ;;
 
 let from_byte =
-  let doc = Printf.sprintf "Start from byte $(docv), the position is automatically rounded down to the closest multiple of %d bytes.
-  If not specified, defaults to start of file.
+  let doc = Printf.sprintf "Start from byte $(docv). The position is automatically rounded down to the closest multiple of %d bytes.
+  If not specified, defaults to the start of file.
   Negative values are treated as 0.
-  If $(docv) exceeds largest possible position(file size - 1), then it will be treated as (file size - 1).
+  If $(docv) exceeds the largest possible position(file size - 1), then it will be treated as (file size - 1).
   The rounding procedure is applied after all auto-adjustments."
       Param.Common.block_scan_alignment in
   Arg.(value & opt (some int64) None & info ["from"; "skip-to"] ~docv:"FROM-BYTE" ~doc)
