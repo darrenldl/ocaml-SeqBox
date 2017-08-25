@@ -34,6 +34,7 @@ let out_dir =
 ;;
 
 let log_file =
-  let doc = "Logfile to keep track of progress to survive interruptions" in
+  let doc = "Log file to keep track of the progress to survive interruptions.
+  Note that you should use the same log file for the same file and range specified in the initial run." in
   Arg.(value & pos 2 (some string) None & info [] ~docv:"LOGFILE" ~doc)
 ;;
