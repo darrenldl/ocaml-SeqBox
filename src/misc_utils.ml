@@ -1,5 +1,9 @@
 open Stdint
 
+type max_len_and_seek_to = { max_len : int64
+                           ; seek_to : int64
+                           }
+
 exception Invalid_range
 
 let pad_bytes ?(filler:uint8 = Uint8.of_int 0x00) (old_bytes:bytes) (new_len:int) : bytes =
@@ -141,4 +145,23 @@ let ensure_at_least (type a) ~(at_least:a) (x:a) =
 
 let ensure_at_most (type a) ~(at_most:a) (x:a) =
   min at_most x
+;;
+
+let calc_max_len_and_seek_to_from_byte_range ~(from_byte:int64 option) ~(to_byte:int64 option) ~(bytes_so_far:int64) ~(last_possible_pos:int64) : max_len_and_seek_to =
+  let open Int64_ops in
+  let from_byte =
+    match from_byte with
+    | None   -> 0L
+    | Some n -> n
+                |> ensure_at_least ~at_least:0L
+                |> ensure_at_most  ~at_most:last_possible_pos in
+  let to_byte   =
+    match to_byte with
+    | None   -> last_possible_pos
+    | Some n -> n
+                |> ensure_at_least ~at_least:from_byte
+                |> ensure_at_most  ~at_most:last_possible_pos in
+  { max_len = to_byte   <-> from_byte <+> 1L
+  ; seek_to = from_byte <+> bytes_so_far
+  }
 ;;

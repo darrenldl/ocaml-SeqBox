@@ -1,5 +1,9 @@
 open Stdint
 
+type max_len_and_seek_to = { max_len : int64
+                           ; seek_to : int64
+                           }
+
 exception Invalid_range
 
 val pad_bytes : ?filler:uint8 -> bytes -> int -> bytes
@@ -35,3 +39,5 @@ val round_up_to_multiple         : multiple_of:int   -> int   -> int
 val ensure_at_least              : at_least:'a       -> 'a    -> 'a
 
 val ensure_at_most               : at_most:'a        -> 'a    -> 'a
+
+val calc_max_len_and_seek_to_from_byte_range : from_byte:int64 option -> to_byte:int64 option -> bytes_so_far:int64 -> last_possible_pos:int64 -> max_len_and_seek_to
