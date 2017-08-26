@@ -2,7 +2,7 @@ open Cmdliner
 open Rescue
 
 let rescue (silent:Progress_report.silence_level) (only_pick:Sbx_block.Block.block_type) (from_byte:int64 option) (to_byte:int64 option) (in_filename:string) (out_dirname:string) (log_filename:string option) : unit =
-  Param.Common.set_silence_settings silent;
+  Dynamic_param.Common.set_silence_settings silent;
   match Process.rescue_from_file ~only_pick ~from_byte ~to_byte ~in_filename ~out_dirname ~log_filename with
   | Ok stats  -> Stats.print_stats stats
   | Error msg -> Printf.printf "%s\n" msg

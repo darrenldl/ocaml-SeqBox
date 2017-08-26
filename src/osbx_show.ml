@@ -102,8 +102,8 @@ let rec print_meta_blocks ?(cur:int64 = 0L) (lst:(Block.t * int64) list) : unit 
 ;;
 
 let show (silent:Progress_report.silence_level) (find_max:int64 option) (from_byte:int64 option) (to_byte:int64 option) (in_filename:string) : unit =
-  Param.Show.set_meta_list_max_length_possibly find_max;
-  Param.Common.set_silence_settings silent;
+  Dynamic_param.Show.set_meta_list_max_length_possibly find_max;
+  Dynamic_param.Common.set_silence_settings silent;
   try
     match find_max with
     | Some n when n <= 0L ->
@@ -127,7 +127,7 @@ let show (silent:Progress_report.silence_level) (find_max:int64 option) (from_by
           | []         -> Printf.printf "No metadata blocks found\n"
           | lst        ->
             begin
-              Printf.printf "Showing first up to %Ld metadata blocks\n" !Param.Show.meta_list_max_length;
+              Printf.printf "Showing first up to %Ld metadata blocks\n" !Dynamic_param.Show.meta_list_max_length;
               print_newline ();
               print_meta_blocks lst
             end

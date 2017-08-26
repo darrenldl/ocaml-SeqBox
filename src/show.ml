@@ -39,7 +39,7 @@ module Progress = struct
     : (unit, stats, int64) Progress_report.progress_print_functions =
     Progress_report.gen_print_generic
       ~header:"Scan progress"
-      ~silence_settings:Param.Common.silence_settings
+      ~silence_settings:Dynamic_param.Common.silence_settings
       ~display_while_active:Param.Show.Show_progress.display_while_active
       ~display_on_finish:Param.Show.Show_progress.display_on_finish
       ~display_on_finish_early:Param.Show.Show_progress.display_on_finish_early
@@ -101,7 +101,7 @@ module Processor = struct
 
   let make_multi_meta_fetcher ~(from_byte:int64 option) ~(to_byte:int64 option) : ((Block.t * int64) list) Stream.in_processor =
     (fun in_file ->
-       List.rev (find_meta_blocks_proc ~from_byte ~to_byte ~get_at_most:!Param.Show.meta_list_max_length in_file)
+       List.rev (find_meta_blocks_proc ~from_byte ~to_byte ~get_at_most:!Dynamic_param.Show.meta_list_max_length in_file)
     )
   ;;
 end

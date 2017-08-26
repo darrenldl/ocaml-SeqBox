@@ -1,14 +1,7 @@
 open Progress_report
-open Misc_utils
 
 module Common = struct
   let block_scan_alignment     = 128  (* largest common divisor of version 1, 2, 3 block sizes *)
-
-  let silence_settings         = ref default_silence_settings
-
-  let set_silence_settings (level:silence_level) : unit =
-    silence_settings := Progress_report.Helper.silence_level_to_silence_settings level
-  ;;
 end
 
 module Encode = struct
@@ -41,18 +34,6 @@ module Decode = struct
     let display_on_finish       = [Time_used_long; Average_rate_long]
     let display_on_finish_early = [Time_used_long; Average_rate_long]
   end
-
-  let failure_list_max_length  = ref 100L
-
-  let set_failure_list_max_length (n:int64) : unit =
-    failure_list_max_length := ensure_at_least ~at_least:0L n
-  ;;
-
-  let set_failure_list_max_length_possibly (n:int64 option) : unit =
-    match n with
-    | Some n -> failure_list_max_length := ensure_at_least ~at_least:0L n
-    | None   -> ()
-  ;;
 end
 
 module Rescue = struct
@@ -75,16 +56,4 @@ module Show = struct
     let display_on_finish       = [Time_used_long; Average_rate_long]
     let display_on_finish_early = [Time_used_long; Average_rate_long]
   end
-
-  let meta_list_max_length     = ref 0L
-
-  let set_meta_list_max_length (n:int64) : unit =
-    meta_list_max_length := ensure_at_least ~at_least:0L n
-  ;;
-
-  let set_meta_list_max_length_possibly (n:int64 option) : unit =
-    match n with
-    | Some n -> meta_list_max_length := ensure_at_least ~at_least:0L n
-    | None   -> ()
-  ;;
 end

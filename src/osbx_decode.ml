@@ -4,8 +4,8 @@ open Decode
 exception Packaged_exn of string
 
 let decode (silent:Progress_report.silence_level) (force_out:bool) (no_meta:bool) (show_max:int64 option) (in_filename:string) (provided_out_filename:string option) : unit =
-  Param.Decode.set_failure_list_max_length_possibly show_max;
-  Param.Common.set_silence_settings silent;
+  Dynamic_param.Decode.set_failure_list_max_length_possibly show_max;
+  Dynamic_param.Common.set_silence_settings silent;
   try
     let ref_block =
       let prefer = if no_meta then `Any else `Meta in
@@ -56,7 +56,7 @@ Please provide an output file name/path that is not a directory"
 
 let show_max =
   let doc = Printf.sprintf "Show up to $(docv)(defaults to %Ld) failing positions.
-  Negative values are treated as 0." !Param.Decode.failure_list_max_length in
+  Negative values are treated as 0." !Dynamic_param.Decode.failure_list_max_length in
   Arg.(value & opt (some int64) None & info ["show-fail-max"] ~docv:"SHOW-FAIL-MAX" ~doc)
 ;;
 

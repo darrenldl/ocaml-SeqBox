@@ -5,7 +5,7 @@ open Sbx_specs
 exception Packaged_exn of string
 
 let encode (silent:Progress_report.silence_level) (force_out:bool) (no_meta:bool) (ver:version) (uid:string option) (hash_type:string option) (in_filename:string) (provided_out_filename:string option) : unit =
-  Param.Common.set_silence_settings silent;
+  Dynamic_param.Common.set_silence_settings silent;
   try
     let uid : bytes option =
       match uid with

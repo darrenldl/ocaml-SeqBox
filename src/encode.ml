@@ -65,7 +65,7 @@ module Progress = struct
   let { print_progress = report_encode; _ } : (unit, stats, stats * in_channel) Progress_report.progress_print_functions =
     Progress_report.gen_print_generic
       ~header:"Data encoding progress"
-      ~silence_settings:Param.Common.silence_settings
+      ~silence_settings:Dynamic_param.Common.silence_settings
       ~display_while_active:Param.Encode.Encode_progress.display_while_active
       ~display_on_finish:Param.Encode.Encode_progress.display_on_finish
       ~display_on_finish_early:Param.Encode.Encode_progress.display_on_finish_early
