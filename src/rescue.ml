@@ -285,7 +285,7 @@ module Processor = struct
        | Error msg -> Error msg (* just exit due to error *)
        | Ok stats  ->
          let open Misc_utils in
-         let last_possible_pos  = Int64.pred (LargeFile.in_channel_length in_file) in
+         let last_possible_pos    = Int64.pred (LargeFile.in_channel_length in_file) in
          let { max_len; seek_to } =
            calc_max_len_and_seek_to_from_byte_range ~from_byte ~to_byte ~bytes_so_far:stats.bytes_processed ~last_possible_pos in
          (* check if seek to position is within valid range *)
