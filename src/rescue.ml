@@ -286,24 +286,10 @@ module Processor = struct
        | Ok stats  ->
          let open Misc_utils in
          let last_possible_pos  = Int64.pred (LargeFile.in_channel_length in_file) in
-         let (max_len, seek_to) =
-           let from_byte =
-             match from_byte with
-             | None   -> 0L
-             | Some n -> n
-                         |> ensure_at_least ~at_least:0L
-                         |> ensure_at_most  ~at_most:last_possible_pos in
-           let to_byte   =
-             match to_byte with
-             | None   -> last_possible_pos
-             | Some n -> n
-                         |> ensure_at_least ~at_least:from_byte
-                         |> ensure_at_most  ~at_most:last_possible_pos in
-           (to_byte <-> from_byte <+> 1L,
-            stats.bytes_processed <+> from_byte (* seek to last position read + from byte *)
-           ) in
+         let { max_len; seek_to } =
+           calc_max_len_and_seek_to_from_byte_range ~from_byte ~to_byte ~bytes_so_far:stats.bytes_processed ~last_possible_pos in
          (* check if seek to position is within valid range *)
-         if      seek_to <= last_possible_pos     then
+         if seek_to <= last_possible_pos then
            begin
              let multiple_of = Int64.of_int Param.Common.block_scan_alignment in
              LargeFile.seek_in in_file (Misc_utils.round_down_to_multiple_int64 ~multiple_of seek_to);
