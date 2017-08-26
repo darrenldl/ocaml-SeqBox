@@ -57,19 +57,8 @@ module Processor = struct
     let open Misc_utils in
     let get_at_most     = ensure_at_least ~at_least:0L get_at_most in
     let last_possible_pos = Int64.pred (LargeFile.in_channel_length in_file) in
-    let from_byte       =
-      match from_byte with
-      | None   -> 0L
-      | Some n -> n
-                  |> ensure_at_least ~at_least:0L
-                  |> ensure_at_most  ~at_most:last_possible_pos in
-    let to_byte         =
-      match to_byte with
-      | None   -> last_possible_pos
-      | Some n -> n
-                  |> ensure_at_least ~at_least:from_byte
-                  |> ensure_at_most  ~at_most:last_possible_pos in
-    let max_len         = to_byte <-> from_byte <+> 1L in
+    let { max_len; seek_to } =
+      calc_max_len_and_seek_to_from_byte_range ~from_byte ~to_byte ~bytes_so_far:0L ~last_possible_pos in
     let raw_header_pred = Header.raw_header_is_meta in
     let rec find_meta_blocks_proc_internal (stats:stats) (acc:(Block.t * int64) list) : stats * ((Block.t * int64) list) =
       (* report progress *)
@@ -95,7 +84,7 @@ module Processor = struct
           find_meta_blocks_proc_internal new_stats new_acc in
     let start_stats = Stats.make_blank_scan_stats () in
     let multiple_of = Int64.of_int Param.Common.block_scan_alignment in
-    LargeFile.seek_in in_file (Misc_utils.round_down_to_multiple_int64 ~multiple_of from_byte);
+    LargeFile.seek_in in_file (Misc_utils.round_down_to_multiple_int64 ~multiple_of seek_to);
     let (stats, res) = find_meta_blocks_proc_internal start_stats [] in
     Progress.report_scan_print_newline_if_not_done ~start_time_src:() ~units_so_far_src:stats ~total_units_src:max_len;
     res
