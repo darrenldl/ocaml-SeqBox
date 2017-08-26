@@ -3,14 +3,9 @@ open Sbx_specs
 open Sbx_block
 open Stream_file
 open Multihash
+open Int64_ops
 
 exception File_metadata_get_failed
-
-let (<+>) = Int64.add;;
-
-(*let (<->) = Int64.sub;;
-
-let (<*>) = Int64.mul;;*)
 
 module Stats = struct
   type t = { block_size          : int

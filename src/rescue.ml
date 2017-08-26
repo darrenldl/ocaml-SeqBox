@@ -1,13 +1,6 @@
 open Stream_file
 open Sbx_block
-
-let (<+>) = Int64.add;;
-
-let (<->) = Int64.sub;;
-
-let (<*>) = Int64.mul;;
-
-let (</>) = Int64.div;;
+open Int64_ops
 
 module Stats = struct
   type t = { bytes_processed       : int64

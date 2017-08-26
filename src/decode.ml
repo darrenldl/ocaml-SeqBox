@@ -2,12 +2,7 @@ open Stdint
 open Sbx_specs
 open Sbx_block
 open Stream_file
-
-let (<+>) = Int64.add;;
-
-let (<->) = Int64.sub;;
-
-let (<*>) = Int64.mul;;
+open Int64_ops
 
 module Stats = struct
   type t = { block_size            : int
