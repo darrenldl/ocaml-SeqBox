@@ -66,11 +66,11 @@ module Progress = struct
     Progress_report.gen_print_generic
       ~header:"Data encoding progress"
       ~silence_settings:Dynamic_param.Common.silence_settings
-      ~display_while_active:Param.Encode.Encode_progress.display_while_active
-      ~display_on_finish:Param.Encode.Encode_progress.display_on_finish
-      ~display_on_finish_early:Param.Encode.Encode_progress.display_on_finish_early
+      ~display_while_active:Progress_report_param.Encode.Encode_progress.display_while_active
+      ~display_on_finish:Progress_report_param.Encode.Encode_progress.display_on_finish
+      ~display_on_finish_early:Progress_report_param.Encode.Encode_progress.display_on_finish_early
       ~unit:"chunks"
-      ~print_interval:Param.Encode.progress_report_interval
+      ~print_interval:Progress_report_param.Encode.progress_report_interval
       ~eval_start_time:Sys.time
       ~eval_units_so_far:(fun stats -> stats.Stats.blocks_written)
       ~eval_total_units:

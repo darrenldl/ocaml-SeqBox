@@ -205,11 +205,11 @@ module Progress = struct
     Progress_report.gen_print_generic
       ~header:"Scan progress"
       ~silence_settings:Dynamic_param.Common.silence_settings
-      ~display_while_active:Param.Decode.Scan_progress.display_while_active
-      ~display_on_finish:Param.Decode.Scan_progress.display_on_finish
-      ~display_on_finish_early:Param.Decode.Scan_progress.display_on_finish_early
+      ~display_while_active:Progress_report_param.Decode.Scan_progress.display_while_active
+      ~display_on_finish:Progress_report_param.Decode.Scan_progress.display_on_finish
+      ~display_on_finish_early:Progress_report_param.Decode.Scan_progress.display_on_finish_early
       ~unit:"bytes"
-      ~print_interval:Param.Decode.progress_report_interval
+      ~print_interval:Progress_report_param.Decode.progress_report_interval
       ~eval_start_time:Sys.time
       ~eval_units_so_far:(fun (stats:scan_stats) -> stats.bytes_processed)
       ~eval_total_units:(fun in_file -> LargeFile.in_channel_length in_file)
@@ -222,11 +222,11 @@ module Progress = struct
     Progress_report.gen_print_generic
       ~header:"Hash progress"
       ~silence_settings:Dynamic_param.Common.silence_settings
-      ~display_while_active:Param.Decode.Hash_progress.display_while_active
-      ~display_on_finish:Param.Decode.Hash_progress.display_on_finish
-      ~display_on_finish_early:Param.Decode.Hash_progress.display_on_finish_early
+      ~display_while_active:Progress_report_param.Decode.Hash_progress.display_while_active
+      ~display_on_finish:Progress_report_param.Decode.Hash_progress.display_on_finish
+      ~display_on_finish_early:Progress_report_param.Decode.Hash_progress.display_on_finish_early
       ~unit:"bytes"
-      ~print_interval:Param.Decode.progress_report_interval
+      ~print_interval:Progress_report_param.Decode.progress_report_interval
       ~eval_start_time:Sys.time
       ~eval_units_so_far:(fun (stats:hash_stats) -> stats.bytes_processed)
       ~eval_total_units:(fun in_file -> LargeFile.in_channel_length in_file)
@@ -239,11 +239,11 @@ module Progress = struct
     Progress_report.gen_print_generic
       ~header:"Data decoding progress"
       ~silence_settings:Dynamic_param.Common.silence_settings
-      ~display_while_active:Param.Decode.Decode_progress.display_while_active
-      ~display_on_finish:Param.Decode.Decode_progress.display_on_finish
-      ~display_on_finish_early:Param.Decode.Decode_progress.display_on_finish_early
+      ~display_while_active:Progress_report_param.Decode.Decode_progress.display_while_active
+      ~display_on_finish:Progress_report_param.Decode.Decode_progress.display_on_finish
+      ~display_on_finish_early:Progress_report_param.Decode.Decode_progress.display_on_finish_early
       ~unit:"blocks"
-      ~print_interval:Param.Decode.progress_report_interval
+      ~print_interval:Progress_report_param.Decode.progress_report_interval
       ~eval_start_time:Sys.time
       ~eval_units_so_far:(fun (stats:stats) -> stats.blocks_processed)
       ~eval_total_units:

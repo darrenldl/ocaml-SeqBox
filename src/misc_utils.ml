@@ -149,19 +149,22 @@ let ensure_at_most (type a) ~(at_most:a) (x:a) =
 
 let calc_max_len_and_seek_to_from_byte_range ~(from_byte:int64 option) ~(to_byte:int64 option) ~(bytes_so_far:int64) ~(last_possible_pos:int64) : max_len_and_seek_to =
   let open Int64_ops in
-  let from_byte =
+  let multiple_of = Int64.of_int Param.Common.block_scan_alignment in
+  let from_byte   =
     match from_byte with
     | None   -> 0L
     | Some n -> n
                 |> ensure_at_least ~at_least:0L
-                |> ensure_at_most  ~at_most:last_possible_pos in
-  let to_byte   =
+                |> ensure_at_most  ~at_most:last_possible_pos
+                |> round_down_to_multiple_int64 ~multiple_of in
+  let to_byte     =
     match to_byte with
     | None   -> last_possible_pos
     | Some n -> n
                 |> ensure_at_least ~at_least:from_byte
                 |> ensure_at_most  ~at_most:last_possible_pos in
-  { max_len = to_byte   <-> from_byte <+> 1L
-  ; seek_to = from_byte <+> bytes_so_far
+  (* bytes_so_far only affects seek_to *)
+  { max_len = to_byte <-> from_byte <+> 1L
+  ; seek_to = round_down_to_multiple_int64 ~multiple_of (from_byte <+> bytes_so_far)
   }
 ;;
