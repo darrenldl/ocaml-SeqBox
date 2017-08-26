@@ -83,8 +83,7 @@ module Processor = struct
             | None       -> (new_stats, acc) in
           find_meta_blocks_proc_internal new_stats new_acc in
     let start_stats  = Stats.make_blank_scan_stats () in
-    let multiple_of  = Int64.of_int Param.Common.block_scan_alignment in
-    LargeFile.seek_in in_file (Misc_utils.round_down_to_multiple_int64 ~multiple_of seek_to);
+    LargeFile.seek_in in_file seek_to;
     let (stats, res) = find_meta_blocks_proc_internal start_stats [] in
     Progress.report_scan_print_newline_if_not_done ~start_time_src:() ~units_so_far_src:stats ~total_units_src:max_len;
     res

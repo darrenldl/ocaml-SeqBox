@@ -291,8 +291,7 @@ module Processor = struct
          (* check if seek to position is within valid range *)
          if seek_to <= last_possible_pos then
            begin
-             let multiple_of = Int64.of_int Param.Common.block_scan_alignment in
-             LargeFile.seek_in in_file (Misc_utils.round_down_to_multiple_int64 ~multiple_of seek_to);
+             LargeFile.seek_in in_file seek_to;
              (* start scan and output process *)
              Ok (scan_and_output in_file ~only_pick ~stats ~max_len ~out_dirname ~log_filename)
            end
