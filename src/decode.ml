@@ -416,7 +416,7 @@ module Processor = struct
          (* if reference block is a metadata block, then use the recorded file size to indicate truncatation *)
          let truncate : int64 option =
            if Block.is_meta ref_block then
-             let metadata_list   = Block.block_to_meta ref_block in
+             let metadata_list = Block.block_to_meta ref_block in
              try
                let open Metadata in
                match List.find (function | FSZ _ -> true | _ -> false) metadata_list with
@@ -428,7 +428,7 @@ module Processor = struct
              None in
          let recorded_hash : Multihash.hash_bytes option =
            let open Metadata in
-           let metadata_list      = dedup (Block.block_to_meta ref_block) in
+           let metadata_list = dedup (Block.block_to_meta ref_block) in
            try
              match List.find (function | HSH _ -> true | _ -> false) metadata_list with
              | HSH hash_bytes -> Some hash_bytes
