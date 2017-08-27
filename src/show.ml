@@ -57,14 +57,14 @@ module Processor = struct
     let open Misc_utils in
     let get_at_most          = ensure_at_least ~at_least:0L get_at_most in
     let last_possible_pos    = Int64.pred (LargeFile.in_channel_length in_file) in
-    let { max_len; seek_to } =
-      calc_max_len_and_seek_to_from_byte_range ~from_byte ~to_byte ~bytes_so_far:0L ~last_possible_pos in
+    let { required_len; seek_to } =
+      calc_required_len_and_seek_to_from_byte_range ~from_byte ~to_byte ~bytes_so_far:0L ~last_possible_pos in
     let raw_header_pred      = Header.raw_header_is_meta in
     let rec find_meta_blocks_proc_internal (stats:stats) (acc:(Block.t * int64) list) : stats * ((Block.t * int64) list) =
       (* report progress *)
-      Progress.report_scan ~start_time_src:() ~units_so_far_src:stats ~total_units_src:max_len;
+      Progress.report_scan ~start_time_src:() ~units_so_far_src:stats ~total_units_src:required_len;
       if (stats.meta_blocks_found >= get_at_most)
-      || (stats.bytes_processed   >= max_len)
+      || (stats.bytes_processed   >= required_len)
       then
         (stats, acc)
       else
@@ -85,7 +85,7 @@ module Processor = struct
     let start_stats  = Stats.make_blank_scan_stats () in
     LargeFile.seek_in in_file seek_to;
     let (stats, res) = find_meta_blocks_proc_internal start_stats [] in
-    Progress.report_scan_print_newline_if_not_done ~start_time_src:() ~units_so_far_src:stats ~total_units_src:max_len;
+    Progress.report_scan_print_newline_if_not_done ~start_time_src:() ~units_so_far_src:stats ~total_units_src:required_len;
     res
   ;;
 

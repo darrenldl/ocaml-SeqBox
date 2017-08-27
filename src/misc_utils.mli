@@ -1,8 +1,8 @@
 open Stdint
 
-type max_len_and_seek_to = { max_len : int64
-                           ; seek_to : int64
-                           }
+type required_len_and_seek_to = { required_len : int64
+                                ; seek_to      : int64
+                                }
 
 exception Invalid_range
 
@@ -40,4 +40,4 @@ val ensure_at_least              : at_least:'a       -> 'a    -> 'a
 
 val ensure_at_most               : at_most:'a        -> 'a    -> 'a
 
-val calc_max_len_and_seek_to_from_byte_range : from_byte:int64 option -> to_byte:int64 option -> bytes_so_far:int64 -> last_possible_pos:int64 -> max_len_and_seek_to
+val calc_required_len_and_seek_to_from_byte_range : from_byte:int64 option -> to_byte:int64 option -> bytes_so_far:int64 -> last_possible_pos:int64 -> required_len_and_seek_to

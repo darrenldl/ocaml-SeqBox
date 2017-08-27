@@ -203,19 +203,19 @@ end
 
 module Processor = struct
   (* scan for valid block *)
-  let scan_proc ~(only_pick:Block.block_type) ~(stats:stats) ~(max_len:int64) ~(log_filename:string option) (in_file:in_channel) : stats * ((Block.t * bytes) option) =
+  let scan_proc ~(only_pick:Block.block_type) ~(stats:stats) ~(required_len:int64) ~(log_filename:string option) (in_file:in_channel) : stats * ((Block.t * bytes) option) =
     let open Read_chunk in
     let raw_header_pred = Sbx_block_helpers.block_type_to_raw_header_pred only_pick in
     let rec scan_proc_internal (stats:stats) (result_so_far:(Block.t * bytes) option) : stats * ((Block.t * bytes) option) =
       (* report progress *)
-      Progress.report_rescue ~start_time_src:() ~units_so_far_src:stats ~total_units_src:max_len;
+      Progress.report_rescue ~start_time_src:() ~units_so_far_src:stats ~total_units_src:required_len;
       try
         (* write log possibly *)
-        Logger.write_possibly ~stats ~log_filename ~total_bytes:max_len;
+        Logger.write_possibly ~stats ~log_filename ~total_bytes:required_len;
         match result_so_far with
-        | Some _ as x                                       -> (stats, x)
-        | None   as x when stats.bytes_processed >= max_len -> (stats, x)
-        | None                                              ->
+        | Some _ as x                                            -> (stats, x)
+        | None   as x when stats.bytes_processed >= required_len -> (stats, x)
+        | None                                                   ->
           let (read_len, block_and_bytes) =
             Processor_components.try_get_block_and_bytes_from_in_channel ~raw_header_pred in_file in
           if read_len = 0L then
@@ -259,12 +259,12 @@ module Processor = struct
   (* if there is any error with outputting, just print directly and return stats
    * this should be very rare however, if happening at all
    *)
-  let rec scan_and_output ~(only_pick:Block.block_type) ~(stats:stats) ~(max_len:int64) ~(out_dirname:string) ~(log_filename:string option) (in_file:in_channel) : stats =
-    match scan_proc ~only_pick ~stats ~max_len ~log_filename in_file with
+  let rec scan_and_output ~(only_pick:Block.block_type) ~(stats:stats) ~(required_len:int64) ~(out_dirname:string) ~(log_filename:string option) (in_file:in_channel) : stats =
+    match scan_proc ~only_pick ~stats ~required_len ~log_filename in_file with
     | (stats, None)                 -> stats  (* ran out of valid blocks in input file *)
     | (stats, Some block_and_chunk) ->
       match output_proc ~stats ~block_and_chunk ~out_dirname with
-      | (stats, Ok _ )     -> scan_and_output ~only_pick ~stats ~max_len ~out_dirname ~log_filename in_file
+      | (stats, Ok _ )     -> scan_and_output ~only_pick ~stats ~required_len ~out_dirname ~log_filename in_file
       | (stats, Error msg) -> Printf.printf "%s\n" msg; stats
   ;;
 
@@ -286,14 +286,14 @@ module Processor = struct
        | Ok stats  ->
          let open Misc_utils in
          let last_possible_pos    = Int64.pred (LargeFile.in_channel_length in_file) in
-         let { max_len; seek_to } =
-           calc_max_len_and_seek_to_from_byte_range ~from_byte ~to_byte ~bytes_so_far:stats.bytes_processed ~last_possible_pos in
+         let { required_len; seek_to } =
+           calc_required_len_and_seek_to_from_byte_range ~from_byte ~to_byte ~bytes_so_far:stats.bytes_processed ~last_possible_pos in
          (* check if seek to position is within valid range *)
          if seek_to <= last_possible_pos then
            begin
              LargeFile.seek_in in_file seek_to;
              (* start scan and output process *)
-             Ok (scan_and_output in_file ~only_pick ~stats ~max_len ~out_dirname ~log_filename)
+             Ok (scan_and_output in_file ~only_pick ~stats ~required_len ~out_dirname ~log_filename)
            end
          else
            (* do nothing *)
