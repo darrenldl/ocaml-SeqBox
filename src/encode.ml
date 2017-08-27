@@ -85,58 +85,60 @@ module Progress = struct
 end
 
 module Processor = struct
-  let pack_data (stats:stats) (common:Header.common_fields) (chunk:bytes) : bytes =
-    let seq_num = Uint32.of_int64 (stats.data_blocks_written <+> 1L) in (* always off by +1 *)
-    let block   = Block.make_data_block ~seq_num common ~data:chunk in
-    Block.to_bytes block
-  ;;
-
-  (* Converts data to data blocks *)
-  let data_to_block_proc (in_file:in_channel) (out_file:out_channel) ~(data_len:int) ~(stats:stats) ~(common:Header.common_fields) : stats =
-    let open Read_chunk in
-    let open Write_chunk in
-    let rec data_to_block_proc_internal (stats:stats) : stats =
-      (* report progress *)
-      Progress.report_encode ~start_time_src:() ~units_so_far_src:stats ~total_units_src:(stats, in_file);
-      match read in_file ~len:data_len with
-      | None           -> stats
-      | Some { chunk } ->
-        let chunk_len   = Bytes.length chunk in
-        let block_bytes = pack_data stats common chunk in
-        (* write to file *)
-        write out_file ~chunk:block_bytes;
-        data_to_block_proc_internal (Stats.add_written_data_block stats ~data_len:chunk_len) in
-    data_to_block_proc_internal stats
-  ;;
-
-  let data_to_block_proc_w_hash (hash_type:hash_type) (in_file:in_channel) (out_file:out_channel) ~(data_len:int) ~(stats: stats) ~(common:Header.common_fields) : stats * hash_bytes =
-    let rec data_to_block_proc_w_hash_internal (hash_state:Hash.ctx) (in_file:in_channel) (out_file:out_channel) ~(data_len:int) ~(stats:stats) ~(common:Header.common_fields) : stats * hash_bytes =
+  let data_to_block_proc (in_file:in_channel) (out_file:out_channel) ~(hash_type:hash_type option) ~(data_len:int) ~(stats: stats) ~(common:Header.common_fields) : stats * (hash_bytes option) =
+    let (update_hash, get_hash_bytes) : (bytes -> unit) * (unit -> hash_bytes option) =
+      let hash_state : Hash.ctx option =
+        match hash_type with
+        | None   -> None
+        | Some h -> Some (Hash.init h) in
+      let update_hash : bytes -> unit =
+        match hash_state with
+          | None   -> (fun _ -> ())
+          | Some s -> (fun b -> Hash.feed s b) in
+      let get_hash_bytes : unit -> hash_bytes option =
+        match hash_state with
+        | None   -> (fun () -> None)
+        | Some s -> (fun () -> Some (Hash.get_hash_bytes s)) in
+      (update_hash, get_hash_bytes) in
+    let pack_data (stats:stats) (common:Header.common_fields) (chunk:bytes) : bytes =
+      let seq_num = Uint32.of_int64 (stats.data_blocks_written <+> 1L) in (* always off by +1 *)
+      let block   = Block.make_data_block ~seq_num common ~data:chunk in
+      Block.to_bytes block in
+    let rec data_to_block_proc_internal (in_file:in_channel) (out_file:out_channel) ~(data_len:int) ~(stats:stats) ~(common:Header.common_fields) : stats * (hash_bytes option) =
       let open Read_chunk in
       let open Write_chunk in
       (* report progress *)
       Progress.report_encode ~start_time_src:() ~units_so_far_src:stats ~total_units_src:(stats, in_file);
       match read in_file ~len:data_len with
-      | None           -> (stats, Hash.get_hash_bytes hash_state)
+      | None           -> (stats, get_hash_bytes ())
       | Some { chunk } ->
         let chunk_len   = Bytes.length chunk in
         let block_bytes = pack_data stats common chunk in
         (* update hash *)
-        Hash.feed hash_state chunk;
+        update_hash chunk;
         (* write to file *)
         write out_file ~chunk:block_bytes;
-        data_to_block_proc_w_hash_internal hash_state in_file out_file ~data_len ~stats:(Stats.add_written_data_block stats ~data_len:chunk_len) ~common in
-    data_to_block_proc_w_hash_internal (Hash.init hash_type) in_file out_file ~data_len ~stats ~common
+        data_to_block_proc_internal
+          in_file
+          out_file
+          ~data_len
+          ~stats:(Stats.add_written_data_block stats ~data_len:chunk_len)
+          ~common in
+    data_to_block_proc_internal in_file out_file ~data_len ~stats ~common
   ;;
 
   let make_in_out_encoder ~(hash_type:hash_type) ~(common:Header.common_fields) ~(metadata:(Metadata.t list) option) : stats Stream.in_out_processor =
-    let ver      = Header.common_fields_to_ver common in
-    let data_len = ver_to_data_size ver in
+    let ver         = Header.common_fields_to_ver common in
+    let data_len    = ver_to_data_size ver in
+    let blank_stats = Stats.make_blank_stats ~ver in
     let open Read_chunk in
     let open Write_chunk in
     match metadata with
     | None ->
       (fun in_file out_file ->
-         data_to_block_proc in_file out_file ~data_len ~stats:(Stats.make_blank_stats ~ver) ~common
+         let (stats, _) =
+           data_to_block_proc in_file out_file ~hash_type:None ~data_len ~stats:blank_stats ~common in
+         stats
       )
     | Some metadata_list ->
       (fun in_file out_file ->
@@ -155,7 +157,9 @@ module Processor = struct
            write out_file ~chunk:dummy_metadata_block_bytes;
            (* write data blocks *)
            let (stats, hash_bytes)        =
-             data_to_block_proc_w_hash hash_type in_file out_file ~data_len ~stats:(Stats.make_blank_stats ~ver) ~common in
+             match data_to_block_proc in_file out_file ~hash_type:(Some hash_type) ~data_len ~stats:blank_stats ~common with
+             | (_,     None  ) -> assert false (* there should always be a hash_bytes *)
+             | (stats, Some h) -> (stats, h) in
            let fields                     =
              (HSH hash_bytes) :: fields_except_hash in
            let metadata_block             = Block.make_metadata_block common ~fields in
