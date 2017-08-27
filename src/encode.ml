@@ -85,6 +85,12 @@ module Progress = struct
 end
 
 module Processor = struct
+  let pack_data (stats:stats) (common:Header.common_fields) (chunk:bytes) : bytes =
+    let seq_num = Uint32.of_int64 (stats.data_blocks_written <+> 1L) in (* always off by +1 *)
+    let block   = Block.make_data_block ~seq_num common ~data:chunk in
+    Block.to_bytes block
+  ;;
+
   (* Converts data to data blocks *)
   let data_to_block_proc (in_file:in_channel) (out_file:out_channel) ~(data_len:int) ~(stats:stats) ~(common:Header.common_fields) : stats =
     let open Read_chunk in
@@ -96,9 +102,7 @@ module Processor = struct
       | None           -> stats
       | Some { chunk } ->
         let chunk_len   = Bytes.length chunk in
-        let seq_num     = Uint32.of_int64 (stats.data_blocks_written <+> 1L) in (* always off by +1 *)
-        let block       = Block.make_data_block ~seq_num common ~data:chunk in
-        let block_bytes = Block.to_bytes block in
+        let block_bytes = pack_data stats common chunk in
         (* write to file *)
         write out_file ~chunk:block_bytes;
         data_to_block_proc_internal (Stats.add_written_data_block stats ~data_len:chunk_len) in
@@ -115,9 +119,7 @@ module Processor = struct
       | None           -> (stats, Hash.get_hash_bytes hash_state)
       | Some { chunk } ->
         let chunk_len   = Bytes.length chunk in
-        let seq_num     = Uint32.of_int64 (stats.data_blocks_written <+> 1L) in (* always off by +1 *)
-        let block       = Block.make_data_block ~seq_num common ~data:chunk in
-        let block_bytes = Block.to_bytes block in
+        let block_bytes = pack_data stats common chunk in
         (* update hash *)
         Hash.feed hash_state chunk;
         (* write to file *)
