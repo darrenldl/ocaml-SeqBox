@@ -93,8 +93,8 @@ module Processor = struct
         | Some h -> Some (Hash.init h) in
       let update_hash : bytes -> unit =
         match hash_state with
-          | None   -> (fun _ -> ())
-          | Some s -> (fun b -> Hash.feed s b) in
+        | None   -> (fun _ -> ())
+        | Some s -> (fun b -> Hash.feed s b) in
       let get_hash_bytes : unit -> hash_bytes option =
         match hash_state with
         | None   -> (fun () -> None)
