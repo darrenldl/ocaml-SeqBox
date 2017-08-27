@@ -101,7 +101,7 @@ module Processor = struct
         | Some s -> (fun () -> Some (Hash.get_hash_bytes s)) in
       (update_hash, get_hash_bytes) in
     let pack_data (stats:stats) (common:Header.common_fields) (chunk:bytes) : bytes =
-      let seq_num = Uint32.of_int64 (stats.data_blocks_written <+> 1L) in (* always off by +1 *)
+      let seq_num = Uint32.of_int64 (stats.data_blocks_written <+> 1L) (* always off by +1 *) in
       let block   = Block.make_data_block ~seq_num common ~data:chunk in
       Block.to_bytes block in
     let rec data_to_block_proc_internal (in_file:in_channel) (out_file:out_channel) ~(data_len:int) ~(stats:stats) ~(common:Header.common_fields) : stats * (hash_bytes option) =
