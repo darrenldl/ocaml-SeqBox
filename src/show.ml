@@ -77,7 +77,7 @@ module Processor = struct
             match block with
             | Some block ->
               if Block.is_meta block then
-                (Stats.add_meta_block new_stats, (block, stats.bytes_processed) :: acc)
+                (Stats.add_meta_block new_stats, (block, stats.bytes_processed <+> seek_to) :: acc)
               else
                 (new_stats, acc)
             | None       -> (new_stats, acc) in
