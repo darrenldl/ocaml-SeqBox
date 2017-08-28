@@ -209,7 +209,6 @@ module Processor = struct
     let rec scan_proc_internal (stats:stats) (result_so_far:(Block.t * bytes) option) : stats * ((Block.t * bytes) option) =
       (* report progress *)
       Progress.report_rescue ~start_time_src:() ~units_so_far_src:stats ~total_units_src:required_len;
-      try
         (* write log possibly *)
         Logger.write_possibly ~stats ~log_filename ~total_bytes:required_len;
         match result_so_far with
@@ -222,17 +221,18 @@ module Processor = struct
             (stats, None)
           else
             let new_stats = Stats.add_bytes stats ~num:read_len in
-            scan_proc_internal new_stats block_and_bytes
-      with
-      | Logger.Write_fail msg ->
-        begin
-          (* just print and quit if cannot write log *)
-          print_newline ();
-          Printf.printf "Failed to write to log file, error : %s" msg;
-          print_newline ();
-          (stats, None)
-        end in
-    scan_proc_internal stats None
+            scan_proc_internal new_stats block_and_bytes in
+    try
+      scan_proc_internal stats None
+    with
+    | Logger.Write_fail msg ->
+      begin
+        (* just print and quit if cannot write log *)
+        print_newline ();
+        Printf.printf "Failed to write to log file, error : %s" msg;
+        print_newline ();
+        (stats, None)
+      end
   ;;
 
   (* append blocks to filename (use uid in hex string as filename)
