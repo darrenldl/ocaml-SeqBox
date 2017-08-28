@@ -11,6 +11,8 @@
     - This allows specifying range of file to scan for data rescuing
   - Added from, to options to show mode(previously only skip-to option exists for show)
     - This allows specifying range of file to scan for metadata
+  - Added force-misalign option to rescue and show mode
+    - This allows disabling automatic rounding down of from byte parameter
 
 ## 1.2.2  (newest version on OPAM)
   - Optimized decoding code to speed up reference block scanning
