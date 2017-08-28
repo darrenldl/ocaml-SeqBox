@@ -209,19 +209,19 @@ module Processor = struct
     let rec scan_proc_internal (stats:stats) (result_so_far:(Block.t * bytes) option) : stats * ((Block.t * bytes) option) =
       (* report progress *)
       Progress.report_rescue ~start_time_src:() ~units_so_far_src:stats ~total_units_src:required_len;
-        (* write log possibly *)
-        Logger.write_possibly ~stats ~log_filename ~total_bytes:required_len;
-        match result_so_far with
-        | Some _ as x                                            -> (stats, x)
-        | None   as x when stats.bytes_processed >= required_len -> (stats, x)
-        | None                                                   ->
-          let (read_len, block_and_bytes) =
-            Processor_components.try_get_block_and_bytes_from_in_channel ~raw_header_pred in_file in
-          if read_len = 0L then
-            (stats, None)
-          else
-            let new_stats = Stats.add_bytes stats ~num:read_len in
-            scan_proc_internal new_stats block_and_bytes in
+      (* write log possibly *)
+      Logger.write_possibly ~stats ~log_filename ~total_bytes:required_len;
+      match result_so_far with
+      | Some _ as x                                            -> (stats, x)
+      | None   as x when stats.bytes_processed >= required_len -> (stats, x)
+      | None                                                   ->
+        let (read_len, block_and_bytes) =
+          Processor_components.try_get_block_and_bytes_from_in_channel ~raw_header_pred in_file in
+        if read_len = 0L then
+          (stats, None)
+        else
+          let new_stats = Stats.add_bytes stats ~num:read_len in
+          scan_proc_internal new_stats block_and_bytes in
     try
       scan_proc_internal stats None
     with
