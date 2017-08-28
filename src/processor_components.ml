@@ -35,8 +35,8 @@ let try_get_block_and_bytes_from_in_channel ?(fixed_ver:Sbx_specs.version option
   | Some { chunk } ->
     let read_len : int64 = Int64.of_int (Bytes.length chunk) in
     try
-      let raw_header_bytes : bytes                    = Misc_utils.get_bytes chunk ~pos:0 ~len:16 in
-      let raw_header       : Header.raw_header        = Header.of_bytes raw_header_bytes in
+      let raw_header_bytes : bytes             = Misc_utils.get_bytes chunk ~pos:0 ~len:16 in
+      let raw_header       : Header.raw_header = Header.of_bytes raw_header_bytes in
       if raw_header_pred raw_header then
         let chunk            : bytes                    =
           match fixed_ver with

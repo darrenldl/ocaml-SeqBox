@@ -219,7 +219,7 @@ module Processor = struct
           let (read_len, block_and_bytes) =
             Processor_components.try_get_block_and_bytes_from_in_channel ~raw_header_pred in_file in
           if read_len = 0L then
-            scan_proc_internal stats result_so_far
+            (stats, None)
           else
             let new_stats = Stats.add_bytes stats ~num:read_len in
             scan_proc_internal new_stats block_and_bytes
@@ -289,16 +289,9 @@ module Processor = struct
          let { required_len; seek_to } =
            calc_required_len_and_seek_to_from_byte_range
              ~from_byte ~to_byte ~force_misalign ~bytes_so_far:stats.bytes_processed ~last_possible_pos in
-         (* check if seek to position is within valid range *)
-         if seek_to <= last_possible_pos then
-           begin
-             LargeFile.seek_in in_file seek_to;
-             (* start scan and output process *)
-             Ok (scan_and_output in_file ~only_pick ~stats ~required_len ~out_dirname ~log_filename)
-           end
-         else
-           (* do nothing *)
-           Ok stats
+         LargeFile.seek_in in_file seek_to;
+         (* start scan and output process *)
+         Ok (scan_and_output in_file ~only_pick ~stats ~required_len ~out_dirname ~log_filename)
     )
   ;;
 end
