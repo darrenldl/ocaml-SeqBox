@@ -268,7 +268,7 @@ module Processor = struct
       | (stats, Error msg) -> Printf.printf "%s\n" msg; stats
   ;;
 
-  let make_rescuer ~(only_pick:Block.block_type) ~(from_byte:int64 option) ~(to_byte:int64 option) ~(out_dirname:string) ~(log_filename:string option) : ((stats, string) result) Stream.in_processor =
+  let make_rescuer ~(only_pick:Block.block_type) ~(from_byte:int64 option) ~(to_byte:int64 option) ~(force_misalign:bool) ~(out_dirname:string) ~(log_filename:string option) : ((stats, string) result) Stream.in_processor =
     (fun in_file ->
        (* try to get last stats from log file and seek to the last position recorded
         * otherwise just make blank stats
@@ -287,7 +287,8 @@ module Processor = struct
          let open Misc_utils in
          let last_possible_pos    = Int64.pred (LargeFile.in_channel_length in_file) in
          let { required_len; seek_to } =
-           calc_required_len_and_seek_to_from_byte_range ~from_byte ~to_byte ~bytes_so_far:stats.bytes_processed ~last_possible_pos in
+           calc_required_len_and_seek_to_from_byte_range
+             ~from_byte ~to_byte ~force_misalign ~bytes_so_far:stats.bytes_processed ~last_possible_pos in
          (* check if seek to position is within valid range *)
          if seek_to <= last_possible_pos then
            begin
@@ -303,8 +304,8 @@ module Processor = struct
 end
 
 module Process = struct
-  let rescue_from_file ~(only_pick:Block.block_type) ~(from_byte:int64 option) ~(to_byte:int64 option) ~(in_filename:string) ~(out_dirname:string) ~(log_filename:string option) : (stats, string) result =
-    let processor = Processor.make_rescuer ~only_pick ~from_byte ~to_byte ~out_dirname ~log_filename in
+  let rescue_from_file ~(only_pick:Block.block_type) ~(from_byte:int64 option) ~(to_byte:int64 option) ~(force_misalign:bool) ~(in_filename:string) ~(out_dirname:string) ~(log_filename:string option) : (stats, string) result =
+    let processor = Processor.make_rescuer ~only_pick ~from_byte ~to_byte ~force_misalign ~out_dirname ~log_filename in
     match Stream.process_in ~in_filename processor with
     | Ok res    -> res
     | Error msg -> Error msg

@@ -11,7 +11,17 @@ end
 type stats = Stats.t
 
 module Process : sig
-  val fetch_single_meta : from_byte:int64 option -> to_byte:int64 option -> in_filename:string -> ((Block.t * int64) option, string) result
+  val fetch_single_meta :
+    from_byte:int64 option ->
+    to_byte:int64 option ->
+    force_misalign:bool ->
+    in_filename:string ->
+    ((Block.t * int64) option, string) result
 
-  val fetch_multi_meta  : from_byte:int64 option -> to_byte:int64 option -> in_filename:string -> ((Block.t * int64) list,   string) result
+  val fetch_multi_meta  :
+    from_byte:int64 option ->
+    to_byte:int64 option ->
+    force_misalign:bool ->
+    in_filename:string ->
+    ((Block.t * int64) list,   string) result
 end

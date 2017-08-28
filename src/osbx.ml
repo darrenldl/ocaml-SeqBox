@@ -45,6 +45,12 @@ let force =
   Arg.(value & flag & info ["f"; "force"] ~docv:"OUT" ~doc)
 ;;
 
+let force_misalign =
+  let doc = "Disable auto-adjustment of $(docv).
+  This is not normally useful, and is only intended for data recovery or related purposes." in
+  Arg.(value & flag & info ["force-misalign"] ~docv:"FROM-BYTE" ~doc)
+;;
+
 let hash =
   let open Multihash in
   let doc =
@@ -99,7 +105,7 @@ let decode_cmd =
 let rescue_cmd =
   let open Osbx_rescue in
   let doc = "Rescue sbx data from file" in
-  (Term.(const rescue $ silent $ only_pick $ from_byte $ to_byte $ in_file $ out_dir $ log_file),
+  (Term.(const rescue $ silent $ only_pick $ from_byte $ to_byte $ force_misalign $ in_file $ out_dir $ log_file),
    Term.info "rescue" ~doc
   )
 ;;
@@ -107,7 +113,7 @@ let rescue_cmd =
 let show_cmd =
   let open Osbx_show in
   let doc = "Search for and print metadata in sbx container (or file)" in
-  (Term.(const show $ silent $ find_max $ from_byte $ to_byte $ in_file),
+  (Term.(const show $ silent $ find_max $ from_byte $ to_byte $ force_misalign $ in_file),
    Term.info "show" ~doc
   )
 ;;

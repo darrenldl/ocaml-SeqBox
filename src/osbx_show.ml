@@ -101,7 +101,7 @@ let rec print_meta_blocks ?(cur:int64 = 0L) (lst:(Block.t * int64) list) : unit 
     end
 ;;
 
-let show (silent:Progress_report.silence_level) (find_max:int64 option) (from_byte:int64 option) (to_byte:int64 option) (in_filename:string) : unit =
+let show (silent:Progress_report.silence_level) (find_max:int64 option) (from_byte:int64 option) (to_byte:int64 option) (force_misalign:bool) (in_filename:string) : unit =
   Dynamic_param.Show.set_meta_list_max_length_possibly find_max;
   Dynamic_param.Common.set_silence_settings silent;
   try
@@ -110,7 +110,7 @@ let show (silent:Progress_report.silence_level) (find_max:int64 option) (from_by
       ()
     | None                ->
       begin
-        match Process.fetch_single_meta ~from_byte ~to_byte ~in_filename with
+        match Process.fetch_single_meta ~from_byte ~to_byte ~force_misalign ~in_filename with
         | Ok res    ->
           begin
             match res with
@@ -120,7 +120,7 @@ let show (silent:Progress_report.silence_level) (find_max:int64 option) (from_by
         | Error str -> raise (Packaged_exn str)
       end
     | _                   ->
-      match Process.fetch_multi_meta ~from_byte ~to_byte ~in_filename with
+      match Process.fetch_multi_meta ~from_byte ~to_byte ~force_misalign ~in_filename with
       | Ok res    ->
         begin
           match res with

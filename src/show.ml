@@ -52,13 +52,13 @@ module Progress = struct
 end
 
 module Processor = struct
-  let find_meta_blocks_proc ~(from_byte:int64 option) ~(to_byte:int64 option) ~(get_at_most:int64) (in_file:in_channel) : (Block.t * int64) list =
+  let find_meta_blocks_proc ~(from_byte:int64 option) ~(to_byte:int64 option) ~(force_misalign:bool) ~(get_at_most:int64) (in_file:in_channel) : (Block.t * int64) list =
     let open Read_chunk in
     let open Misc_utils in
     let get_at_most          = ensure_at_least ~at_least:0L get_at_most in
     let last_possible_pos    = Int64.pred (LargeFile.in_channel_length in_file) in
     let { required_len; seek_to } =
-      calc_required_len_and_seek_to_from_byte_range ~from_byte ~to_byte ~bytes_so_far:0L ~last_possible_pos in
+      calc_required_len_and_seek_to_from_byte_range ~from_byte ~to_byte ~force_misalign ~bytes_so_far:0L ~last_possible_pos in
     let raw_header_pred      = Header.raw_header_is_meta in
     let rec find_meta_blocks_proc_internal (stats:stats) (acc:(Block.t * int64) list) : stats * ((Block.t * int64) list) =
       (* report progress *)
@@ -89,30 +89,30 @@ module Processor = struct
     res
   ;;
 
-  let make_single_meta_fetcher ~(from_byte:int64 option) ~(to_byte:int64 option) : ((Block.t * int64) option) Stream.in_processor =
+  let make_single_meta_fetcher ~(from_byte:int64 option) ~(to_byte:int64 option) ~(force_misalign:bool) : ((Block.t * int64) option) Stream.in_processor =
     (fun in_file ->
-       match find_meta_blocks_proc ~from_byte ~to_byte ~get_at_most:1L in_file with
+       match find_meta_blocks_proc ~from_byte ~to_byte ~force_misalign ~get_at_most:1L in_file with
        | []       -> None
        | [x]      -> Some x
        | hd :: tl -> assert false
     )
   ;;
 
-  let make_multi_meta_fetcher ~(from_byte:int64 option) ~(to_byte:int64 option) : ((Block.t * int64) list) Stream.in_processor =
+  let make_multi_meta_fetcher ~(from_byte:int64 option) ~(to_byte:int64 option) ~(force_misalign:bool) : ((Block.t * int64) list) Stream.in_processor =
     (fun in_file ->
-       List.rev (find_meta_blocks_proc ~from_byte ~to_byte ~get_at_most:!Dynamic_param.Show.meta_list_max_length in_file)
+       List.rev (find_meta_blocks_proc ~from_byte ~to_byte ~force_misalign ~get_at_most:!Dynamic_param.Show.meta_list_max_length in_file)
     )
   ;;
 end
 
 module Process = struct
-  let fetch_single_meta ~(from_byte:int64 option) ~(to_byte:int64 option) ~(in_filename:string) : ((Block.t * int64) option, string) result =
-    let processor = Processor.make_single_meta_fetcher ~from_byte ~to_byte in
+  let fetch_single_meta ~(from_byte:int64 option) ~(to_byte:int64 option) ~(force_misalign:bool) ~(in_filename:string) : ((Block.t * int64) option, string) result =
+    let processor = Processor.make_single_meta_fetcher ~from_byte ~to_byte ~force_misalign in
     Stream.process_in ~in_filename processor
   ;;
 
-  let fetch_multi_meta ~(from_byte:int64 option) ~(to_byte:int64 option) ~(in_filename:string) : ((Block.t * int64) list, string) result =
-    let processor = Processor.make_multi_meta_fetcher  ~from_byte ~to_byte in
+  let fetch_multi_meta ~(from_byte:int64 option) ~(to_byte:int64 option) ~(force_misalign:bool) ~(in_filename:string) : ((Block.t * int64) list, string) result =
+    let processor = Processor.make_multi_meta_fetcher  ~from_byte ~to_byte ~force_misalign in
     Stream.process_in ~in_filename processor
   ;;
 end

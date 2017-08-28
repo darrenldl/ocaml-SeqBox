@@ -40,4 +40,10 @@ val ensure_at_least              : at_least:'a       -> 'a    -> 'a
 
 val ensure_at_most               : at_most:'a        -> 'a    -> 'a
 
-val calc_required_len_and_seek_to_from_byte_range : from_byte:int64 option -> to_byte:int64 option -> bytes_so_far:int64 -> last_possible_pos:int64 -> required_len_and_seek_to
+val calc_required_len_and_seek_to_from_byte_range :
+  from_byte:int64 option ->
+  to_byte:int64 option ->
+  force_misalign:bool ->
+  bytes_so_far:int64 ->
+  last_possible_pos:int64 ->
+  required_len_and_seek_to

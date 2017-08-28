@@ -147,16 +147,21 @@ let ensure_at_most (type a) ~(at_most:a) (x:a) =
   min at_most x
 ;;
 
-let calc_required_len_and_seek_to_from_byte_range ~(from_byte:int64 option) ~(to_byte:int64 option) ~(bytes_so_far:int64) ~(last_possible_pos:int64) : required_len_and_seek_to =
+let calc_required_len_and_seek_to_from_byte_range ~(from_byte:int64 option) ~(to_byte:int64 option) ~(force_misalign:bool) ~(bytes_so_far:int64) ~(last_possible_pos:int64) : required_len_and_seek_to =
   let open Int64_ops in
   let multiple_of = Int64.of_int Param.Common.block_scan_alignment in
+  let align : int64 -> int64 =
+    if force_misalign then
+      (fun x -> x)
+    else
+      round_down_to_multiple_int64 ~multiple_of in
   let from_byte   =
     match from_byte with
     | None   -> 0L
     | Some n -> n
                 |> ensure_at_least ~at_least:0L
                 |> ensure_at_most  ~at_most:last_possible_pos
-                |> round_down_to_multiple_int64 ~multiple_of in
+                |> align in
   let to_byte     =
     match to_byte with
     | None   -> last_possible_pos
@@ -165,6 +170,6 @@ let calc_required_len_and_seek_to_from_byte_range ~(from_byte:int64 option) ~(to
                 |> ensure_at_most  ~at_most:last_possible_pos in
   (* bytes_so_far only affects seek_to *)
   { required_len = to_byte <-> from_byte <+> 1L
-  ; seek_to      = round_down_to_multiple_int64 ~multiple_of (from_byte <+> bytes_so_far)
+  ; seek_to      = align (from_byte <+> bytes_so_far)
   }
 ;;
