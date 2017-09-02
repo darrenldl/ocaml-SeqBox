@@ -218,6 +218,11 @@ module Processor = struct
         let (read_len, block_and_bytes) =
           Processor_components.try_get_block_and_bytes_from_in_channel ~raw_header_pred in_file in
         if read_len = 0L then
+          (* return here instead of doing another recursive call
+           * to avoid infinite loop due to change of file size causing stats.bytes_processed
+           * to never reach required_len
+           * not sure if that will happen, but just in case
+           *)
           (stats, None)
         else
           let new_stats = Stats.add_bytes stats ~num:read_len in
