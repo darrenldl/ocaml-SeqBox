@@ -47,7 +47,7 @@ let force =
 
 let force_misalign =
   let doc = "Disable automatic rounding down of $(docv).
-  This is not normally useful, and is only intended for data recovery or related purposes." in
+  This is not normally used and is only intended for data recovery or related purposes." in
   Arg.(value & flag & info ["force-misalign"] ~docv:"FROM-BYTE" ~doc)
 ;;
 
