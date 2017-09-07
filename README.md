@@ -43,7 +43,7 @@ I would like to thank [Ming](https://github.com/mdchia/) for his feedback on the
 You can view the recordings [here](https://github.com/darrenldl/ocaml-SeqBox/wiki/Recordings)
 
 ### Installation
-Osbx 1.2.2 is available through OPAM.
+Osbx 1.2.3 is available through OPAM.
 ```
 opam install osbx
 ```
@@ -59,9 +59,7 @@ osbx show   --help
 ```
 
 ## Notes
-Version 1.2.2 is considered to be feature complete and mature enough for production use, but any bug reports or suggestions are very welcome - just open an issue!
-
-Version 1.2.3 will come out at some point, but will likely only contain message text polishing.
+Version 1.2.3 is considered to be feature complete and mature enough for production use, but any bug reports or suggestions are very welcome - just open an issue!
 
 CRC-CCITT is currently implemented in pure OCaml and is translated from implementation in [libcrc](https://github.com/lammertb/libcrc)
   - See src/crcccitt.ml, src/crcccitt.mli for the OCaml implementation
