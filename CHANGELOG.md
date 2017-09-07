@@ -1,4 +1,4 @@
-## 1.2.3  (development version)
+## 1.2.3  (newest version on OPAM)
   - Message text polishing
   - Fixed division by zero error/exception in progress reporting when number of total units is 0
     - The error/exception affects all four modes when dealing with files of size 0 bytes
@@ -14,7 +14,7 @@
   - Added force-misalign option to rescue and show mode
     - This allows disabling automatic rounding down of from byte parameter
 
-## 1.2.2  (newest version on OPAM)
+## 1.2.2  (published on OPAM)
   - Optimized decoding code to speed up reference block scanning
     - Avoids decoding the sbx block in full when already has a block of that type
   - Added no-meta option to decode mode
