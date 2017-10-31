@@ -203,9 +203,12 @@ end
 
 module Processor = struct
   (* scan for valid block *)
-  let scan_proc ~(only_pick_block:Block.block_type) ~(stats:stats) ~(required_len:int64) ~(log_filename:string option) (in_file:in_channel) : stats * ((Block.t * bytes) option) =
+  let scan_proc ~(only_pick_block:Block.block_type) ~(only_pick_uid:string option) ~(stats:stats) ~(required_len:int64) ~(log_filename:string option) (in_file:in_channel) : stats * ((Block.t * bytes) option) =
     let open Read_chunk in
-    let raw_header_pred = Sbx_block_helpers.block_type_to_raw_header_pred only_pick_block in
+    let raw_header_pred =
+      let block_type_pred = Sbx_block_helpers.block_type_to_raw_header_pred only_pick_block in
+      let file_uid_pred   = Sbx_block_helpers.file_uid_to_raw_header_pred only_pick_uid in
+      (fun header -> (block_type_pred header) && (file_uid_pred header)) in
     let rec scan_proc_internal (stats:stats) (result_so_far:(Block.t * bytes) option) : stats * ((Block.t * bytes) option) =
       (* report progress *)
       Progress.report_rescue ~start_time_src:() ~units_so_far_src:stats ~total_units_src:required_len;
@@ -264,16 +267,16 @@ module Processor = struct
   (* if there is any error with outputting, just print directly and return stats
    * this should be very rare however, if happening at all
    *)
-  let rec scan_and_output ~(only_pick_block:Block.block_type) ~(stats:stats) ~(required_len:int64) ~(out_dirname:string) ~(log_filename:string option) (in_file:in_channel) : stats =
-    match scan_proc ~only_pick_block ~stats ~required_len ~log_filename in_file with
+  let rec scan_and_output ~(only_pick_block:Block.block_type) ~(only_pick_uid:string option) ~(stats:stats) ~(required_len:int64) ~(out_dirname:string) ~(log_filename:string option) (in_file:in_channel) : stats =
+    match scan_proc ~only_pick_block ~only_pick_uid ~stats ~required_len ~log_filename in_file with
     | (stats, None)                 -> stats  (* ran out of valid blocks in input file *)
     | (stats, Some block_and_chunk) ->
       match output_proc ~stats ~block_and_chunk ~out_dirname with
-      | (stats, Ok _ )     -> scan_and_output ~only_pick_block ~stats ~required_len ~out_dirname ~log_filename in_file
+      | (stats, Ok _ )     -> scan_and_output ~only_pick_block ~only_pick_uid ~stats ~required_len ~out_dirname ~log_filename in_file
       | (stats, Error msg) -> Printf.printf "%s\n" msg; stats
   ;;
 
-  let make_rescuer ~(only_pick_block:Block.block_type) ~(from_byte:int64 option) ~(to_byte:int64 option) ~(force_misalign:bool) ~(out_dirname:string) ~(log_filename:string option) : ((stats, string) result) Stream.in_processor =
+  let make_rescuer ~(only_pick_block:Block.block_type) ~(only_pick_uid:string option) ~(from_byte:int64 option) ~(to_byte:int64 option) ~(force_misalign:bool) ~(out_dirname:string) ~(log_filename:string option) : ((stats, string) result) Stream.in_processor =
     (fun in_file ->
        (* try to get last stats from log file and seek to the last position recorded
         * otherwise just make blank stats
@@ -296,14 +299,23 @@ module Processor = struct
              ~from_byte ~to_byte ~force_misalign ~bytes_so_far:stats.bytes_processed ~last_possible_pos in
          LargeFile.seek_in in_file seek_to;
          (* start scan and output process *)
-         Ok (scan_and_output in_file ~only_pick_block ~stats ~required_len ~out_dirname ~log_filename)
+         Ok (scan_and_output in_file ~only_pick_block ~only_pick_uid ~stats ~required_len ~out_dirname ~log_filename)
     )
   ;;
 end
 
 module Process = struct
-  let rescue_from_file ~(only_pick_block:Block.block_type) ~(from_byte:int64 option) ~(to_byte:int64 option) ~(force_misalign:bool) ~(in_filename:string) ~(out_dirname:string) ~(log_filename:string option) : (stats, string) result =
-    let processor = Processor.make_rescuer ~only_pick_block ~from_byte ~to_byte ~force_misalign ~out_dirname ~log_filename in
+  let rescue_from_file
+      ~(only_pick_block:Block.block_type)
+      ~(only_pick_uid:string option)
+      ~(from_byte:int64 option)
+      ~(to_byte:int64 option)
+      ~(force_misalign:bool)
+      ~(in_filename:string)
+      ~(out_dirname:string)
+      ~(log_filename:string option)
+    : (stats, string) result =
+    let processor = Processor.make_rescuer ~only_pick_block ~only_pick_uid ~from_byte ~to_byte ~force_misalign ~out_dirname ~log_filename in
     match Stream.process_in ~in_filename processor with
     | Ok res    -> res
     | Error msg -> Error msg

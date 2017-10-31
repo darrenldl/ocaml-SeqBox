@@ -21,3 +21,9 @@ let block_type_to_raw_header_pred (block_type:Block.block_type) : (Header.raw_he
   | `Data -> Header.raw_header_is_data
   | `Any  -> (fun _ -> true)
 ;;
+
+let file_uid_to_raw_header_pred (uid:bytes option) : (Header.raw_header -> bool) =
+  match uid with
+  | Some uid -> (fun header -> header.file_uid = uid)
+  | None     -> (fun _ -> true)
+;;

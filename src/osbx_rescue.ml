@@ -1,16 +1,33 @@
 open Cmdliner
 open Rescue
 
+exception Packaged_exn of string
+
 let rescue
     (silent:Progress_report.silence_level)
     (only_pick_block:Sbx_block.Block.block_type)
     (only_pick_uid:string option)
     (from_byte:int64 option)
-    (to_byte:int64 option) (force_misalign:bool) (in_filename:string) (out_dirname:string) (log_filename:string option) : unit =
+    (to_byte:int64 option)
+    (force_misalign:bool)
+    (in_filename:string)
+    (out_dirname:string)
+    (log_filename:string option)
+  : unit =
   Dynamic_param.Common.set_silence_settings silent;
-  match Process.rescue_from_file ~only_pick_block ~from_byte ~to_byte ~force_misalign ~in_filename ~out_dirname ~log_filename with
-  | Ok stats  -> Stats.print_stats stats
-  | Error msg -> Printf.printf "%s\n" msg
+  try
+    let only_pick_uid : bytes option =
+      match only_pick_uid with
+      | None -> None
+      | Some str ->
+        match Conv_utils.hex_string_to_bytes str with
+        | Ok uid -> Some uid
+        | Error _ -> raise (Packaged_exn (Printf.sprintf "Uid %s is not a valid hex string" str)) in
+    match Process.rescue_from_file ~only_pick_block ~only_pick_uid ~from_byte ~to_byte ~force_misalign ~in_filename ~out_dirname ~log_filename with
+    | Ok stats  -> Stats.print_stats stats
+    | Error msg -> Printf.printf "%s\n" msg
+  with 
+  | Packaged_exn str -> Printf.printf "%s\n" str
 ;;
 
 let only_pick_block =
