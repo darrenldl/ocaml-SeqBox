@@ -18,7 +18,7 @@ let only_pick_block =
                 ("data", (`Data:block_type))])
          (`Any:block_type)
        & info
-         ["only-pick"]
+         ["only-pick-block"]
          ~docv:"TYPE"
          ~doc)
 ;;
