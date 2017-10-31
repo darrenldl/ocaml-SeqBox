@@ -16,7 +16,7 @@ type stats = Stats.t
 
 module Process : sig
   val rescue_from_file :
-    only_pick:Block.block_type ->
+    only_pick_block:Block.block_type ->
     from_byte:int64 option ->
     to_byte:int64 option ->
     force_misalign:bool ->
