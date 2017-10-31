@@ -59,11 +59,11 @@ osbx show   --help
 ```
 
 ## Notes
-Version 1.2.3 is considered to be feature complete and mature enough for production use, but any bug reports or suggestions are very welcome - just open an issue!
+Version 1.2.4 is considered to be feature complete and mature enough for production use, but any bug reports or suggestions are very welcome - just open an issue!
 
 Contributions are welcome as well, but note that by submitting a contribution, you agree that your code will be licensed under the 3-Clause BSD license.
 
-No major active development will occur, but since 1.2.3 was designed to be quite scriptable via the options, you can always write helper scripts for advanced features. You can check out the ones I am writing [here](https://github.com/darrenldl/osbx-helpers).
+No major active development will occur, but since 1.2.4 was designed to be quite scriptable via the options, you can always write helper scripts for advanced features. You can check out the ones I am writing [here](https://github.com/darrenldl/osbx-helpers).
 
 CRC-CCITT is currently implemented in pure OCaml and is translated from the implementation in [libcrc](https://github.com/lammertb/libcrc)
   - See src/crcccitt.ml, src/crcccitt.mli for the OCaml implementation
