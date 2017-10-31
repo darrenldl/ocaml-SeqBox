@@ -89,7 +89,7 @@ let path_to_list (path:string) : string list =
   in
   let path_parser   : string list Angstrom.t =
     sep_by sep single_parser in
-  match Angstrom.parse_only path_parser (`String path) with
+  match Angstrom.parse_string path_parser path with
   | Ok lst  -> lst
   | Error _ -> assert false
 ;;

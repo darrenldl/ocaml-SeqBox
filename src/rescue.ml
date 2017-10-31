@@ -186,7 +186,7 @@ module Logger = struct
        | None         -> None
        | Some { chunk } ->
          let open Angstrom in
-         match parse_only Parser.log_file_p (`String chunk) with
+         match parse_string Parser.log_file_p chunk with
          | Ok stats -> Some stats
          | Error _  -> None
     )

@@ -197,7 +197,7 @@ end = struct
     ;;
 
     let seq_p : Stdint.uint32 Angstrom.t =
-      BE.uint32 >>| Uint32.of_int32
+      BE.int32 >>| Uint32.of_int32
     ;;
 
     let header_p : raw_header Angstrom.t =
@@ -206,7 +206,7 @@ end = struct
   end
 
   let of_bytes (data:bytes) : raw_header =
-    match Angstrom.parse_only Parser.header_p (`String data) with
+    match Angstrom.parse_string Parser.header_p data with
     | Ok header -> header
     | Error _   -> raise Invalid_bytes
   ;;
@@ -359,7 +359,7 @@ end = struct
     ;;
 
     let uint64_data_p : Stdint.uint64 Angstrom.t =
-      char '\008' *> Angstrom.BE.uint64 >>| Uint64.of_int64
+      char '\008' *> Angstrom.BE.int64 >>| Uint64.of_int64
     ;;
 
     let fnm_p : metadata Angstrom.t =
@@ -420,7 +420,7 @@ end = struct
   end
 
   let of_bytes (data:bytes) : t list =
-    match Angstrom.parse_only Parser.fields_p (`String data) with
+    match Angstrom.parse_string Parser.fields_p data with
     | Ok fields -> dedup fields
     | Error _   -> raise Invalid_bytes
   ;;
