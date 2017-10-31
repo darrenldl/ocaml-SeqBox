@@ -56,6 +56,12 @@ echo "========================================"
 
 echo ""
 
+echo "Starting rescue with specified uid tests"
+echo "========================================"
+./rescue_pick_uid_tests.sh
+echo "========================================"
+
+echo ""
 
 # output file tests
 echo "Starting output file path logic tests"
