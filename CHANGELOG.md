@@ -4,6 +4,7 @@
   - Added --only-pick-uid option to rescue mode
     - This allows only picking sbx blocks of specific uid when rescuing
     - This is useful when you only only want to rescue one specific file
+  - Renamed --only-pick option to --only-pick-block in rescue mode
   
 ## 1.2.3  (newest version on OPAM)
   - Message text polishing
