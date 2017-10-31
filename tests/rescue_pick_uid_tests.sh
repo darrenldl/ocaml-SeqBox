@@ -23,17 +23,17 @@ rm -rf rescued_data2
 mkdir rescued_data2
 ./osbx rescue --only-pick-uid $uid_unused dummy_disk2 rescued_data2
 if [ ! -f "rescued_data2/"$uid1 ]; then
-  echo "==> okay"
+  echo "==> Okay"
 else
   echo "==> NOT okay"
 fi
 if [ ! -f "rescued_data2/"$uid2 ]; then
-    echo "==> okay"
+    echo "==> Okay"
 else
     echo "==> NOT okay"
 fi
 if [ ! -f "rescued_data2/"$uid3 ]; then
-    echo "==> okay"
+    echo "==> Okay"
 else
     echo "==> NOT okay"
 fi
@@ -41,17 +41,30 @@ fi
 echo "Rescuing from dummy disk 2 with "$uid1
 ./osbx rescue --only-pick-uid $uid1 dummy_disk2 rescued_data2
 if [ -f "rescued_data2/"$uid1 ]; then
-    echo "==> okay"
+    echo "==> Okay"
 else
     echo "==> NOT okay"
 fi
 if [ ! -f "rescued_data2/"$uid2 ]; then
-    echo "==> okay"
+    echo "==> Okay"
 else
     echo "==> NOT okay"
 fi
 if [ ! -f "rescued_data2/"$uid3 ]; then
-    echo "==> okay"
+    echo "==> Okay"
 else
     echo "==> NOT okay"
+fi
+echo""
+
+echo "Decoding rescued file"
+./osbx decode "rescued_data2/"$uid1 "rescued_data2/"$uid1.decoded
+echo""
+
+echo "Comparing decoded data to original"
+cmp dummy "rescued_data2/"$uid1.decoded
+if [[ $? == 0 ]]; then
+    echo "No mismatches detected"
+else
+    echo "Mismatch detected"
 fi
