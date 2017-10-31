@@ -46,8 +46,8 @@ let only_pick_block =
 ;;
 
 let only_pick_uid =
-  let doc = "Only pick blocks with $(docv) as uid" in
-  Arg.(value & opt (some string) None & info ["--only-pick-uid"] ~docv:"UID-HEX" ~doc)
+  let doc = "Only pick blocks with $(docv) as uid. Uid must be exactly 6 bytes(12 hex digits) in length." in
+  Arg.(value & opt (some string) None & info ["only-pick-uid"] ~docv:"UID-HEX" ~doc)
 ;;
 
 let in_file =
