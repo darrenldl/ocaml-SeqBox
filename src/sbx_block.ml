@@ -148,7 +148,7 @@ end = struct
       | (None,   None)   -> None   in
     match seq_num with
     | Some seq_num ->
-      let seq_num_string : string     = Conv_utils.uint32_to_string seq_num in
+      let seq_num_string : string      = Conv_utils.uint32_to_string seq_num in
       let things_to_crc  : string list = [ header_to_file_uid header
                                          ; seq_num_string
                                          ; data
@@ -156,11 +156,11 @@ end = struct
       let string_to_crc  : string      = String.concat "" things_to_crc in
       let crc_result     : string      = Helper.crc_ccitt_sbx ~ver:(header_to_ver header) ~input:string_to_crc in
       let header_parts   : string list = [ header_to_signature header
-                                       ; ver_to_string (header_to_ver header)
-                                       ; crc_result
-                                       ; header_to_file_uid header
-                                       ; seq_num_string
-                                       ] in
+                                         ; ver_to_string (header_to_ver header)
+                                         ; crc_result
+                                         ; header_to_file_uid header
+                                         ; seq_num_string
+                                         ] in
       String.concat "" header_parts
     | None ->
       raise Missing_alt_seq_num
