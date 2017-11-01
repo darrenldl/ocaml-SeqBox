@@ -7,11 +7,11 @@ exception Packaged_exn of string
 let encode (silent:Progress_report.silence_level) (force_out:bool) (no_meta:bool) (ver:version) (uid:string option) (hash_type:string option) (in_filename:string) (provided_out_filename:string option) : unit =
   Dynamic_param.Common.set_silence_settings silent;
   try
-    let uid : bytes option =
+    let uid : string option =
       match uid with
       | None     -> None
       | Some str ->
-        match Conv_utils.hex_string_to_bytes str with
+        match Conv_utils.hex_string_to_string str with
         | Ok uid  -> Some uid
         | Error _ -> raise (Packaged_exn (Printf.sprintf "Uid %s is not a valid hex string" str)) in
     let out_filename : string =
