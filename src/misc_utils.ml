@@ -6,7 +6,7 @@ type required_len_and_seek_to = { required_len : int64
 
 exception Invalid_range
 
-let pad_bytes ?(filler:uint8 = Uint8.of_int 0x00) (old_bytes:bytes) (new_len:int) : bytes =
+(*let pad_bytes ?(filler:uint8 = Uint8.of_int 0x00) (old_bytes:bytes) (new_len:int) : bytes =
   let buf         = Bytes.create 1 in
   Uint8.to_bytes_big_endian filler buf 0;
   let filler_char = Bytes.get buf 0 in
@@ -17,7 +17,7 @@ let pad_bytes ?(filler:uint8 = Uint8.of_int 0x00) (old_bytes:bytes) (new_len:int
     new_bytes
   else
     old_bytes
-;;
+  ;;*)
 
 let get_sub_string (chunk:string) ~(pos:int) ~(len:int) : string =
   let chunk_size = String.length chunk in

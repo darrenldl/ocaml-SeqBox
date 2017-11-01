@@ -6,7 +6,7 @@ type required_len_and_seek_to = { required_len : int64
 
 exception Invalid_range
 
-val pad_bytes : ?filler:uint8 -> bytes -> int -> bytes
+(*val pad_bytes : ?filler:uint8 -> bytes -> int -> bytes *)
 
 val get_sub_string : string -> pos:int -> len:int -> string
 
