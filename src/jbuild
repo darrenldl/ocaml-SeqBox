@@ -1,5 +1,5 @@
 (executable
- ((name           stream_file)
+ ((name           multihash)
   (public_name    whatever)
   (ocamlopt_flags (-nodynlink -safe-string))
   (libraries      (stdint
