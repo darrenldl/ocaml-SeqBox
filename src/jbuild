@@ -1,5 +1,5 @@
 (executable
- ((name           sbx_block)
+ ((name           progress_report)
   (public_name    whatever)
   (ocamlopt_flags (-nodynlink -safe-string))
   (libraries      (stdint
