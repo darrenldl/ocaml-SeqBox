@@ -131,9 +131,9 @@ module Write_from_buf = struct
 end
 
 module Write_chunk = struct
-  let write (out_file:out_channel) ~(chunk:bytes) : unit =
+  let write (out_file:out_channel) ~(chunk:string) : unit =
     try
-      Write_from_buf.write out_file ~buf:chunk
+      Write_from_buf.write out_file ~buf:(Bytes.of_string chunk)
     with
     (* Write_chunk.write should never raise any exceptions related to use of Write_from_buf.write *)
     | Write_from_buf.Invalid_offset

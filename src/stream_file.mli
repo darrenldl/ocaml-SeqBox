@@ -63,5 +63,5 @@ module Write_from_buf : sig
 end
 
 module Write_chunk : sig
-  val write : out_channel -> chunk:bytes -> unit
+  val write : out_channel -> chunk:string -> unit
 end

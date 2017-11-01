@@ -86,12 +86,12 @@ end
 
 module Processor = struct
   let data_to_block_proc (in_file:in_channel) (out_file:out_channel) ~(hash_type:hash_type option) ~(data_len:int) ~(stats: stats) ~(common:Header.common_fields) : stats * (hash_bytes option) =
-    let (update_hash, get_hash_bytes) : (bytes -> unit) * (unit -> hash_bytes option) =
+    let (update_hash, get_hash_bytes) : (string -> unit) * (unit -> hash_bytes option) =
       let hash_state : Hash.ctx option =
         match hash_type with
         | None   -> None
         | Some h -> Some (Hash.init h) in
-      let update_hash : bytes -> unit =
+      let update_hash : string -> unit =
         match hash_state with
         | None   -> (fun _ -> ())
         | Some s -> (fun b -> Hash.feed s b) in
@@ -100,10 +100,10 @@ module Processor = struct
         | None   -> (fun () -> None)
         | Some s -> (fun () -> Some (Hash.get_hash_bytes s)) in
       (update_hash, get_hash_bytes) in
-    let pack_data (stats:stats) (common:Header.common_fields) (chunk:bytes) : bytes =
+    let pack_data (stats:stats) (common:Header.common_fields) (chunk:string) : string =
       let seq_num = Uint32.of_int64 (stats.data_blocks_written <+> 1L) (* always off by +1 *) in
       let block   = Block.make_data_block ~seq_num common ~data:chunk in
-      Block.to_bytes block in
+      Block.to_string block in
     let rec data_to_block_proc_internal (in_file:in_channel) (out_file:out_channel) ~(data_len:int) ~(stats:stats) ~(common:Header.common_fields) : stats * (hash_bytes option) =
       let open Read_chunk in
       let open Write_chunk in
@@ -112,7 +112,7 @@ module Processor = struct
       match read in_file ~len:data_len with
       | None           -> (stats, get_hash_bytes ())
       | Some { chunk } ->
-        let chunk_len   = Bytes.length chunk in
+        let chunk_len   = String.length chunk in
         let block_bytes = pack_data stats common chunk in
         (* update hash *)
         update_hash chunk;
@@ -153,8 +153,8 @@ module Processor = struct
            let dummy_hash_bytes           = Multihash.make_dummy_hash_bytes hash_type in
            let dummy_fields               = (HSH dummy_hash_bytes) :: fields_except_hash in
            let dummy_metadata_block       = Block.make_metadata_block common ~fields:dummy_fields in
-           let dummy_metadata_block_bytes = Block.to_bytes dummy_metadata_block in
-           write out_file ~chunk:dummy_metadata_block_bytes;
+           let dummy_metadata_block_string = Block.to_string dummy_metadata_block in
+           write out_file ~chunk:dummy_metadata_block_string;
            (* write data blocks *)
            let (stats, hash_bytes)        =
              match data_to_block_proc in_file out_file ~hash_type:(Some hash_type) ~data_len ~stats:blank_stats ~common with
@@ -163,10 +163,10 @@ module Processor = struct
            let fields                     =
              (HSH hash_bytes) :: fields_except_hash in
            let metadata_block             = Block.make_metadata_block common ~fields in
-           let metadata_block_bytes       = Block.to_bytes metadata_block in
+           let metadata_block_string      = Block.to_string metadata_block in
            (* go back and write metadata block *)
            LargeFile.seek_out out_file 0L;
-           write out_file ~chunk:metadata_block_bytes;
+           write out_file ~chunk:metadata_block_string;
            (* update stats *)
            Stats.add_written_meta_block stats
          with
@@ -191,7 +191,7 @@ module Process = struct
     | _ -> raise File_metadata_get_failed
   ;;
 
-  let encode_file ~(uid:bytes option) ~(want_meta:bool) ~(ver:version) ~(hash:string) ~(in_filename:string) ~(out_filename:string) : (stats, string) result =
+  let encode_file ~(uid:string option) ~(want_meta:bool) ~(ver:version) ~(hash:string) ~(in_filename:string) ~(out_filename:string) : (stats, string) result =
     try
       (* check file size first *)
       let max_file_size = ver_to_max_file_size ver in

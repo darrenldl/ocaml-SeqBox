@@ -20,5 +20,5 @@ end
 type stats = Stats.t
 
 module Process : sig
-  val encode_file : uid:bytes option -> want_meta:bool -> ver:version -> hash:string -> in_filename:string -> out_filename:string -> (stats, string) result
+  val encode_file : uid:string option -> want_meta:bool -> ver:version -> hash:string -> in_filename:string -> out_filename:string -> (stats, string) result
 end
