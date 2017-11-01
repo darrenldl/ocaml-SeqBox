@@ -99,7 +99,3 @@ let string_to_ver       (str:string)  : (version, string) result =
   | "3" -> Ok `V3
   | _   -> Error "Invalid version string"
 ;;
-
-let ver_to_string       (ver:version) : string =
-  string_of_int (ver_to_int ver)
-;;
