@@ -107,12 +107,12 @@ let get_option_ref_init_if_none (eval:(unit -> 'a)) (opt_ref:'a option ref) : 'a
     x
 ;;
 
-let pad_string (input:string) (len:int) (pad_char:char) : string =
+let pad_string ?(filler:char = (Char.chr 0x00)) (input:string) (len:int) : string =
   let input_len = String.length input in
   let pad_len   = len - input_len in
   let padding =
     if pad_len > 0 then
-      String.make pad_len pad_char
+      String.make pad_len filler
     else
       "" in
   String.concat "" [input; padding]

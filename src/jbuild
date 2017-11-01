@@ -1,5 +1,5 @@
 (executable
- ((name           sbx_specs)
+ ((name           sbx_block)
   (public_name    whatever)
   (ocamlopt_flags (-nodynlink -safe-string))
   (libraries      (stdint
