@@ -14,13 +14,13 @@ type hash_type  = [ `SHA1
 type hash_bytes
 
 module Specs : sig
-  type param = { hash_func_type : bytes
+  type param = { hash_func_type : string
                ; digest_length  : int
                }
 
   val hash_type_to_param          : hash_type -> param
 
-  val hash_type_to_hash_func_type : hash_type -> bytes
+  val hash_type_to_hash_func_type : hash_type -> string
 
   val hash_type_to_digest_length  : hash_type -> int
 
@@ -44,9 +44,9 @@ module Hash : sig
 
   val init                   : hash_type -> ctx
 
-  val feed                   : ctx       -> bytes      -> unit
+  val feed                   : ctx       -> string     -> unit
 
-  val get_raw_hash           : ctx       -> bytes
+  val get_raw_hash           : ctx       -> string
 
   val get_hash_bytes         : ctx       -> hash_bytes
 end
@@ -61,16 +61,16 @@ val string_to_hash_type : string    -> (hash_type, string) result
 
 val string_to_hash_type_exn : string -> hash_type
 
-val raw_hash_to_hash_bytes  : hash_type   -> bytes -> hash_bytes
+val raw_hash_to_hash_bytes  : hash_type   -> string -> hash_bytes
 
-val hash_bytes_to_raw_hash  : hash_bytes -> bytes
+val hash_bytes_to_raw_hash  : hash_bytes -> string
 
-val hash_bytes_to_multihash : hash_bytes -> bytes
+val hash_bytes_to_multihash : hash_bytes -> string
 
 val hash_bytes_to_hash_type : hash_bytes -> hash_type
 
-val hash_bytes_to_hash_type_string : hash_bytes -> bytes
+val hash_bytes_to_hash_type_string : hash_bytes -> string
 
-val raw_hash_to_multihash   : hash_type   -> bytes -> bytes
+val raw_hash_to_multihash   : hash_type   -> string -> string
 
 val make_dummy_hash_bytes   : hash_type   -> hash_bytes

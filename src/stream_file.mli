@@ -24,15 +24,15 @@ end
 module General_helper : sig
   exception Invalid_range
 
-  val make_buffer            : int       -> bytes
+  val make_buffer            : int        -> bytes
 
-  val get_from_buf           : buf:bytes -> pos:int      -> len:int        -> bytes
+  val get_from_buf           : buf:string -> pos:int      -> len:int        -> string 
 
   (* Inclusive range *)
-  val get_from_buf_inc_range : buf:bytes -> start_at:int -> end_at:int     -> bytes
+  val get_from_buf_inc_range : buf:string -> start_at:int -> end_at:int     -> string
 
   (* Exclusive range *)
-  val get_from_buf_exc_range : buf:bytes -> start_at:int -> end_before:int -> bytes
+  val get_from_buf_exc_range : buf:string -> start_at:int -> end_before:int -> string
 end
 
 (* Helpers for reading into buffer *)
@@ -48,7 +48,7 @@ end
 
 (* Helpers for reading and returning data as value *)
 module Read_chunk : sig
-  type read_content = { chunk : bytes }
+  type read_content = { chunk : string }
   type read_result  = read_content option
 
   val read : in_channel -> len:int -> read_result
@@ -63,5 +63,5 @@ module Write_from_buf : sig
 end
 
 module Write_chunk : sig
-  val write : out_channel -> chunk:bytes -> unit
+  val write : out_channel -> chunk:string -> unit
 end

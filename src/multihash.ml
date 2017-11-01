@@ -23,18 +23,18 @@ let all_hash_types = [ `SHA1
                      ; `BLAKE2S_256
                      ]
 
-type hash_bytes = hash_type * bytes
+type hash_bytes = hash_type * string
 
 module Specs = struct
-  type param = { hash_func_type : bytes
+  type param = { hash_func_type : string
                ; digest_length  : int
                }
 
   let hash_type_to_param (hash_type:hash_type) : param =
-    let of_hex_str (hex_str:string) : bytes =
-      match Conv_utils.hex_string_to_bytes hex_str with
-      | Ok bytes -> bytes
-      | Error _  -> assert false in
+    let of_hex_str (hex_str:string) : string =
+      match Conv_utils.hex_string_to_string hex_str with
+      | Ok str  -> str
+      | Error _ -> assert false in
     match hash_type with
     | `SHA1                   -> { hash_func_type = (of_hex_str "11");   digest_length = 0x14 }
     | `SHA2_256     | `SHA256 -> { hash_func_type = (of_hex_str "12");   digest_length = 0x20 }
@@ -46,7 +46,7 @@ module Specs = struct
     | `BLAKE2S_256            -> { hash_func_type = (of_hex_str "b260"); digest_length = 0x20 }
   ;;
 
-  let hash_type_to_hash_func_type (hash_type:hash_type) : bytes =
+  let hash_type_to_hash_func_type (hash_type:hash_type) : string =
     let { hash_func_type; _ } = hash_type_to_param hash_type in
     hash_func_type
   ;;
@@ -58,17 +58,14 @@ module Specs = struct
 
   let hash_type_to_total_length   (hash_type:hash_type) : int =
     let { hash_func_type; digest_length } = hash_type_to_param hash_type in
-    (Bytes.length hash_func_type) + 1 + digest_length
+    (String.length hash_func_type) + 1 + digest_length
   ;;
 end
 
 let hash_bytes_equal (a:hash_bytes) (b:hash_bytes) : bool =
   let (hash_type_a, raw_a) = a in
   let (hash_type_b, raw_b) = b in
-  if hash_type_a = hash_type_b then
-    (Bytes.compare raw_a raw_b) = 0
-  else
-    false
+  (hash_type_a = hash_type_b) && (raw_a = raw_b)
 ;;
 
 let hash_type_to_string (hash_type:hash_type) : string =
@@ -105,23 +102,23 @@ let string_to_hash_type (str:string) : (hash_type, string) result =
   | Invalid_hash_type_string -> Error "Unrecognized hash type string"
 ;;
 
-let raw_hash_to_hash_bytes (hash_type:hash_type) (raw:bytes) : hash_bytes =
-  if Specs.hash_type_to_digest_length hash_type = Bytes.length raw then
+let raw_hash_to_hash_bytes (hash_type:hash_type) (raw:string) : hash_bytes =
+  if Specs.hash_type_to_digest_length hash_type = String.length raw then
     (hash_type, raw)
   else
     raise Length_mismatch
 ;;
 
-let hash_bytes_to_raw_hash (hash_bytes:hash_bytes) : bytes =
+let hash_bytes_to_raw_hash (hash_bytes:hash_bytes) : string =
   let (_, raw) = hash_bytes in
   raw
 ;;
 
-let hash_bytes_to_multihash (hash_bytes:hash_bytes) : bytes =
+let hash_bytes_to_multihash (hash_bytes:hash_bytes) : string =
   let (hash_type, raw)                        = hash_bytes in
   let { Specs.hash_func_type; digest_length } = Specs.hash_type_to_param hash_type in
-  let len_bytes                               = Conv_utils.uint8_to_bytes (Uint8.of_int digest_length) in
-  Bytes.concat "" [hash_func_type; len_bytes; raw]
+  let len_bytes                               = Conv_utils.uint8_to_string (Uint8.of_int digest_length) in
+  String.concat "" [hash_func_type; len_bytes; raw]
 ;;
 
 let hash_bytes_to_hash_type        (hash_bytes:hash_bytes) : hash_type =
@@ -129,18 +126,18 @@ let hash_bytes_to_hash_type        (hash_bytes:hash_bytes) : hash_type =
   hash_type
 ;;
 
-let hash_bytes_to_hash_type_string (hash_bytes:hash_bytes) : bytes =
+let hash_bytes_to_hash_type_string (hash_bytes:hash_bytes) : string =
   let (hash_type, _) = hash_bytes in
   hash_type_to_string hash_type
 ;;
 
-let raw_hash_to_multihash (hash_type:hash_type) (raw:bytes) : bytes =
+let raw_hash_to_multihash (hash_type:hash_type) (raw:string) : string =
   let hash_bytes = raw_hash_to_hash_bytes hash_type raw in
   hash_bytes_to_multihash hash_bytes
 ;;
 
 let make_dummy_hash_bytes (hash_type:hash_type) : hash_bytes =
-  (hash_type, Bytes.make (Specs.hash_type_to_digest_length hash_type) '\x00')
+  (hash_type, String.make (Specs.hash_type_to_digest_length hash_type) '\x00')
 ;;
 
 module Parser = struct
@@ -148,8 +145,8 @@ module Parser = struct
 
   let gen_parser (hash_type:hash_type) : hash_bytes Angstrom.t =
     let { Specs.hash_func_type; digest_length } = Specs.hash_type_to_param hash_type in
-    let len_bytes                               = Conv_utils.uint8_to_bytes (Uint8.of_int digest_length) in
-    let header_bytes                            = Bytes.concat "" [hash_func_type; len_bytes] in
+    let len_bytes                               = Conv_utils.uint8_to_string (Uint8.of_int digest_length) in
+    let header_bytes                            = String.concat "" [hash_func_type; len_bytes] in
     string header_bytes *> take digest_length
     >>|
     (fun raw ->
@@ -201,24 +198,24 @@ module Hash = struct
     | Unsupported_hash -> false
   ;;
 
-  let feed (ctx:ctx) (data:bytes) : unit =
-    let bytes_to_cstruct (bytes:bytes) : Cstruct.t =
-      Cstruct.of_bytes bytes in
+  let feed (ctx:ctx) (data:string) : unit =
+    let to_cstruct (data:string) : Cstruct.t =
+      Cstruct.of_string data in
     match ctx with
-    | SHA1    ctx -> Nocrypto.Hash.SHA1.feed     ctx (bytes_to_cstruct data) (* Digestif.SHA1.Bytes.feed   ctx data *)
-    | SHA256  ctx -> Nocrypto.Hash.SHA256.feed   ctx (bytes_to_cstruct data) (* Digestif.SHA256.Bytes.feed ctx data *)
-    | SHA512  ctx -> Nocrypto.Hash.SHA512.feed   ctx (bytes_to_cstruct data) (* Digestif.SHA512.Bytes.feed ctx data *)
-    | BLAKE2B ctx -> Digestif.BLAKE2B.Bytes.feed ctx data
+    | SHA1    ctx -> Nocrypto.Hash.SHA1.feed     ctx (to_cstruct data) (* Digestif.SHA1.Bytes.feed   ctx data *)
+    | SHA256  ctx -> Nocrypto.Hash.SHA256.feed   ctx (to_cstruct data) (* Digestif.SHA256.Bytes.feed ctx data *)
+    | SHA512  ctx -> Nocrypto.Hash.SHA512.feed   ctx (to_cstruct data) (* Digestif.SHA512.Bytes.feed ctx data *)
+    | BLAKE2B ctx -> Digestif.BLAKE2B.Bytes.feed ctx (Bytes.of_string data)
   ;;
 
-  let get_raw_hash (ctx:ctx) : bytes =
-    let cstruct_to_bytes (cstruct:Cstruct.t) : bytes =
+  let get_raw_hash (ctx:ctx) : string =
+    let cstruct_to_bytes (cstruct:Cstruct.t) : string =
       Cstruct.to_string cstruct in
     match ctx with
     | SHA1    ctx -> cstruct_to_bytes (Nocrypto.Hash.SHA1.get   ctx) (* Digestif.SHA1.Bytes.get   ctx *)
     | SHA256  ctx -> cstruct_to_bytes (Nocrypto.Hash.SHA256.get ctx) (* Digestif.SHA256.Bytes.get ctx *)
     | SHA512  ctx -> cstruct_to_bytes (Nocrypto.Hash.SHA512.get ctx) (* Digestif.SHA512.Bytes.get ctx *)
-    | BLAKE2B ctx -> Digestif.BLAKE2B.Bytes.get ctx
+    | BLAKE2B ctx -> Bytes.to_string (Digestif.BLAKE2B.Bytes.get ctx)
   ;;
 
   let get_hash_bytes (ctx:ctx) : hash_bytes =

@@ -6,13 +6,13 @@ type required_len_and_seek_to = { required_len : int64
 
 exception Invalid_range
 
-val pad_bytes : ?filler:uint8 -> bytes -> int -> bytes
+(*val pad_bytes : ?filler:uint8 -> bytes -> int -> bytes *)
 
-val get_bytes : bytes -> pos:int -> len:int -> bytes
+val get_sub_string : string -> pos:int -> len:int -> string
 
-val get_bytes_inc_range : bytes -> start_at:int -> end_at:int     -> bytes
+val get_sub_string_inc_range : string -> start_at:int -> end_at:int     -> string
 
-val get_bytes_exc_range : bytes -> start_at:int -> end_before:int -> bytes
+val get_sub_string_exc_range : string -> start_at:int -> end_before:int -> string
 
 val list_find_option : ('a -> bool) -> 'a list -> 'a option
 
@@ -26,7 +26,7 @@ val path_to_file : string -> string
 
 val get_option_ref_init_if_none : (unit -> 'a) -> 'a option ref -> 'a
 
-val pad_string : string -> int -> char -> string
+val pad_string : ?filler:char -> string -> int -> string
 
 val round_down_to_multiple_int64 : multiple_of:int64 -> int64 -> int64
 

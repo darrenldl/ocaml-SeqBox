@@ -1,14 +1,14 @@
-let gen_bytes ~(len:int) : bytes =
-  let gen_bytes_helper () : bytes =
+let gen_string ~(len:int) : string =
+  let gen_string_helper () : string =
     Cstruct.to_string (
       Nocrypto.Rng.generate ~g:!Nocrypto.Rng.generator len
     ) in
   try
-    gen_bytes_helper ()
+    gen_string_helper ()
   with
   | Nocrypto.Rng.Unseeded_generator ->
     begin
       Nocrypto_entropy_unix.initialize ();
-      gen_bytes_helper ()
+      gen_string_helper ()
     end
 ;;

@@ -21,18 +21,18 @@ module General_helper = struct
     Bytes.make size '\x00'
   ;;
 
-  let get_from_buf ~(buf:bytes) ~(pos:int) ~(len:int) : bytes =
+  let get_from_buf ~(buf:string) ~(pos:int) ~(len:int) : string =
     try
-      Misc_utils.get_bytes buf ~pos ~len
+      Misc_utils.get_sub_string buf ~pos ~len
     with
     | Misc_utils.Invalid_range -> raise Invalid_range
   ;;
 
-  let get_from_buf_inc_range ~(buf:bytes) ~(start_at:int) ~(end_at:int) : bytes =
+  let get_from_buf_inc_range ~(buf:string) ~(start_at:int) ~(end_at:int) : string =
     get_from_buf ~buf ~pos:start_at ~len:(end_at     - start_at + 1)
   ;;
 
-  let get_from_buf_exc_range ~(buf:bytes) ~(start_at:int) ~(end_before:int) : bytes =
+  let get_from_buf_exc_range ~(buf:string) ~(start_at:int) ~(end_before:int) : string =
     get_from_buf ~buf ~pos:start_at ~len:(end_before - start_at)
   ;;
 end
@@ -91,7 +91,7 @@ module Read_into_buf = struct
 end
 
 module Read_chunk = struct
-  type read_content = { chunk : bytes }
+  type read_content = { chunk : string }
   type read_result  = read_content option
 
   let read (in_file:in_channel) ~(len:int) : read_result =
@@ -99,7 +99,9 @@ module Read_chunk = struct
       let buf = General_helper.make_buffer len in
       match Read_into_buf.read in_file ~buf with
       | None                -> None
-      | Some { read_count } -> let chunk = General_helper.get_from_buf ~buf ~pos:0 ~len:read_count in
+      | Some { read_count } ->
+        let buf   = Bytes.to_string buf in
+        let chunk = General_helper.get_from_buf ~buf ~pos:0 ~len:read_count in
         Some { chunk }
     with
     (* Read_chunk.read should never raise any exceptions related to use of Read_into_buf.read *)
@@ -129,9 +131,9 @@ module Write_from_buf = struct
 end
 
 module Write_chunk = struct
-  let write (out_file:out_channel) ~(chunk:bytes) : unit =
+  let write (out_file:out_channel) ~(chunk:string) : unit =
     try
-      Write_from_buf.write out_file ~buf:chunk
+      Write_from_buf.write out_file ~buf:(Bytes.of_string chunk)
     with
     (* Write_chunk.write should never raise any exceptions related to use of Write_from_buf.write *)
     | Write_from_buf.Invalid_offset

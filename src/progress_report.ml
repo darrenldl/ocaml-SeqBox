@@ -235,13 +235,13 @@ let gen_print_generic
                  printed_at_100      := percent = 100;
 
                  let message        = make_message ~info ~elements:display_while_active in
-                 let padded_message = Misc_utils.pad_string message !max_print_length ' ' in
+                 let padded_message = Misc_utils.pad_string ~filler:' ' message !max_print_length in
                  max_print_length := max (String.length padded_message) !max_print_length;
                  Printf.printf "\r%s " padded_message;
                  flush stdout;
                  if percent = 100 then
                    let message        = (make_message ~info ~elements:display_on_finish) in
-                   let padded_message = Misc_utils.pad_string message !max_print_length ' ' in
+                   let padded_message = Misc_utils.pad_string ~filler:' ' message !max_print_length in
                    if message = "" then
                      Printf.printf "\r%s \r" padded_message
                    else
@@ -279,7 +279,7 @@ let gen_print_generic
                    ~last_reported_units:!last_reported_units
                    ~units_so_far in
                let message        = make_message ~info ~elements:display_on_finish_early in
-               let padded_message = Misc_utils.pad_string message !max_print_length ' ' in
+               let padded_message = Misc_utils.pad_string ~filler:' ' message !max_print_length in
                Printf.printf "\r%s \n" padded_message
            end
       )

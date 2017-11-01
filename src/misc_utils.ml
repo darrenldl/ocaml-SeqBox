@@ -6,7 +6,7 @@ type required_len_and_seek_to = { required_len : int64
 
 exception Invalid_range
 
-let pad_bytes ?(filler:uint8 = Uint8.of_int 0x00) (old_bytes:bytes) (new_len:int) : bytes =
+(*let pad_bytes ?(filler:uint8 = Uint8.of_int 0x00) (old_bytes:bytes) (new_len:int) : bytes =
   let buf         = Bytes.create 1 in
   Uint8.to_bytes_big_endian filler buf 0;
   let filler_char = Bytes.get buf 0 in
@@ -17,10 +17,10 @@ let pad_bytes ?(filler:uint8 = Uint8.of_int 0x00) (old_bytes:bytes) (new_len:int
     new_bytes
   else
     old_bytes
-;;
+  ;;*)
 
-let get_bytes (chunk:bytes) ~(pos:int) ~(len:int) : bytes =
-  let chunk_size = Bytes.length chunk in
+let get_sub_string (chunk:string) ~(pos:int) ~(len:int) : string =
+  let chunk_size = String.length chunk in
   if      pos < 0 || pos >= chunk_size then
     raise Invalid_range
   else if len < 0 then
@@ -28,15 +28,15 @@ let get_bytes (chunk:bytes) ~(pos:int) ~(len:int) : bytes =
   else if pos + (len - 1) >= chunk_size then
     raise Invalid_range
   else
-    Bytes.sub chunk pos len
+    String.sub chunk pos len
 ;;
 
-let get_bytes_inc_range (chunk:bytes) ~(start_at:int) ~(end_at:int) : bytes =
-  get_bytes chunk ~pos:start_at ~len:(end_at     - start_at + 1)
+let get_sub_string_inc_range (chunk:string) ~(start_at:int) ~(end_at:int) : string =
+  get_sub_string chunk ~pos:start_at ~len:(end_at     - start_at + 1)
 ;;
 
-let get_bytes_exc_range (chunk:bytes) ~(start_at:int) ~(end_before:int) : bytes =
-  get_bytes chunk ~pos:start_at ~len:(end_before - start_at)
+let get_sub_string_exc_range (chunk:string) ~(start_at:int) ~(end_before:int) : string =
+  get_sub_string chunk ~pos:start_at ~len:(end_before - start_at)
 ;;
 
 let list_find_option (pred:('a -> bool)) (lst:'a list) : 'a option =
@@ -60,7 +60,7 @@ let make_path (path_parts:string list) : string =
         let char_last     = String.get str (str_len - 1) in
         let char_2nd_last = String.get str (str_len - 2) in
         if char_last = '/' && char_2nd_last <> '\\' then
-          get_bytes str ~pos:0 ~len:(str_len - 1)
+          get_sub_string str ~pos:0 ~len:(str_len - 1)
         else
           str
       end in
@@ -107,12 +107,12 @@ let get_option_ref_init_if_none (eval:(unit -> 'a)) (opt_ref:'a option ref) : 'a
     x
 ;;
 
-let pad_string (input:string) (len:int) (pad_char:char) : string =
+let pad_string ?(filler:char = '\x00') (input:string) (len:int) : string =
   let input_len = String.length input in
   let pad_len   = len - input_len in
   let padding =
     if pad_len > 0 then
-      String.make pad_len pad_char
+      String.make pad_len filler
     else
       "" in
   String.concat "" [input; padding]

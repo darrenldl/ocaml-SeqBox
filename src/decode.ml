@@ -149,7 +149,7 @@ module Stats = struct
        | Some hsh ->
          Printf.sprintf "%s - %s"
            (Multihash.hash_bytes_to_hash_type_string hsh)
-           (Conv_utils.bytes_to_hex_string_hash (Multihash.hash_bytes_to_raw_hash hsh))
+           (Conv_utils.string_to_hex_string_hash (Multihash.hash_bytes_to_raw_hash hsh))
        | None     ->
          "N/A"
       );
@@ -158,7 +158,7 @@ module Stats = struct
        | (Some hsh, _     )     ->
          Printf.sprintf "%s - %s"
            (Multihash.hash_bytes_to_hash_type_string hsh)
-           (Conv_utils.bytes_to_hex_string_hash (Multihash.hash_bytes_to_raw_hash hsh))
+           (Conv_utils.string_to_hex_string_hash (Multihash.hash_bytes_to_raw_hash hsh))
        | (None    , Some _)     ->
          "N/A - recorded hash type is not supported by osbx"
        | (None    , None  )     ->
@@ -440,10 +440,10 @@ module Processor = struct
     )
   ;;
 
-  let make_hasher ~(hash_type:Multihash.hash_type) : bytes Stream.in_processor =
+  let make_hasher ~(hash_type:Multihash.hash_type) : string Stream.in_processor =
     let read_len = 1024 * 1024 (* 1 MiB *) in
     (fun in_file ->
-       let rec hash_proc (stats:hash_stats) (hash_state:Multihash.Hash.ctx) (in_file:in_channel) : bytes =
+       let rec hash_proc (stats:hash_stats) (hash_state:Multihash.Hash.ctx) (in_file:in_channel) : string =
          let open Read_chunk in
          Progress.report_hash ~start_time_src:() ~units_so_far_src:stats ~total_units_src:in_file;
          match read in_file ~len:read_len with
@@ -451,7 +451,7 @@ module Processor = struct
          | Some { chunk } ->
            Multihash.Hash.feed hash_state chunk;
            let new_stats =
-             Stats.add_bytes_hashed stats ~num:(Int64.of_int (Bytes.length chunk)) in
+             Stats.add_bytes_hashed stats ~num:(Int64.of_int (String.length chunk)) in
            hash_proc new_stats hash_state in_file in
        let stats      = Stats.make_blank_hash_stats () in
        let hash_state = Multihash.Hash.init hash_type in
@@ -466,12 +466,12 @@ module Process = struct
     Stream.process_in ~in_filename processor
   ;;
 
-  let hash_file ~(hash_type:Multihash.hash_type) ~(in_filename:string) : (bytes, string) result =
+  let hash_file ~(hash_type:Multihash.hash_type) ~(in_filename:string) : (string, string) result =
     let processor = Processor.make_hasher ~hash_type in
     Stream.process_in ~in_filename processor
   ;;
 
-  let hash_file_w_warning ~(hash_type:Multihash.hash_type) ~(in_filename:string) : bytes option =
+  let hash_file_w_warning ~(hash_type:Multihash.hash_type) ~(in_filename:string) : string option =
     match hash_file ~hash_type ~in_filename with
     | Ok hash   -> Some hash
     | Error msg -> Printf.printf "Warning : %s\n" msg; None

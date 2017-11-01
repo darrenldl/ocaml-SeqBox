@@ -3,19 +3,19 @@ open Crcccitt
 open Sbx_specs
 
 module Helper : sig
-  val pad_header_or_block_bytes : bytes       -> int         -> bytes
+  val pad_header_or_block_string : string      -> int          -> string
 
-  val crc_ccitt_sbx             : ver:version -> input:bytes -> bytes
+  val crc_ccitt_sbx              : ver:version -> input:string -> string
 
 end = struct
 
-  let pad_header_or_block_bytes (old_bytes:bytes) (new_len:int) : bytes =
-    Misc_utils.pad_bytes ~filler:(Uint8.of_int 0x1a) old_bytes new_len
+  let pad_header_or_block_string (old_string:string) (new_len:int) : string =
+    Misc_utils.pad_string ~filler:(Char.chr 0x1a) old_string new_len
   ;;
 
-  let crc_ccitt_sbx ~(ver:version) ~(input:bytes) : bytes =
+  let crc_ccitt_sbx ~(ver:version) ~(input:string) : string =
     let res = crc_ccitt_generic_uint16 ~input ~start_val:(ver_to_uint16 ver) in
-    Conv_utils.uint16_to_bytes res
+    Conv_utils.uint16_to_string res
   ;;
 end
 
@@ -26,9 +26,9 @@ module Header : sig
   exception Invalid_seq_num
 
   type common_fields =
-    { signature  : bytes
+    { signature  : string
     ; version    : version
-    ; file_uid   : bytes
+    ; file_uid   : string
     }
 
   type t
@@ -36,25 +36,25 @@ module Header : sig
   type raw_header =
     { version   : version
     ; crc_ccitt : uint16
-    ; file_uid  : bytes
+    ; file_uid  : string
     ; seq_num   : uint32
     }
 
   val common_fields_to_ver : common_fields             -> version
 
-  val make_common_fields   : ?uid:bytes                -> version       -> common_fields
+  val make_common_fields   : ?uid:string               -> version       -> common_fields
 
   val make_metadata_header : common_fields             -> t
 
   val make_data_header     : ?seq_num:uint32           -> common_fields      -> t
 
-  val of_bytes             : bytes                     -> raw_header
+  val of_string            : string                    -> raw_header
 
-  val to_bytes             : alt_seq_num:uint32 option -> header:t      -> data:bytes    -> bytes
+  val to_string            : alt_seq_num:uint32 option -> header:t      -> data:string    -> string
 
   val header_to_ver        : t -> version
 
-  val header_to_file_uid   : t -> bytes
+  val header_to_file_uid   : t -> string
 
   val header_to_seq_num    : t -> uint32 option
 
@@ -70,9 +70,9 @@ end = struct
   exception Invalid_seq_num
 
   type common_fields =
-    { signature  : bytes
+    { signature  : string
     ; version    : version
-    ; file_uid   : bytes
+    ; file_uid   : string
     }
 
   type t =
@@ -88,11 +88,11 @@ end = struct
     | Data { common; _ } -> common
   ;;
 
-  let header_to_signature (header:t) : bytes   = (header_to_common header).signature;;
+  let header_to_signature (header:t) : string  = (header_to_common header).signature;;
 
   let header_to_ver       (header:t) : version = (header_to_common header).version;;
 
-  let header_to_file_uid  (header:t) : bytes   = (header_to_common header).file_uid;;
+  let header_to_file_uid  (header:t) : string  = (header_to_common header).file_uid;;
 
   let header_to_seq_num (header:t) : uint32 option =
     match header with
@@ -100,20 +100,20 @@ end = struct
     | Data { seq_num; _ } -> seq_num
   ;;
 
-  let gen_file_uid () : bytes =
+  let gen_file_uid () : string =
     let len = sbx_file_uid_len in
-    Random_utils.gen_bytes ~len
+    Random_utils.gen_string ~len
   ;;
 
   let common_fields_to_ver (common:common_fields) : version =
     common.version
   ;;
 
-  let make_common_fields ?(uid:bytes option) (ver:version) : common_fields =
-    let uid : bytes = match uid with
+  let make_common_fields ?(uid:string option) (ver:version) : common_fields =
+    let uid : string = match uid with
       | Some x ->
         let len = sbx_file_uid_len in
-        if Bytes.length x == len then
+        if String.length x = len then
           x
         else
           raise Invalid_uid_length
@@ -139,7 +139,7 @@ end = struct
     Data { common; seq_num }
   ;;
 
-  let to_bytes ~(alt_seq_num:uint32 option) ~(header:t) ~(data:bytes) : bytes =
+  let to_string ~(alt_seq_num:uint32 option) ~(header:t) ~(data:string) : string =
     let seq_num =
       match (alt_seq_num, (header_to_seq_num header)) with
       | (Some _, Some s) -> Some s    (* prefer existing one over provided one *)
@@ -148,20 +148,20 @@ end = struct
       | (None,   None)   -> None   in
     match seq_num with
     | Some seq_num ->
-      let seq_num_bytes : bytes      = Conv_utils.uint32_to_bytes seq_num in
-      let things_to_crc : bytes list = [ header_to_file_uid header
-                                       ; seq_num_bytes
-                                       ; data
-                                       ] in
-      let bytes_to_crc  : bytes      = Bytes.concat "" things_to_crc in
-      let crc_result    : bytes      = Helper.crc_ccitt_sbx ~ver:(header_to_ver header) ~input:bytes_to_crc in
-      let header_parts  : bytes list = [ header_to_signature header
-                                       ; ver_to_bytes (header_to_ver header)
-                                       ; crc_result
-                                       ; header_to_file_uid header
-                                       ; seq_num_bytes
-                                       ] in
-      Bytes.concat "" header_parts
+      let seq_num_string : string      = Conv_utils.uint32_to_string seq_num in
+      let things_to_crc  : string list = [ header_to_file_uid header
+                                         ; seq_num_string
+                                         ; data
+                                         ] in
+      let string_to_crc  : string      = String.concat "" things_to_crc in
+      let crc_result     : string      = Helper.crc_ccitt_sbx ~ver:(header_to_ver header) ~input:string_to_crc in
+      let header_parts   : string list = [ header_to_signature header
+                                         ; ver_to_string (header_to_ver header)
+                                         ; crc_result
+                                         ; header_to_file_uid header
+                                         ; seq_num_string
+                                         ] in
+      String.concat "" header_parts
     | None ->
       raise Missing_alt_seq_num
   ;;
@@ -169,7 +169,7 @@ end = struct
   type raw_header =
     { version   : version
     ; crc_ccitt : uint16
-    ; file_uid  : bytes
+    ; file_uid  : string
     ; seq_num   : uint32
     }
 
@@ -192,7 +192,7 @@ end = struct
       BE.uint16 >>| Uint16.of_int
     ;;
 
-    let uid_p : bytes Angstrom.t =
+    let uid_p : string Angstrom.t =
       take 6
     ;;
 
@@ -205,7 +205,7 @@ end = struct
     ;;
   end
 
-  let of_bytes (data:bytes) : raw_header =
+  let of_string (data:string) : raw_header =
     match Angstrom.parse_string Parser.header_p data with
     | Ok header -> header
     | Error _   -> raise Invalid_bytes
@@ -234,13 +234,13 @@ module Metadata : sig
     | FDT of uint64
     | SDT of uint64
     | HSH of Multihash.hash_bytes  (* should ALWAYS store the RAW hash, to bytes should automatically convert it to multihash *)
-    | PID of bytes
+    | PID of string
 
   val dedup    : t list      -> t list
 
-  val to_bytes : ver:version -> fields:t list -> bytes
+  val to_string : ver:version -> fields:t list -> string
 
-  val of_bytes : bytes       -> t list
+  val of_string : string      -> t list
 
 end = struct
 
@@ -255,7 +255,7 @@ end = struct
     | FDT of uint64
     | SDT of uint64
     | HSH of Multihash.hash_bytes
-    | PID of bytes
+    | PID of string
 
   type id =
     [ `FNM
@@ -278,11 +278,11 @@ end = struct
     | `PID -> "PID"
   ;;
 
-  let length_distribution (lst:(id * bytes) list) : string =
-    let rec length_distribution_helper (lst:(id * bytes) list) (acc:string list) : string =
+  let length_distribution (lst:(id * string) list) : string =
+    let rec length_distribution_helper (lst:(id * string) list) (acc:string list) : string =
       match lst with
       | []              -> (String.concat "\n" (List.rev acc))
-      | (id, data) :: vs -> let str = Printf.sprintf "id : %s, len : %3d" (id_to_string id) (Bytes.length data) in
+      | (id, data) :: vs -> let str = Printf.sprintf "id : %s, len : %3d" (id_to_string id) (String.length data) in
         length_distribution_helper vs (str :: acc) in
     let distribution_str = length_distribution_helper lst [] in
     String.concat "\n" ["The length distribution of the metadata:"; distribution_str]
@@ -310,51 +310,51 @@ end = struct
     dedup_internal [] fields
   ;;
 
-  let single_to_bytes (entry:t) : bytes =
+  let single_to_string (entry:t) : string =
     match entry with
-    | FNM v | SNM v         -> Conv_utils.string_to_bytes v
-    | FSZ v | FDT v | SDT v -> Conv_utils.uint64_to_bytes v
+    | FNM v | SNM v         -> v
+    | FSZ v | FDT v | SDT v -> Conv_utils.uint64_to_string v
     | HSH hash_bytes        -> Multihash.hash_bytes_to_multihash hash_bytes
     | PID v                 -> v
   ;;
 
-  let to_id_and_bytes (entry:t) : id * bytes =
-    let res_bytes = single_to_bytes entry in
+  let to_id_and_string (entry:t) : id * string =
+    let res_string = single_to_string entry in
     match entry with
-    | FNM _ -> (`FNM, res_bytes)
-    | SNM _ -> (`SNM, res_bytes)
-    | FSZ _ -> (`FSZ, res_bytes)
-    | FDT _ -> (`FDT, res_bytes)
-    | SDT _ -> (`SDT, res_bytes)
-    | HSH _ -> (`HSH, res_bytes)
-    | PID _ -> (`PID, res_bytes)
+    | FNM _ -> (`FNM, res_string)
+    | SNM _ -> (`SNM, res_string)
+    | FSZ _ -> (`FSZ, res_string)
+    | FDT _ -> (`FDT, res_string)
+    | SDT _ -> (`SDT, res_string)
+    | HSH _ -> (`HSH, res_string)
+    | PID _ -> (`PID, res_string)
   ;;
 
-  let id_and_bytes_to_bytes (entry:id * bytes) : bytes =
+  let id_and_bytes_to_bytes (entry:id * string) : string =
     let (id, data) = entry in
     let id_str     = id_to_string id in
-    let len        = Uint8.of_int (Bytes.length data) in
-    let len_bytes  = Conv_utils.uint8_to_bytes len in
-    Bytes.concat (Bytes.create 0) [id_str; len_bytes; data]
+    let len        = Uint8.of_int (String.length data) in
+    let len_bytes  = Conv_utils.uint8_to_string len in
+    String.concat "" [id_str; len_bytes; data]
   ;;
 
-  let to_bytes ~(ver:version) ~(fields:t list) : bytes =
-    let max_data_size = ver_to_data_size ver in
-    let id_bytes_list = List.map to_id_and_bytes fields in
-    let bytes_list    = List.map id_and_bytes_to_bytes id_bytes_list in
-    let all_bytes     = Bytes.concat (Bytes.create 0) bytes_list in
-    let all_bytes_len = Bytes.length all_bytes in
-    if all_bytes_len <= max_data_size then
-      Helper.pad_header_or_block_bytes all_bytes max_data_size
+  let to_string ~(ver:version) ~(fields:t list) : string =
+    let max_data_size  = ver_to_data_size ver in
+    let id_string_list  = List.map to_id_and_string fields in
+    let string_list    = List.map id_and_bytes_to_bytes id_string_list in
+    let all_string     = String.concat "" string_list in
+    let all_string_len = String.length all_string in
+    if all_string_len <= max_data_size then
+      Helper.pad_header_or_block_string all_string max_data_size
     else
-      raise (Too_much_data (Printf.sprintf "Metadata is too long when converted to bytes\n%s" (length_distribution id_bytes_list)))
+      raise (Too_much_data (Printf.sprintf "Metadata is too long when converted to bytes\n%s" (length_distribution id_string_list)))
   ;;
 
   module Parser = struct
     type metadata = t (* to work around the shadowing binding of t in Angstrom *)
     open Angstrom
 
-    let arb_len_data_p : bytes Angstrom.t =
+    let arb_len_data_p : string Angstrom.t =
       any_uint8 >>= (fun x -> take x)
     ;;
 
@@ -386,7 +386,7 @@ end = struct
     let gen_hash_parser (hash_type:Multihash.hash_type) =
       let open Multihash in
       let total_len = Specs.hash_type_to_total_length hash_type in
-      let len_bytes = Conv_utils.uint8_to_bytes (Uint8.of_int total_len) in
+      let len_bytes = Conv_utils.uint8_to_string (Uint8.of_int total_len) in
       string "HSH" *> string len_bytes *> Parser.gen_parser hash_type
     ;;
 
@@ -419,7 +419,7 @@ end = struct
     ;;
   end
 
-  let of_bytes (data:bytes) : t list =
+  let of_string (data:string) : t list =
     match Angstrom.parse_string Parser.fields_p data with
     | Ok fields -> dedup fields
     | Error _   -> raise Invalid_bytes
@@ -438,19 +438,19 @@ module Block : sig
 
   val make_metadata_block : Header.common_fields   -> fields:Metadata.t list -> t
 
-  val make_data_block     : ?seq_num:uint32        -> Header.common_fields   -> data:bytes             -> t
+  val make_data_block     : ?seq_num:uint32        -> Header.common_fields   -> data:string             -> t
 
-  val to_bytes            : ?alt_seq_num:uint32           -> t                      -> bytes
+  val to_string           : ?alt_seq_num:uint32           -> t                      -> string
 
-  val of_bytes            : ?raw_header:Header.raw_header -> ?skipped_already:bool  -> bytes -> t
+  val of_string           : ?raw_header:Header.raw_header -> ?skipped_already:bool  -> string -> t
 
   val block_to_ver        : t -> version
 
-  val block_to_file_uid   : t -> bytes
+  val block_to_file_uid   : t -> string
 
   val block_to_seq_num    : t -> uint32 option
 
-  val block_to_data       : t -> bytes
+  val block_to_data       : t -> string
 
   val block_to_meta       : t -> Metadata.t list
 
@@ -469,37 +469,37 @@ end = struct
 
   type t =
       Data of { header : Header.t
-              ; data   : bytes }
+              ; data   : string }
     | Meta of { header : Header.t
               ; fields : Metadata.t list
-              ; data   : bytes }
+              ; data   : string }
 
   type block_type = [ `Meta | `Data | `Any ]
 
   let make_metadata_block (common:Header.common_fields) ~(fields:Metadata.t list) : t =
     (* encode once to make sure the size is okay *)
     let ver              = common.version in
-    let encoded_metadata = Metadata.to_bytes ~ver ~fields in
+    let encoded_metadata = Metadata.to_string ~ver ~fields in
     Meta { header = Header.make_metadata_header common
          ; fields
          ; data   = encoded_metadata}
   ;;
 
-  let make_data_block ?(seq_num:uint32 option) (common:Header.common_fields) ~(data:bytes) : t =
+  let make_data_block ?(seq_num:uint32 option) (common:Header.common_fields) ~(data:string) : t =
     let ver           = common.version in
     let max_data_size = ver_to_data_size ver in
-    let len           = Bytes.length data in
+    let len           = String.length data in
     if len <= max_data_size then
       try
         Data { header = Header.make_data_header ?seq_num common
-             ; data   = Helper.pad_header_or_block_bytes data max_data_size }
+             ; data   = Helper.pad_header_or_block_string data max_data_size }
       with
       | Header.Invalid_seq_num -> raise Invalid_seq_num
     else
       raise Too_much_data
   ;;
 
-  let to_bytes ?(alt_seq_num:uint32 option) (block:t) : bytes =
+  let to_string ?(alt_seq_num:uint32 option) (block:t) : string =
     let (header, data) =
       match block with
       | Data { header; data }    ->
@@ -522,31 +522,31 @@ end = struct
             else
               (header, data)
         end in
-    let header_bytes = Header.to_bytes ~alt_seq_num ~header ~data in
-    Bytes.concat "" [header_bytes; data]
+    let header_string = Header.to_string ~alt_seq_num ~header ~data in
+    String.concat "" [header_string; data]
   ;;
 
   type raw_block =
     { header : Header.raw_header
-    ; data   : bytes
+    ; data   : string
     }
 
   module Checker = struct
     let check_data_length ({header; data}:raw_block) : unit =
-      let data_size         = Bytes.length data in
+      let data_size         = String.length data in
       let correct_data_size = ver_to_data_size header.version in
       if data_size <> correct_data_size then
         raise Invalid_size
     ;;
 
     let check_crc_ccitt ({header; data}:raw_block) : unit =
-      let crc_ccitt                   = Conv_utils.uint16_to_bytes header.crc_ccitt in
-      let parts_to_check : bytes list = [ header.file_uid
-                                        ; Conv_utils.uint32_to_bytes header.seq_num
+      let crc_ccitt                    = Conv_utils.uint16_to_string header.crc_ccitt in
+      let parts_to_check : string list = [ header.file_uid
+                                        ; Conv_utils.uint32_to_string header.seq_num
                                         ; data
                                         ] in
-      let bytes_to_check              = Bytes.concat "" parts_to_check in
-      let correct_crc_ccitt           = Helper.crc_ccitt_sbx ~ver:header.version ~input:bytes_to_check in
+      let string_to_check              = String.concat "" parts_to_check in
+      let correct_crc_ccitt            = Helper.crc_ccitt_sbx ~ver:header.version ~input:string_to_check in
       if crc_ccitt <> correct_crc_ccitt then
         raise Invalid_bytes
     ;;
@@ -558,13 +558,13 @@ end = struct
     let {header = raw_header; data = raw_data} = raw_block in
     let common = Header.make_common_fields ~uid:raw_header.file_uid raw_header.version in
     if Header.raw_header_is_meta raw_header then
-      let fields = Metadata.of_bytes raw_data in
+      let fields = Metadata.of_string raw_data in
       make_metadata_block common ~fields
     else
       make_data_block     ~seq_num:raw_header.seq_num common ~data:raw_data
   ;;
 
-  let of_bytes ?(raw_header:Header.raw_header option) ?(skipped_already:bool = false) (raw_data:bytes) : t =
+  let of_string ?(raw_header:Header.raw_header option) ?(skipped_already:bool = false) (raw_data:string) : t =
     try
       let (header, data_offset) =
         match (raw_header, skipped_already) with
@@ -572,9 +572,9 @@ end = struct
         | (Some h, true)  -> (h, 0)
         | (Some h, false) -> (h, 16)
         | (None,   _)     ->
-          let header_bytes = Misc_utils.get_bytes raw_data ~pos:0 ~len:16 in
-          (Header.of_bytes header_bytes, 16) in
-      let data      = Misc_utils.get_bytes_exc_range raw_data ~start_at:data_offset ~end_before:(Bytes.length raw_data) in
+          let header_string = Misc_utils.get_sub_string raw_data ~pos:0 ~len:16 in
+          (Header.of_string header_string, 16) in
+      let data      = Misc_utils.get_sub_string_exc_range raw_data ~start_at:data_offset ~end_before:(String.length raw_data) in
       let raw_block = {header; data} in
       raw_block_to_block raw_block
     with
@@ -591,7 +591,7 @@ end = struct
     Header.header_to_ver (block_to_header block)
   ;;
 
-  let block_to_file_uid (block:t) : bytes =
+  let block_to_file_uid (block:t) : string =
     Header.header_to_file_uid (block_to_header block)
   ;;
 
@@ -599,7 +599,7 @@ end = struct
     Header.header_to_seq_num (block_to_header block)
   ;;
 
-  let block_to_data     (block:t) : bytes =
+  let block_to_data     (block:t) : string =
     match block with
     | Data {data; _} -> data
     | Meta {data; _} -> data

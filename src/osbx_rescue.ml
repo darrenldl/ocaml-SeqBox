@@ -16,11 +16,11 @@ let rescue
   : unit =
   Dynamic_param.Common.set_silence_settings silent;
   try
-    let only_pick_uid : bytes option =
+    let only_pick_uid : string option =
       match only_pick_uid with
       | None -> None
       | Some str ->
-        match Conv_utils.hex_string_to_bytes str with
+        match Conv_utils.hex_string_to_string str with
         | Ok uid -> Some uid
         | Error _ -> raise (Packaged_exn (Printf.sprintf "Uid %s is not a valid hex string" str)) in
     match Process.rescue_from_file ~only_pick_block ~only_pick_uid ~from_byte ~to_byte ~force_misalign ~in_filename ~out_dirname ~log_filename with

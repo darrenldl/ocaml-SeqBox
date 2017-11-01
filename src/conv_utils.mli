@@ -5,24 +5,22 @@ type date_time_mode = [ `UTC | `Local ]
 
 type case = [ `Upper | `Lower ]
 
-val uint64_to_bytes : uint64 -> bytes
+val uint64_to_string : uint64 -> string
 
-val uint32_to_bytes : uint32 -> bytes
+val uint32_to_string : uint32 -> string
 
-val uint16_to_bytes : uint16 -> bytes
+val uint16_to_string : uint16 -> string
 
-val uint8_to_bytes  : uint8  -> bytes
+val uint8_to_string  : uint8  -> string
 
-val string_to_bytes : string -> bytes
+val string_to_hex_string      : case:case -> string -> string
 
-val bytes_to_hex_string      : case:case -> bytes  -> string
+val string_to_hex_string_uid  : string    -> string
 
-val bytes_to_hex_string_uid  : bytes     -> string
+val string_to_hex_string_hash : string    -> string
 
-val bytes_to_hex_string_hash : bytes     -> string
+val hex_string_to_string : string -> (string, string) result
 
-val hex_string_to_bytes : string -> (bytes, string) result
-
-val sha256_hash_state_to_bytes : SHA256.t -> bytes
+(* val sha256_hash_state_to_bytes : SHA256.t -> bytes *)
 
 val uint64_seconds_to_date_time_string : uint64 -> date_time_mode -> string
