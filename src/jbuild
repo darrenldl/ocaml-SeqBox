@@ -1,6 +1,6 @@
 (executable
- ((name           misc_utils)
-  (public_name    misc_utils)
+ ((name           stream_file)
+  (public_name    whatever)
   (ocamlopt_flags (-nodynlink -safe-string))
   (libraries      (stdint
                    nocrypto
