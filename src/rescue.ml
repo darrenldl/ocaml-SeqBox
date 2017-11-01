@@ -203,13 +203,13 @@ end
 
 module Processor = struct
   (* scan for valid block *)
-  let scan_proc ~(only_pick_block:Block.block_type) ~(only_pick_uid:string option) ~(stats:stats) ~(required_len:int64) ~(log_filename:string option) (in_file:in_channel) : stats * ((Block.t * bytes) option) =
+  let scan_proc ~(only_pick_block:Block.block_type) ~(only_pick_uid:string option) ~(stats:stats) ~(required_len:int64) ~(log_filename:string option) (in_file:in_channel) : stats * ((Block.t * string) option) =
     let open Read_chunk in
     let raw_header_pred =
       let block_type_pred = Sbx_block_helpers.block_type_to_raw_header_pred only_pick_block in
       let file_uid_pred   = Sbx_block_helpers.file_uid_to_raw_header_pred only_pick_uid in
       (fun header -> (block_type_pred header) && (file_uid_pred header)) in
-    let rec scan_proc_internal (stats:stats) (result_so_far:(Block.t * bytes) option) : stats * ((Block.t * bytes) option) =
+    let rec scan_proc_internal (stats:stats) (result_so_far:(Block.t * string) option) : stats * ((Block.t * string) option) =
       (* report progress *)
       Progress.report_rescue ~start_time_src:() ~units_so_far_src:stats ~total_units_src:required_len;
       (* write log possibly *)
@@ -246,11 +246,11 @@ module Processor = struct
   (* append blocks to filename (use uid in hex string as filename)
    * return Error if failed to write for whatever reason
    *)
-  let output_proc ~(stats:stats) ~(block_and_chunk:Block.t * bytes) ~(out_dirname:string) : stats * ((unit, string) result) =
+  let output_proc ~(stats:stats) ~(block_and_chunk:Block.t * string) ~(out_dirname:string) : stats * ((unit, string) result) =
     let (block, chunk) = block_and_chunk in
     let out_filename =
       let uid_hex =
-        Conv_utils.bytes_to_hex_string_uid (Block.block_to_file_uid block) in
+        Conv_utils.string_to_hex_string_uid (Block.block_to_file_uid block) in
       Misc_utils.make_path [out_dirname; uid_hex] in
     let output_proc_internal_processor (out_file:out_channel) : unit =
       let open Write_chunk in
