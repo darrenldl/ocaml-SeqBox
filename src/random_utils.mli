@@ -1,1 +1,1 @@
-val gen_bytes : len:int -> string
+val gen_string : len:int -> string
