@@ -1,6 +1,6 @@
 (executable
- ((name           osbx_rescue)
-  (public_name    whatever)
+ ((name           osbx)
+  (public_name    osbx)
   (ocamlopt_flags (-nodynlink -safe-string))
   (libraries      (stdint
                    nocrypto
