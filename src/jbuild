@@ -1,7 +1,7 @@
 (executable
  ((name           osbx)
   (public_name    osbx)
-  (ocamlopt_flags (-nodynlink))
+  (ocamlopt_flags (-nodynlink -safe-string))
   (libraries      (stdint
                    nocrypto
                    nocrypto.unix

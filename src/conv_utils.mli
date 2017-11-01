@@ -5,15 +5,13 @@ type date_time_mode = [ `UTC | `Local ]
 
 type case = [ `Upper | `Lower ]
 
-val uint64_to_bytes : uint64 -> bytes
+val uint64_to_string : uint64 -> string
 
-val uint32_to_bytes : uint32 -> bytes
+val uint32_to_string : uint32 -> string
 
-val uint16_to_bytes : uint16 -> bytes
+val uint16_to_string : uint16 -> string
 
-val uint8_to_bytes  : uint8  -> bytes
-
-val string_to_bytes : string -> bytes
+val uint8_to_string  : uint8  -> string
 
 val bytes_to_hex_string      : case:case -> bytes  -> string
 

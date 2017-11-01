@@ -1,5 +1,5 @@
-let gen_bytes ~(len:int) : bytes =
-  let gen_bytes_helper () : bytes =
+let gen_bytes ~(len:int) : string =
+  let gen_bytes_helper () : string =
     Cstruct.to_string (
       Nocrypto.Rng.generate ~g:!Nocrypto.Rng.generator len
     ) in
