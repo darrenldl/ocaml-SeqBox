@@ -19,8 +19,8 @@ let pad_bytes ?(filler:uint8 = Uint8.of_int 0x00) (old_bytes:bytes) (new_len:int
     old_bytes
 ;;
 
-let get_bytes (chunk:bytes) ~(pos:int) ~(len:int) : bytes =
-  let chunk_size = Bytes.length chunk in
+let get_sub_string (chunk:string) ~(pos:int) ~(len:int) : string =
+  let chunk_size = String.length chunk in
   if      pos < 0 || pos >= chunk_size then
     raise Invalid_range
   else if len < 0 then
@@ -28,15 +28,15 @@ let get_bytes (chunk:bytes) ~(pos:int) ~(len:int) : bytes =
   else if pos + (len - 1) >= chunk_size then
     raise Invalid_range
   else
-    Bytes.sub chunk pos len
+    String.sub chunk pos len
 ;;
 
-let get_bytes_inc_range (chunk:bytes) ~(start_at:int) ~(end_at:int) : bytes =
-  get_bytes chunk ~pos:start_at ~len:(end_at     - start_at + 1)
+let get_sub_string_inc_range (chunk:string) ~(start_at:int) ~(end_at:int) : string =
+  get_sub_string chunk ~pos:start_at ~len:(end_at     - start_at + 1)
 ;;
 
-let get_bytes_exc_range (chunk:bytes) ~(start_at:int) ~(end_before:int) : bytes =
-  get_bytes chunk ~pos:start_at ~len:(end_before - start_at)
+let get_sub_string_exc_range (chunk:string) ~(start_at:int) ~(end_before:int) : string =
+  get_sub_string chunk ~pos:start_at ~len:(end_before - start_at)
 ;;
 
 let list_find_option (pred:('a -> bool)) (lst:'a list) : 'a option =

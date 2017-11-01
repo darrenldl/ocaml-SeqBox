@@ -1,6 +1,6 @@
 (executable
- ((name           osbx)
-  (public_name    osbx)
+ ((name           conv_utils)
+  (public_name    conv_utils)
   (ocamlopt_flags (-nodynlink -safe-string))
   (libraries      (stdint
                    nocrypto
