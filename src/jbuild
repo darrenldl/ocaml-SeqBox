@@ -1,5 +1,5 @@
 (executable
- ((name           processor_components)
+ ((name           sbx_block_helpers)
   (public_name    whatever)
   (ocamlopt_flags (-nodynlink -safe-string))
   (libraries      (stdint
