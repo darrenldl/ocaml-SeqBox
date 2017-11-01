@@ -60,7 +60,7 @@ let make_path (path_parts:string list) : string =
         let char_last     = String.get str (str_len - 1) in
         let char_2nd_last = String.get str (str_len - 2) in
         if char_last = '/' && char_2nd_last <> '\\' then
-          get_bytes str ~pos:0 ~len:(str_len - 1)
+          get_sub_string str ~pos:0 ~len:(str_len - 1)
         else
           str
       end in

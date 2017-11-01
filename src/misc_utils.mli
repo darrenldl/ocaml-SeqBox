@@ -10,9 +10,9 @@ val pad_bytes : ?filler:uint8 -> bytes -> int -> bytes
 
 val get_sub_string : string -> pos:int -> len:int -> string
 
-val get_sub_string_inc_range : bytes -> start_at:int -> end_at:int     -> string
+val get_sub_string_inc_range : string -> start_at:int -> end_at:int     -> string
 
-val get_sub_string_exc_range : bytes -> start_at:int -> end_before:int -> string
+val get_sub_string_exc_range : string -> start_at:int -> end_before:int -> string
 
 val list_find_option : ('a -> bool) -> 'a list -> 'a option
 

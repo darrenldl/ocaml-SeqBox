@@ -1,6 +1,6 @@
 (executable
- ((name           conv_utils)
-  (public_name    conv_utils)
+ ((name           misc_utils)
+  (public_name    misc_utils)
   (ocamlopt_flags (-nodynlink -safe-string))
   (libraries      (stdint
                    nocrypto
