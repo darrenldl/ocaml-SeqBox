@@ -73,10 +73,10 @@ let make_crcccitt_tab () : fuint16 array =
 
 let crc_tabccitt = make_crcccitt_tab ();;
 
-let crc_ccitt_generic ~(input:bytes) ~(start_val:fuint16) : fuint16 =
+let crc_ccitt_generic ~(input:string) ~(start_val:fuint16) : fuint16 =
   let crc         : fuint16 ref = ref start_val in
   let index       : int     ref = ref 0 in
-  let len         : int         = Bytes.length input in
+  let len         : int         = String.length input in
   let mask_0x00FF : fuint16     = of_int 0x00FF in
 
   for _ = 0 to len - 1 do
@@ -84,7 +84,7 @@ let crc_ccitt_generic ~(input:bytes) ~(start_val:fuint16) : fuint16 =
            ^
            crc_tabccitt.(
              to_int (
-               ((!crc >> 8) ^ (of_char (Bytes.get input !index)))
+               ((!crc >> 8) ^ (of_char (String.get input !index)))
                &
                mask_0x00FF
              )
@@ -96,7 +96,7 @@ let crc_ccitt_generic ~(input:bytes) ~(start_val:fuint16) : fuint16 =
   !crc
 ;;
 
-let crc_ccitt_generic_uint16 ~(input:bytes) ~(start_val:uint16) : uint16 =
+let crc_ccitt_generic_uint16 ~(input:string) ~(start_val:uint16) : uint16 =
   to_uint16 (
     crc_ccitt_generic ~input ~start_val:(of_uint16 start_val)
   )
