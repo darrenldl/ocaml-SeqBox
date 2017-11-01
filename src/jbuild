@@ -1,5 +1,5 @@
 (executable
- ((name           encode)
+ ((name           processor_components)
   (public_name    whatever)
   (ocamlopt_flags (-nodynlink -safe-string))
   (libraries      (stdint
