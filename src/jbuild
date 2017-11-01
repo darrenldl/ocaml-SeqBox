@@ -1,5 +1,5 @@
 (executable
- ((name           osbx_show)
+ ((name           osbx_rescue)
   (public_name    whatever)
   (ocamlopt_flags (-nodynlink -safe-string))
   (libraries      (stdint
