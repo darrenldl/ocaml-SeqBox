@@ -107,7 +107,7 @@ let get_option_ref_init_if_none (eval:(unit -> 'a)) (opt_ref:'a option ref) : 'a
     x
 ;;
 
-let pad_string ?(filler:char = (Char.chr 0x00)) (input:string) (len:int) : string =
+let pad_string ?(filler:char = '\x00') (input:string) (len:int) : string =
   let input_len = String.length input in
   let pad_len   = len - input_len in
   let padding =
