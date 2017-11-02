@@ -131,7 +131,6 @@ module Processor = struct
     let ver         = Header.common_fields_to_ver common in
     let data_len    = ver_to_data_size ver in
     let blank_stats = Stats.make_blank_stats ~ver in
-    let open Read_chunk in
     let open Write_chunk in
     match metadata with
     | None ->
@@ -201,8 +200,8 @@ module Process = struct
       else
         (* check hash *)
         match string_to_hash_type hash with
-        | Error msg as em -> em
-        | Ok hash_type    ->
+        | Error _ as em -> em
+        | Ok hash_type  ->
           if not (Hash.hash_type_is_supported hash_type) then
             Error "Hash type is not supported"
           else
