@@ -216,7 +216,8 @@ module Progress = struct
   ;;
 
   let { print_progress            = report_hash
-      ; print_newline_if_not_done = report_hash_print_newline_if_not_done
+      ; _
+        (* ; print_newline_if_not_done = report_hash_print_newline_if_not_done *)
       }
     : (unit, hash_stats, in_channel) Progress_report.progress_print_functions =
     Progress_report.gen_print_generic
@@ -233,7 +234,8 @@ module Progress = struct
   ;;
 
   let { print_progress            = report_decode
-      ; print_newline_if_not_done = report_decode_print_newline_if_not_done
+      ; _
+        (* ; print_newline_if_not_done = report_decode_print_newline_if_not_done *)
       }
     : (unit, stats, stats * in_channel) Progress_report.progress_print_functions =
     Progress_report.gen_print_generic
@@ -263,7 +265,6 @@ module Processor = struct
                           }
 
   let find_first_both_proc ~(prefer:Block.block_type) (in_file:in_channel) : find_both_result =
-    let open Read_chunk in
     let gen_raw_header_pred : find_both_result -> (Header.raw_header -> bool) =
       let get_meta     = Header.raw_header_is_meta
       and get_data     = Header.raw_header_is_data
@@ -316,7 +317,6 @@ module Processor = struct
    *  block must match those two parameters to be accepted
    *)
   let find_valid_data_block_proc ~(ref_block:Block.t) (in_file:in_channel) ~(stats:stats) : stats * (Block.t option) =
-    let open Read_chunk in
     let ref_ver        = Block.block_to_ver ref_block in
     let ref_file_uid   = Block.block_to_file_uid ref_block in
     let ref_block_size = ver_to_block_size ref_ver in
@@ -512,7 +512,7 @@ module Process = struct
           | Multihash.Length_mismatch -> assert false
           | _                         -> Error "Failed to truncate output file"
         end
-      | Ok (stats, None)            -> Ok stats
-      | Error msg as em             -> em
+      | Ok (stats, None) -> Ok stats
+      | Error _ as em    -> em
   ;;
 end
