@@ -1,5 +1,4 @@
 open Stdint
-open Misc_utils
 
 type version = [ `V1 | `V2 | `V3 ]
 

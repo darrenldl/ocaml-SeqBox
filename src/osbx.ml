@@ -52,7 +52,6 @@ let force_misalign =
 ;;
 
 let hash =
-  let open Multihash in
   let doc =
     "Hash function to use, one of (case-insensitive) : sha1 sha256(default) sha512 blake2b-512" in
   Arg.(value & opt (some string) None & info ["hash"] ~docv:"HASH-TYPE" ~doc)

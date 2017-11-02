@@ -53,7 +53,6 @@ end
 
 module Processor = struct
   let find_meta_blocks_proc ~(from_byte:int64 option) ~(to_byte:int64 option) ~(force_misalign:bool) ~(get_at_most:int64) (in_file:in_channel) : (Block.t * int64) list =
-    let open Read_chunk in
     let open Misc_utils in
     let get_at_most          = ensure_at_least ~at_least:0L get_at_most in
     let last_possible_pos    = Int64.pred (LargeFile.in_channel_length in_file) in
@@ -92,9 +91,9 @@ module Processor = struct
   let make_single_meta_fetcher ~(from_byte:int64 option) ~(to_byte:int64 option) ~(force_misalign:bool) : ((Block.t * int64) option) Stream.in_processor =
     (fun in_file ->
        match find_meta_blocks_proc ~from_byte ~to_byte ~force_misalign ~get_at_most:1L in_file with
-       | []       -> None
-       | [x]      -> Some x
-       | hd :: tl -> assert false
+       | []     -> None
+       | [x]    -> Some x
+       | _ :: _ -> assert false
     )
   ;;
 
