@@ -204,7 +204,6 @@ end
 module Processor = struct
   (* scan for valid block *)
   let scan_proc ~(only_pick_block:Block.block_type) ~(only_pick_uid:string option) ~(stats:stats) ~(required_len:int64) ~(log_filename:string option) (in_file:in_channel) : stats * ((Block.t * string) option) =
-    let open Read_chunk in
     let raw_header_pred =
       let block_type_pred = Sbx_block_helpers.block_type_to_raw_header_pred only_pick_block in
       let file_uid_pred   = Sbx_block_helpers.file_uid_to_raw_header_pred only_pick_uid in
