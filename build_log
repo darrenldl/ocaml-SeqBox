@@ -1,13 +1,3 @@
-File "src/sbx_specs.ml", line 1, characters 0-11:
-Warning 44: this open statement shadows the type identifier int64 (which is later used)
-File "src/sbx_specs.ml", line 2, characters 0-15:
-Warning 33: unused open Misc_utils.
-      ocamlc src/osbx_decode.{cmi,cmo,cmt}
-      ocamlc src/osbx_encode.{cmi,cmo,cmt}
-    ocamlopt src/progress_report.{cmx,o}
-File "src/progress_report.ml", line 108, characters 17-25:
-Warning 27: unused variable cur_time.
-    ocamlopt src/stream_file.{cmx,o}
 File "src/stream_file.ml", line 102, characters 15-25:
 Warning 42: this use of read_count relies on type-directed disambiguation,
 it will not compile with OCaml 4.00 or earlier.
