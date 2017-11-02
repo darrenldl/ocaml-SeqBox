@@ -7,59 +7,53 @@
       ocamlc src/param.{cmi,cmti}
       ocamlc src/fake_uint16.{cmi,cmti}
       ocamlc src/conv_utils.{cmi,cmti}
-      ocamlc src/random_utils.{cmi,cmti}
       ocamlc src/progress_report.{cmi,cmti}
       ocamlc src/misc_utils.{cmi,cmti}
       ocamlc src/multihash.{cmi,cmti}
+      ocamlc src/random_utils.{cmi,cmti}
       ocamlc src/stream_file.{cmi,cmti}
       ocamlc src/protect.{cmi,cmti}
-      ocamlc src/parser_components.{cmi,cmti}
       ocamlc src/sbx_specs.{cmi,cmti}
+      ocamlc src/parser_components.{cmi,cmti}
       ocamlc src/file_utils.{cmi,cmti}
       ocamlc src/time_utils.{cmi,cmti}
-    ocamlopt src/debug_param.{cmx,o}
     ocamlopt src/int64_ops.{cmx,o}
     ocamlopt src/param.{cmx,o}
-      ocamlc src/crcccitt.{cmi,cmti}
-    ocamlopt src/fake_uint16.{cmx,o}
+    ocamlopt src/debug_param.{cmx,o}
       ocamlc src/dynamic_param.{cmi,cmti}
-    ocamlopt src/random_utils.{cmx,o}
+      ocamlc src/crcccitt.{cmi,cmti}
       ocamlc src/progress_report_param.{cmi,cmti}
+    ocamlopt src/fake_uint16.{cmx,o}
+    ocamlopt src/random_utils.{cmx,o}
+      ocamlc src/sbx_block.{cmi,cmti}
     ocamlopt src/protect.{cmx,o}
     ocamlopt src/conv_utils.{cmx,o}
-      ocamlc src/sbx_block.{cmi,cmti}
     ocamlopt src/parser_components.{cmx,o}
-    ocamlopt src/time_utils.{cmx,o}
-    ocamlopt src/crcccitt.{cmx,o}
       ocamlc src/sbx_block_helpers.{cmi,cmti}
-    ocamlopt src/misc_utils.{cmx,o}
+    ocamlopt src/time_utils.{cmx,o}
       ocamlc src/rescue.{cmi,cmti}
-      ocamlc src/show.{cmi,cmti}
-    ocamlopt src/multihash.{cmx,o}
+    ocamlopt src/crcccitt.{cmx,o}
       ocamlc src/processor_components.{cmi,cmti}
-    ocamlopt src/sbx_specs.{cmx,o}
+      ocamlc src/show.{cmi,cmti}
       ocamlc src/decode.{cmi,cmti}
       ocamlc src/encode.{cmi,cmti}
+    ocamlopt src/misc_utils.{cmx,o}
       ocamlc src/osbx_rescue.{cmi,cmo,cmt}
+    ocamlopt src/sbx_specs.{cmx,o}
       ocamlc src/osbx_show.{cmi,cmo,cmt}
+      ocamlc src/osbx_decode.{cmi,cmo,cmt}
+    ocamlopt src/multihash.{cmx,o}
+      ocamlc src/osbx_encode.{cmi,cmo,cmt}
+      ocamlc src/osbx.{cmi,cmo,cmt}
     ocamlopt src/stream_file.{cmx,o}
     ocamlopt src/progress_report.{cmx,o}
-      ocamlc src/osbx_decode.{cmi,cmo,cmt}
-      ocamlc src/osbx_encode.{cmi,cmo,cmt}
+    ocamlopt src/progress_report_param.{cmx,o}
     ocamlopt src/dynamic_param.{cmx,o}
     ocamlopt src/file_utils.{cmx,o}
-    ocamlopt src/progress_report_param.{cmx,o}
-      ocamlc src/osbx.{cmi,cmo,cmt}
     ocamlopt src/sbx_block.{cmx,o}
     ocamlopt src/sbx_block_helpers.{cmx,o}
     ocamlopt src/processor_components.{cmx,o}
     ocamlopt src/show.{cmx,o}
-File "src/show.ml", line 56, characters 4-1790:
-Warning 33: unused open Stream_file.Read_chunk.
-File "src/show.ml", line 97, characters 9-11:
-Warning 27: unused variable hd.
-File "src/show.ml", line 97, characters 15-17:
-Warning 27: unused variable tl.
     ocamlopt src/encode.{cmx,o}
 File "src/encode.ml", line 134, characters 4-2118:
 Warning 33: unused open Stream_file.Read_chunk.
@@ -69,8 +63,8 @@ Warning 27: unused variable msg.
 File "src/rescue.ml", line 207, characters 4-1837:
 Warning 33: unused open Stream_file.Read_chunk.
     ocamlopt src/osbx_encode.{cmx,o}
-    ocamlopt src/osbx_rescue.{cmx,o}
     ocamlopt src/osbx_show.{cmx,o}
+    ocamlopt src/osbx_rescue.{cmx,o}
     ocamlopt src/decode.{cmx,o}
 File "src/decode.ml", line 219, characters 36-73:
 Warning 32: unused value report_hash_print_newline_if_not_done.
