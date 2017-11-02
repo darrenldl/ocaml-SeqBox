@@ -1,0 +1,517 @@
+File "src/sbx_specs.ml", line 1, characters 0-11:
+Warning 44: this open statement shadows the type identifier int64 (which is later used)
+File "src/sbx_specs.ml", line 2, characters 0-15:
+Warning 33: unused open Misc_utils.
+      ocamlc src/osbx_decode.{cmi,cmo,cmt}
+      ocamlc src/osbx_encode.{cmi,cmo,cmt}
+    ocamlopt src/progress_report.{cmx,o}
+File "src/progress_report.ml", line 108, characters 17-25:
+Warning 27: unused variable cur_time.
+    ocamlopt src/stream_file.{cmx,o}
+File "src/stream_file.ml", line 102, characters 15-25:
+Warning 42: this use of read_count relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/stream_file.ml", line 102, characters 13-27:
+Warning 40: this record of type Read_into_buf.read_stats contains fields that are 
+not visible in the current scope: read_count.
+They will not be selected if the type becomes unknown.
+      ocamlc src/osbx.{cmi,cmo,cmt}
+    ocamlopt src/dynamic_param.{cmx,o}
+    ocamlopt src/progress_report_param.{cmx,o}
+    ocamlopt src/file_utils.{cmx,o}
+File "src/file_utils.ml", line 1, characters 0-11:
+Warning 44: this open statement shadows the type identifier int64 (which is later used)
+    ocamlopt src/sbx_block.{cmx,o}
+File "src/sbx_block.ml", line 292, characters 4-254:
+Warning 4: this pattern-matching is fragile.
+It will remain exhaustive when constructors are added to type t.
+File "src/sbx_block.ml", line 387, characters 6-241:
+Warning 44: this open statement shadows the module identifier Parser (which is later used)
+File "src/sbx_block.ml", line 481, characters 34-41:
+Warning 40: version was selected from type Header.common_fields.
+It is not visible in the current scope, and will not 
+be selected if the type becomes unknown.
+File "src/sbx_block.ml", line 481, characters 34-41:
+Warning 42: this use of version relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/sbx_block.ml", line 489, characters 31-38:
+Warning 40: version was selected from type Header.common_fields.
+It is not visible in the current scope, and will not 
+be selected if the type becomes unknown.
+File "src/sbx_block.ml", line 489, characters 31-38:
+Warning 42: this use of version relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/sbx_block.ml", line 537, characters 54-61:
+Warning 40: version was selected from type Header.raw_header.
+It is not visible in the current scope, and will not 
+be selected if the type becomes unknown.
+File "src/sbx_block.ml", line 537, characters 54-61:
+Warning 42: this use of version relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/sbx_block.ml", line 543, characters 76-85:
+Warning 40: crc_ccitt was selected from type Header.raw_header.
+It is not visible in the current scope, and will not 
+be selected if the type becomes unknown.
+File "src/sbx_block.ml", line 543, characters 76-85:
+Warning 42: this use of crc_ccitt relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/sbx_block.ml", line 544, characters 50-58:
+Warning 40: file_uid was selected from type Header.raw_header.
+It is not visible in the current scope, and will not 
+be selected if the type becomes unknown.
+File "src/sbx_block.ml", line 544, characters 50-58:
+Warning 42: this use of file_uid relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/sbx_block.ml", line 545, characters 77-84:
+Warning 40: seq_num was selected from type Header.raw_header.
+It is not visible in the current scope, and will not 
+be selected if the type becomes unknown.
+File "src/sbx_block.ml", line 545, characters 77-84:
+Warning 42: this use of seq_num relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/sbx_block.ml", line 549, characters 74-81:
+Warning 40: version was selected from type Header.raw_header.
+It is not visible in the current scope, and will not 
+be selected if the type becomes unknown.
+File "src/sbx_block.ml", line 549, characters 74-81:
+Warning 42: this use of version relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/sbx_block.ml", line 559, characters 59-67:
+Warning 40: file_uid was selected from type Header.raw_header.
+It is not visible in the current scope, and will not 
+be selected if the type becomes unknown.
+File "src/sbx_block.ml", line 559, characters 59-67:
+Warning 42: this use of file_uid relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/sbx_block.ml", line 559, characters 79-86:
+Warning 40: version was selected from type Header.raw_header.
+It is not visible in the current scope, and will not 
+be selected if the type becomes unknown.
+File "src/sbx_block.ml", line 559, characters 79-86:
+Warning 42: this use of version relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/sbx_block.ml", line 564, characters 46-53:
+Warning 40: seq_num was selected from type Header.raw_header.
+It is not visible in the current scope, and will not 
+be selected if the type becomes unknown.
+File "src/sbx_block.ml", line 564, characters 46-53:
+Warning 42: this use of seq_num relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+    ocamlopt src/sbx_block_helpers.{cmx,o}
+File "src/sbx_block_helpers.ml", line 5, characters 20-68:
+Warning 4: this pattern-matching is fragile.
+It will remain exhaustive when constructors are added to type Sbx_block.Metadata.t.
+File "src/sbx_block_helpers.ml", line 7, characters 5-8:
+Warning 40: FNM was selected from type Sbx_block.Metadata.t.
+It is not visible in the current scope, and will not 
+be selected if the type becomes unknown.
+File "src/sbx_block_helpers.ml", line 7, characters 5-8:
+Warning 42: this use of FNM relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/sbx_block_helpers.ml", line 5, characters 2-195:
+Warning 4: this pattern-matching is fragile.
+It will remain exhaustive when constructors are added to type Sbx_block.Metadata.t.
+File "src/sbx_block_helpers.ml", line 27, characters 38-46:
+Warning 40: file_uid was selected from type Sbx_block.Header.raw_header.
+It is not visible in the current scope, and will not 
+be selected if the type becomes unknown.
+File "src/sbx_block_helpers.ml", line 27, characters 38-46:
+Warning 42: this use of file_uid relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+    ocamlopt src/processor_components.{cmx,o}
+File "src/processor_components.ml", line 17, characters 49-56:
+Warning 40: version was selected from type Sbx_block.Header.raw_header.
+It is not visible in the current scope, and will not 
+be selected if the type becomes unknown.
+File "src/processor_components.ml", line 17, characters 49-56:
+Warning 42: this use of version relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+    ocamlopt src/show.{cmx,o}
+File "src/show.ml", line 36, characters 8-22:
+Warning 42: this use of print_progress relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/show.ml", line 37, characters 8-33:
+Warning 42: this use of print_newline_if_not_done relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/show.ml", line 36, characters 6-129:
+Warning 40: this record of type Progress_report.progress_print_functions contains fields that are 
+not visible in the current scope: print_progress print_newline_if_not_done.
+They will not be selected if the type becomes unknown.
+File "src/show.ml", line 49, characters 53-68:
+Warning 40: bytes_processed was selected from type Stats.t.
+It is not visible in the current scope, and will not 
+be selected if the type becomes unknown.
+File "src/show.ml", line 49, characters 53-68:
+Warning 42: this use of bytes_processed relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/show.ml", line 66, characters 16-33:
+Warning 40: meta_blocks_found was selected from type Stats.t.
+It is not visible in the current scope, and will not 
+be selected if the type becomes unknown.
+File "src/show.ml", line 66, characters 16-33:
+Warning 42: this use of meta_blocks_found relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/show.ml", line 67, characters 16-31:
+Warning 40: bytes_processed was selected from type Stats.t.
+It is not visible in the current scope, and will not 
+be selected if the type becomes unknown.
+File "src/show.ml", line 67, characters 16-31:
+Warning 42: this use of bytes_processed relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/show.ml", line 80, characters 63-78:
+Warning 40: bytes_processed was selected from type Stats.t.
+It is not visible in the current scope, and will not 
+be selected if the type becomes unknown.
+File "src/show.ml", line 80, characters 63-78:
+Warning 42: this use of bytes_processed relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/show.ml", line 56, characters 4-1790:
+Warning 33: unused open Stream_file.Read_chunk.
+File "src/show.ml", line 97, characters 9-11:
+Warning 27: unused variable hd.
+File "src/show.ml", line 97, characters 15-17:
+Warning 27: unused variable tl.
+    ocamlopt src/encode.{cmx,o}
+File "src/encode.ml", line 1, characters 0-11:
+Warning 44: this open statement shadows the type identifier int64 (which is later used)
+File "src/encode.ml", line 65, characters 8-22:
+Warning 42: this use of print_progress relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/encode.ml", line 65, characters 6-43:
+Warning 40: this record of type Progress_report.progress_print_functions contains fields that are 
+not visible in the current scope: print_progress.
+They will not be selected if the type becomes unknown.
+File "src/encode.ml", line 104, characters 43-62:
+Warning 40: data_blocks_written was selected from type Stats.t.
+It is not visible in the current scope, and will not 
+be selected if the type becomes unknown.
+File "src/encode.ml", line 104, characters 43-62:
+Warning 42: this use of data_blocks_written relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/encode.ml", line 149, characters 25-64:
+Warning 4: this pattern-matching is fragile.
+It will remain exhaustive when constructors are added to type Sbx_block.Metadata.t.
+File "src/encode.ml", line 134, characters 4-2118:
+Warning 33: unused open Stream_file.Read_chunk.
+File "src/encode.ml", line 204, characters 16-19:
+Warning 27: unused variable msg.
+    ocamlopt src/rescue.{cmx,o}
+File "src/rescue.ml", line 74, characters 8-22:
+Warning 42: this use of print_progress relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/rescue.ml", line 74, characters 6-43:
+Warning 40: this record of type Progress_report.progress_print_functions contains fields that are 
+not visible in the current scope: print_progress.
+They will not be selected if the type becomes unknown.
+File "src/rescue.ml", line 95, characters 81-96:
+Warning 40: bytes_processed was selected from type Stats.t.
+It is not visible in the current scope, and will not 
+be selected if the type becomes unknown.
+File "src/rescue.ml", line 95, characters 81-96:
+Warning 42: this use of bytes_processed relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/rescue.ml", line 96, characters 81-97:
+Warning 40: blocks_processed was selected from type Stats.t.
+It is not visible in the current scope, and will not 
+be selected if the type becomes unknown.
+File "src/rescue.ml", line 96, characters 81-97:
+Warning 42: this use of blocks_processed relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/rescue.ml", line 97, characters 81-102:
+Warning 40: meta_blocks_processed was selected from type Stats.t.
+It is not visible in the current scope, and will not 
+be selected if the type becomes unknown.
+File "src/rescue.ml", line 97, characters 81-102:
+Warning 42: this use of meta_blocks_processed relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/rescue.ml", line 98, characters 81-102:
+Warning 40: data_blocks_processed was selected from type Stats.t.
+It is not visible in the current scope, and will not 
+be selected if the type becomes unknown.
+File "src/rescue.ml", line 98, characters 81-102:
+Warning 42: this use of data_blocks_processed relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/rescue.ml", line 132, characters 52-67:
+Warning 40: bytes_processed was selected from type Stats.t.
+It is not visible in the current scope, and will not 
+be selected if the type becomes unknown.
+File "src/rescue.ml", line 132, characters 52-67:
+Warning 42: this use of bytes_processed relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/rescue.ml", line 219, characters 31-46:
+Warning 40: bytes_processed was selected from type Stats.t.
+It is not visible in the current scope, and will not 
+be selected if the type becomes unknown.
+File "src/rescue.ml", line 219, characters 31-46:
+Warning 42: this use of bytes_processed relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/rescue.ml", line 299, characters 69-84:
+Warning 40: bytes_processed was selected from type Stats.t.
+It is not visible in the current scope, and will not 
+be selected if the type becomes unknown.
+File "src/rescue.ml", line 299, characters 69-84:
+Warning 42: this use of bytes_processed relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/rescue.ml", line 207, characters 4-1837:
+Warning 33: unused open Stream_file.Read_chunk.
+    ocamlopt src/decode.{cmx,o}
+File "src/decode.ml", line 1, characters 0-11:
+Warning 44: this open statement shadows the type identifier int64 (which is later used)
+File "src/decode.ml", line 36, characters 6-16:
+Warning 42: this use of start_time relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/decode.ml", line 49, characters 6-16:
+Warning 42: this use of start_time relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/decode.ml", line 49, characters 36-46:
+Warning 42: this use of start_time relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/decode.ml", line 62, characters 6-16:
+Warning 42: this use of start_time relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/decode.ml", line 62, characters 36-46:
+Warning 42: this use of start_time relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/decode.ml", line 79, characters 6-16:
+Warning 42: this use of start_time relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/decode.ml", line 79, characters 36-46:
+Warning 42: this use of start_time relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/decode.ml", line 106, characters 6-16:
+Warning 42: this use of start_time relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/decode.ml", line 106, characters 36-46:
+Warning 42: this use of start_time relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/decode.ml", line 111, characters 6-21:
+Warning 42: this use of bytes_processed relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/decode.ml", line 112, characters 6-16:
+Warning 42: this use of start_time relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/decode.ml", line 117, characters 6-21:
+Warning 42: this use of bytes_processed relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/decode.ml", line 118, characters 6-16:
+Warning 42: this use of start_time relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/decode.ml", line 117, characters 30-45:
+Warning 42: this use of bytes_processed relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/decode.ml", line 118, characters 30-40:
+Warning 42: this use of start_time relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/decode.ml", line 145, characters 106-116:
+Warning 42: this use of start_time relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/decode.ml", line 201, characters 8-22:
+Warning 42: this use of print_progress relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/decode.ml", line 202, characters 8-33:
+Warning 42: this use of print_newline_if_not_done relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/decode.ml", line 201, characters 6-129:
+Warning 40: this record of type Progress_report.progress_print_functions contains fields that are 
+not visible in the current scope: print_progress print_newline_if_not_done.
+They will not be selected if the type becomes unknown.
+File "src/decode.ml", line 214, characters 58-73:
+Warning 40: bytes_processed was selected from type Stats.scan_stats.
+It is not visible in the current scope, and will not 
+be selected if the type becomes unknown.
+File "src/decode.ml", line 214, characters 58-73:
+Warning 42: this use of bytes_processed relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/decode.ml", line 218, characters 8-22:
+Warning 42: this use of print_progress relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/decode.ml", line 219, characters 8-33:
+Warning 42: this use of print_newline_if_not_done relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/decode.ml", line 218, characters 6-129:
+Warning 40: this record of type Progress_report.progress_print_functions contains fields that are 
+not visible in the current scope: print_progress print_newline_if_not_done.
+They will not be selected if the type becomes unknown.
+File "src/decode.ml", line 231, characters 58-73:
+Warning 40: bytes_processed was selected from type Stats.hash_stats.
+It is not visible in the current scope, and will not 
+be selected if the type becomes unknown.
+File "src/decode.ml", line 231, characters 58-73:
+Warning 42: this use of bytes_processed relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/decode.ml", line 235, characters 8-22:
+Warning 42: this use of print_progress relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/decode.ml", line 236, characters 8-33:
+Warning 42: this use of print_newline_if_not_done relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/decode.ml", line 235, characters 6-133:
+Warning 40: this record of type Progress_report.progress_print_functions contains fields that are 
+not visible in the current scope: print_progress print_newline_if_not_done.
+They will not be selected if the type becomes unknown.
+File "src/decode.ml", line 248, characters 53-69:
+Warning 40: blocks_processed was selected from type Stats.t.
+It is not visible in the current scope, and will not 
+be selected if the type becomes unknown.
+File "src/decode.ml", line 248, characters 53-69:
+Warning 42: this use of blocks_processed relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/decode.ml", line 422, characters 31-70:
+Warning 4: this pattern-matching is fragile.
+It will remain exhaustive when constructors are added to type Sbx_block.Metadata.t.
+File "src/decode.ml", line 422, characters 15-195:
+Warning 4: this pattern-matching is fragile.
+It will remain exhaustive when constructors are added to type Sbx_block.Metadata.t.
+File "src/decode.ml", line 433, characters 29-68:
+Warning 4: this pattern-matching is fragile.
+It will remain exhaustive when constructors are added to type Sbx_block.Metadata.t.
+File "src/decode.ml", line 433, characters 13-174:
+Warning 4: this pattern-matching is fragile.
+It will remain exhaustive when constructors are added to type Sbx_block.Metadata.t.
+File "src/decode.ml", line 495, characters 24-37:
+Warning 40: recorded_hash was selected from type Stats.t.
+It is not visible in the current scope, and will not 
+be selected if the type becomes unknown.
+File "src/decode.ml", line 495, characters 24-37:
+Warning 42: this use of recorded_hash relies on type-directed disambiguation,
+it will not compile with OCaml 4.00 or earlier.
+File "src/decode.ml", line 219, characters 36-73:
+Warning 32: unused value report_hash_print_newline_if_not_done.
+File "src/decode.ml", line 236, characters 36-75:
+Warning 32: unused value report_decode_print_newline_if_not_done.
+File "src/decode.ml", line 266, characters 4-2602:
+Warning 33: unused open Stream_file.Read_chunk.
+File "src/decode.ml", line 319, characters 4-1749:
+Warning 33: unused open Stream_file.Read_chunk.
+File "src/decode.ml", line 516, characters 14-17:
+Warning 27: unused variable msg.
+    ocamlopt src/osbx_show.{cmx,o}
+File "src/osbx_show.ml", line 141, characters 69-70:
+Warning 29: unescaped end-of-line in a string constant (non-portable code)
+File "src/osbx_show.ml", line 142, characters 114-115:
+Warning 29: unescaped end-of-line in a string constant (non-portable code)
+File "src/osbx_show.ml", line 143, characters 97-98:
+Warning 29: unescaped end-of-line in a string constant (non-portable code)
+File "src/osbx_show.ml", line 3, characters 0-11:
+Warning 44: this open statement shadows the type identifier int64 (which is later used)
+File "src/osbx_show.ml", line 35, characters 40-79:
+Warning 4: this pattern-matching is fragile.
+It will remain exhaustive when constructors are added to type Sbx_block.Metadata.t.
+File "src/osbx_show.ml", line 35, characters 6-195:
+Warning 4: this pattern-matching is fragile.
+It will remain exhaustive when constructors are added to type Sbx_block.Metadata.t.
+File "src/osbx_show.ml", line 40, characters 40-79:
+Warning 4: this pattern-matching is fragile.
+It will remain exhaustive when constructors are added to type Sbx_block.Metadata.t.
+File "src/osbx_show.ml", line 40, characters 6-195:
+Warning 4: this pattern-matching is fragile.
+It will remain exhaustive when constructors are added to type Sbx_block.Metadata.t.
+File "src/osbx_show.ml", line 45, characters 40-79:
+Warning 4: this pattern-matching is fragile.
+It will remain exhaustive when constructors are added to type Sbx_block.Metadata.t.
+File "src/osbx_show.ml", line 45, characters 6-195:
+Warning 4: this pattern-matching is fragile.
+It will remain exhaustive when constructors are added to type Sbx_block.Metadata.t.
+File "src/osbx_show.ml", line 50, characters 40-79:
+Warning 4: this pattern-matching is fragile.
+It will remain exhaustive when constructors are added to type Sbx_block.Metadata.t.
+File "src/osbx_show.ml", line 50, characters 6-195:
+Warning 4: this pattern-matching is fragile.
+It will remain exhaustive when constructors are added to type Sbx_block.Metadata.t.
+File "src/osbx_show.ml", line 55, characters 40-79:
+Warning 4: this pattern-matching is fragile.
+It will remain exhaustive when constructors are added to type Sbx_block.Metadata.t.
+File "src/osbx_show.ml", line 55, characters 6-195:
+Warning 4: this pattern-matching is fragile.
+It will remain exhaustive when constructors are added to type Sbx_block.Metadata.t.
+File "src/osbx_show.ml", line 60, characters 40-79:
+Warning 4: this pattern-matching is fragile.
+It will remain exhaustive when constructors are added to type Sbx_block.Metadata.t.
+File "src/osbx_show.ml", line 60, characters 6-395:
+Warning 4: this pattern-matching is fragile.
+It will remain exhaustive when constructors are added to type Sbx_block.Metadata.t.
+File "src/osbx_show.ml", line 145, characters 2-79:
+Warning 44: this open statement shadows the value identifier & (which is later used)
+File "src/osbx_show.ml", line 150, characters 2-79:
+Warning 44: this open statement shadows the value identifier & (which is later used)
+    ocamlopt src/osbx_encode.{cmx,o}
+File "src/osbx_encode.ml", line 72, characters 57-58:
+Warning 29: unescaped end-of-line in a string constant (non-portable code)
+File "src/osbx_encode.ml", line 58, characters 2-74:
+Warning 44: this open statement shadows the value identifier & (which is later used)
+File "src/osbx_encode.ml", line 63, characters 2-44:
+Warning 44: this open statement shadows the value identifier & (which is later used)
+File "src/osbx_encode.ml", line 68, characters 2-79:
+Warning 44: this open statement shadows the value identifier & (which is later used)
+File "src/osbx_encode.ml", line 74, characters 2-67:
+Warning 44: this open statement shadows the value identifier & (which is later used)
+    ocamlopt src/osbx_rescue.{cmx,o}
+File "src/osbx_rescue.ml", line 64, characters 77-78:
+Warning 29: unescaped end-of-line in a string constant (non-portable code)
+File "src/osbx_rescue.ml", line 36, characters 2-270:
+Warning 44: this open statement shadows the value identifier & (which is later used)
+File "src/osbx_rescue.ml", line 50, characters 2-84:
+Warning 44: this open statement shadows the value identifier & (which is later used)
+File "src/osbx_rescue.ml", line 55, characters 2-79:
+Warning 44: this open statement shadows the value identifier & (which is later used)
+File "src/osbx_rescue.ml", line 60, characters 2-70:
+Warning 44: this open statement shadows the value identifier & (which is later used)
+File "src/osbx_rescue.ml", line 66, characters 2-71:
+Warning 44: this open statement shadows the value identifier & (which is later used)
+    ocamlopt src/osbx_decode.{cmx,o}
+File "src/osbx_decode.ml", line 39, characters 98-99:
+Warning 29: unescaped end-of-line in a string constant (non-portable code)
+File "src/osbx_decode.ml", line 58, characters 82-83:
+Warning 29: unescaped end-of-line in a string constant (non-portable code)
+File "src/osbx_decode.ml", line 74, characters 31-32:
+Warning 29: unescaped end-of-line in a string constant (non-portable code)
+File "src/osbx_decode.ml", line 75, characters 83-84:
+Warning 29: unescaped end-of-line in a string constant (non-portable code)
+File "src/osbx_decode.ml", line 76, characters 95-96:
+Warning 29: unescaped end-of-line in a string constant (non-portable code)
+File "src/osbx_decode.ml", line 60, characters 2-89:
+Warning 44: this open statement shadows the value identifier & (which is later used)
+File "src/osbx_decode.ml", line 65, characters 2-44:
+Warning 44: this open statement shadows the value identifier & (which is later used)
+File "src/osbx_decode.ml", line 70, characters 2-79:
+Warning 44: this open statement shadows the value identifier & (which is later used)
+File "src/osbx_decode.ml", line 78, characters 2-67:
+Warning 44: this open statement shadows the value identifier & (which is later used)
+    ocamlopt src/osbx.{cmx,o}
+File "src/osbx.ml", line 29, characters 96-97:
+Warning 29: unescaped end-of-line in a string constant (non-portable code)
+File "src/osbx.ml", line 49, characters 56-57:
+Warning 29: unescaped end-of-line in a string constant (non-portable code)
+File "src/osbx.ml", line 62, characters 132-133:
+Warning 29: unescaped end-of-line in a string constant (non-portable code)
+File "src/osbx.ml", line 63, characters 50-51:
+Warning 29: unescaped end-of-line in a string constant (non-portable code)
+File "src/osbx.ml", line 64, characters 35-36:
+Warning 29: unescaped end-of-line in a string constant (non-portable code)
+File "src/osbx.ml", line 65, characters 110-111:
+Warning 29: unescaped end-of-line in a string constant (non-portable code)
+File "src/osbx.ml", line 72, characters 52-53:
+Warning 29: unescaped end-of-line in a string constant (non-portable code)
+File "src/osbx.ml", line 73, characters 48-49:
+Warning 29: unescaped end-of-line in a string constant (non-portable code)
+File "src/osbx.ml", line 74, characters 35-36:
+Warning 29: unescaped end-of-line in a string constant (non-portable code)
+File "src/osbx.ml", line 17, characters 2-237:
+Warning 44: this open statement shadows the value identifier & (which is later used)
+File "src/osbx.ml", line 32, characters 2-187:
+Warning 44: this open statement shadows the value identifier & (which is later used)
+File "src/osbx.ml", line 45, characters 2-59:
+Warning 44: this open statement shadows the value identifier & (which is later used)
+File "src/osbx.ml", line 51, characters 2-69:
+Warning 44: this open statement shadows the value identifier & (which is later used)
+File "src/osbx.ml", line 58, characters 2-77:
+Warning 44: this open statement shadows the value identifier & (which is later used)
+File "src/osbx.ml", line 68, characters 2-87:
+Warning 44: this open statement shadows the value identifier & (which is later used)
+File "src/osbx.ml", line 76, characters 2-72:
+Warning 44: this open statement shadows the value identifier & (which is later used)
+File "src/osbx.ml", line 124, characters 2-11:
+Warning 48: implicit elimination of optional argument ?term_err
+File "src/osbx.ml", line 55, characters 2-212:
+Warning 33: unused open Multihash.
+    ocamlopt src/osbx.exe
