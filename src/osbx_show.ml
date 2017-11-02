@@ -29,7 +29,7 @@ let print_meta ((block, pos):Block.t * int64) : unit =
   else
     let open Metadata in
     let uid : string  = Conv_utils.string_to_hex_string_uid (Block.block_to_file_uid block) in
-    let ver : string  = Sbx_specs.ver_to_string (Block.block_to_ver block) in
+    let ver : string  = Sbx_specs.ver_to_human_string (Block.block_to_ver block) in
     let metadata_list = dedup (Block.block_to_meta block) in
     let fnm : string option =
       match Misc_utils.list_find_option (function | FNM _ -> true | _ -> false) metadata_list with

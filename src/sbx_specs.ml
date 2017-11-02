@@ -73,6 +73,10 @@ let ver_to_string       (ver:version) : string =
   Conv_utils.uint8_to_string (ver_to_uint8 ver)
 ;;
 
+let ver_to_human_string (ver:version) : string =
+  string_of_int (ver_to_int ver)
+;;
+
 let ver_to_block_size   (ver:version) : int =
   match ver with
   | `V1 -> Param_for_v1.block_size

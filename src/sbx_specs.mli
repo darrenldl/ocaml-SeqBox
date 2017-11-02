@@ -29,3 +29,5 @@ val ver_to_max_file_size : version -> int64
 val string_to_ver        : string  -> (version, string) result
 
 val ver_to_string        : version -> string
+
+val ver_to_human_string  : version -> string
