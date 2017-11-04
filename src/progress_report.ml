@@ -105,7 +105,7 @@ end
 let default_silence_settings = Helper.silence_level_to_silence_settings L0;;
 
 let make_message ~(info:info) ~(elements:progress_element list) : string =
-  let { percent; cur_time; cur_rate; avg_rate; unit; time_used; time_left } = info in
+  let { percent; cur_rate; avg_rate; unit; time_used; time_left; _ } = info in
   let make_string_for_element (element:progress_element) : string =
     match element with
     | Percentage         -> Printf.sprintf "%3d%%" percent

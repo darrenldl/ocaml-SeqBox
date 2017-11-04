@@ -1,5 +1,4 @@
 open Stdint
-open Nocrypto.Hash
 
 type date_time_mode = [ `UTC | `Local ]
 
@@ -45,7 +44,6 @@ let string_to_hex_string_hash (data:string) : string =
 ;;
 
 let hex_string_to_string (str:string) : (string, string) result =
-  let open Hex in
   try
     let hex = `Hex str in
     Ok (Hex.to_string hex)
