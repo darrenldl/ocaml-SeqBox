@@ -1,12 +1,12 @@
-## 1.2.4  (development version, publishing in progress)
-  - Adapt to Angstrom 0.7.0 API changes
+## 1.2.4  (newest version on OPAM)
+  - Adapted to Angstrom 0.7.0 API changes
     - This is completely internal
   - Added --only-pick-uid option to rescue mode
     - This allows only picking sbx blocks of specific uid when rescuing
     - This is useful when you only only want to rescue one specific file
   - Renamed --only-pick option to --only-pick-block in rescue mode
   
-## 1.2.3  (newest version on OPAM)
+## 1.2.3  (published on OPAM)
   - Message text polishing
   - Fixed division by zero error/exception in progress reporting when number of total units is 0
     - The error/exception affects all four modes when dealing with files of size 0 bytes

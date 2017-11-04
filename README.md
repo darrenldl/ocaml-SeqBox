@@ -43,7 +43,7 @@ I would like to thank [Ming](https://github.com/mdchia/) for his feedback on the
 You can view the recordings [here](https://github.com/darrenldl/ocaml-SeqBox/wiki/Recordings)
 
 ### Installation
-Osbx 1.2.3 is available through OPAM.
+Osbx 1.2.4 is available through OPAM.
 ```
 opam install osbx
 ```
