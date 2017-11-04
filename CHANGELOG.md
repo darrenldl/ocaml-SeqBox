@@ -1,4 +1,4 @@
-## 1.2.4  (development version)
+## 1.2.4  (development version, publishing in progress)
   - Adapt to Angstrom 0.7.0 API changes
     - This is completely internal
   - Added --only-pick-uid option to rescue mode
