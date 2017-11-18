@@ -1,4 +1,4 @@
-(* This file is translated from Galois.java from Backblaze
+(* This file is translated from Galois.java from Backblaze Reed-Solomon implementation
  * as part of the ocaml-SeqBox project
  *
  * Following is the original notice
