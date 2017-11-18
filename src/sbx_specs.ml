@@ -1,6 +1,6 @@
 open Stdint
 
-type version = [ `V1 | `V2 | `V3 ]
+type version = [ `V1 | `V2 | `V3 | `V11 | `V12 | `V13 ]
 
 module Common_param = struct
   let file_uid_len   : int    = 6
@@ -24,25 +24,55 @@ module Param_for_v3 = struct
   let data_size    : int   = block_size - Common_param.header_size
 end
 
+module Param_for_v11 = struct
+  let block_size   : int   = Param_for_v1.block_size
+  let data_size    : int   = block_size - Common_param.header_size
+end
+
+module Param_for_v12 = struct
+  let block_size   : int   = Param_for_v2.block_size
+  let data_size    : int   = block_size - Common_param.header_size
+end
+
+module Param_for_v13 = struct
+  let block_size   : int   = Param_for_v3.block_size
+  let data_size    : int   = block_size - Common_param.header_size
+end
+
 module Parser = struct
   open Angstrom
 
   let v1_p  : version Angstrom.t =
-    char '\x01' *> return `V1
+    char '\001' *> return `V1
   ;;
 
   let v2_p  : version Angstrom.t =
-    char '\x02' *> return `V2
+    char '\002' *> return `V2
   ;;
 
   let v3_p  : version Angstrom.t =
-    char '\x03' *> return `V3
+    char '\003' *> return `V3
+  ;;
+
+  let v11_p : version Angstrom.t =
+    char '\011' *> return `V11
+  ;;
+
+  let v12_p : version Angstrom.t =
+    char '\012' *> return `V12
+  ;;
+
+  let v13_p : version Angstrom.t =
+    char '\013' *> return `V13
   ;;
 
   let ver_p : version Angstrom.t =
     choice [ v1_p
            ; v2_p
            ; v3_p
+           ; v11_p
+           ; v12_p
+           ; v13_p
            ]
   ;;
 end
