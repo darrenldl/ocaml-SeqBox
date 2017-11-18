@@ -173,3 +173,12 @@ let calc_required_len_and_seek_to_from_byte_range ~(from_byte:int64 option) ~(to
   ; seek_to      = align (from_byte <+> bytes_so_far)
   }
 ;;
+
+let int_array_to_string (arr : int array) : string =
+  let arr_len     = Array.length arr in
+  let tmp : bytes = Bytes.make arr_len '\000' in
+  for i = 0 to pred arr_len do
+    Bytes.set tmp i (Char.chr arr.(i))
+  done;
+  Bytes.to_string tmp
+;;

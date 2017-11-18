@@ -47,3 +47,5 @@ val calc_required_len_and_seek_to_from_byte_range :
   bytes_so_far:int64 ->
   last_possible_pos:int64 ->
   required_len_and_seek_to
+
+val int_array_to_string : int array -> string

@@ -7,3 +7,5 @@ val mult : int -> int -> int
 val div  : int -> int -> int
 
 val exp  : int -> int -> int
+
+val field_size : int
