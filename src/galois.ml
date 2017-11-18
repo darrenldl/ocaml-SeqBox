@@ -78,15 +78,29 @@ let gen_multiplication_table () : int array array =
 ;;
 
 let div (a : int) (b : int) : int =
-  if      a = 0 then
-    0
-  else if b = 0 then
-    raise Zero_division
+  if      a = 0 then 0
+  else if b = 0 then raise Zero_division
   else (
     let logA = log_table.(a land 0xFF) in
     let logB = log_table.(b land 0xFF) in
     let tmp  = logA - logB in
     let res  = if tmp < 0 then tmp + 255 else tmp in
+    exp_table.(res)
+  )
+;;
+
+let rec sub_255_until_lt_255 (x : int) : int =
+  if 255 <= x then sub_255_until_lt_255 (x - 255)
+  else             x
+;;
+
+let exp (a : int) (n : int) : int =
+  if      n = 0 then 1
+  else if a = 0 then 0
+  else (
+    let logA = log_table.(a land 0xFF) in
+    let tmp  = logA * n in
+    let res  = sub_255_until_lt_255 tmp in
     exp_table.(res)
   )
 ;;
