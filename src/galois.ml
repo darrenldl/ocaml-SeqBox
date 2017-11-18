@@ -15,13 +15,13 @@ let generating_polynomial : int = 29
 let gen_log_table (polynomial : int) : int array =
   let result : int array = Array.make field_size 0 in
 
-  for i = 1 to field_size do
+  for i = 0 to pred field_size do
     result.(i) <- -1
   done;
 
   let b : int ref = ref 1 in
 
-  for log = 0 to field_size - 1 do
+  for log = 0 to pred (field_size - 1) do
     if result.(!b) <> -1 then (
       assert false
     );
@@ -40,7 +40,7 @@ let log_table = gen_log_table generating_polynomial
 let gen_exp_table (log_table : int array) : int array =
   let result : int array = Array.make (field_size * 2 - 2) 0 in
 
-  for i = 1 to field_size do
+  for i = 1 to pred field_size do
     let log : int = log_table.(i) in
     result.(log)                  <- i;
     result.(log + field_size - 1) <- i
@@ -68,8 +68,8 @@ let mult (a : int) (b : int) : int =
 let gen_multiplication_table () : int array array =
   let result : int array array = Array.make_matrix 256 256 0 in
 
-  for a = 0 to field_size do
-    for b = 0 to field_size do
+  for a = 0 to pred field_size do
+    for b = 0 to pred field_size do
       result.(a).(b) <- mult a b
     done;
   done;
