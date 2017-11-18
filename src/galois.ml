@@ -56,17 +56,16 @@ let add = (lxor)
 
 let sub = (lxor)
 
-let mult (a : int) (b : int) : int =
-  if a = 0 || b = 0 then
-    0
-  else
-    let logA = log_table.(a land 0xFF) in
-    let logB = log_table.(b land 0xFF) in
-    let res  = logA + logB in
-    exp_table.(res)
-;;
+let gen_mult_table () : int array array =
+  let mult (a : int) (b : int) : int =
+    if a = 0 || b = 0 then
+      0
+    else
+      let logA = log_table.(a land 0xFF) in
+      let logB = log_table.(b land 0xFF) in
+      let res  = logA + logB in
+      exp_table.(res) in
 
-let gen_multiplication_table () : int array array =
   let result : int array array = Array.make_matrix 256 256 0 in
 
   for a = 0 to pred field_size do
@@ -76,6 +75,15 @@ let gen_multiplication_table () : int array array =
   done;
 
   result
+;;
+
+let mult_table = gen_mult_table ()
+
+let mult (a : int) (b : int) : int =
+  if a = 0 || b = 0 then
+    0
+  else
+    mult_table.(a).(b)
 ;;
 
 let div (a : int) (b : int) : int =
