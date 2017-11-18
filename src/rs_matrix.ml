@@ -3,9 +3,9 @@
  *
  * Following is the original notice
  *
- * 8-bit Galois Field
+ * Matrix Algebra over an 8-bit Galois Field
  *
- * Copyright 2015, Backblaze, Inc.  All rights reserved.
+ * Copyright 2015, Backblaze, Inc.
  *)
 exception Incompatible_matrix_size
 exception Row_index_out_of_range
