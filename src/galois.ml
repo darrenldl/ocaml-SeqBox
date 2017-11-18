@@ -76,3 +76,18 @@ let gen_multiplication_table () : int array array =
 
   result
 ;;
+
+let div (a : int) (b : int) : int =
+  if      a = 0 then
+    0
+  else if b = 0 then
+    raise ZeroDivision
+  else (
+    let logA = log_table.(a land 0xFF) in
+    let logB = log_table.(b land 0xFF) in
+    let res  = ref (logA - logB) in
+    if !res < 0 then
+      res := !res + 255;
+    exp_table.(!res)
+  )
+;;
