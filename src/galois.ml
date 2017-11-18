@@ -85,9 +85,8 @@ let div (a : int) (b : int) : int =
   else (
     let logA = log_table.(a land 0xFF) in
     let logB = log_table.(b land 0xFF) in
-    let res  = ref (logA - logB) in
-    if !res < 0 then
-      res := !res + 255;
-    exp_table.(!res)
+    let tmp  = logA - logB in
+    let res  = if tmp < 0 then tmp + 255 else tmp in
+    exp_table.(res)
   )
 ;;
