@@ -6,7 +6,7 @@
  *
  * Copyright 2015, Backblaze, Inc.  All rights reserved.
  *)
-exception ZeroDivision
+exception Zero_division
 
 let field_size            : int = 256
 
@@ -81,7 +81,7 @@ let div (a : int) (b : int) : int =
   if      a = 0 then
     0
   else if b = 0 then
-    raise ZeroDivision
+    raise Zero_division
   else (
     let logA = log_table.(a land 0xFF) in
     let logB = log_table.(b land 0xFF) in
