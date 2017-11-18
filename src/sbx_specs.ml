@@ -85,9 +85,12 @@ let sbx_header_size  = Common_param.header_size;;
 
 let ver_to_int          (ver:version) : int =
   match ver with
-  | `V1 -> 1
-  | `V2 -> 2
-  | `V3 -> 3
+  | `V1  -> 1
+  | `V2  -> 2
+  | `V3  -> 3
+  | `V11 -> 11
+  | `V12 -> 12
+  | `V13 -> 13
 ;;
 
 let ver_to_uint8        (ver:version) : uint8 =
@@ -108,16 +111,22 @@ let ver_to_human_string (ver:version) : string =
 
 let ver_to_block_size   (ver:version) : int =
   match ver with
-  | `V1 -> Param_for_v1.block_size
-  | `V2 -> Param_for_v2.block_size
-  | `V3 -> Param_for_v3.block_size
+  | `V1  -> Param_for_v1.block_size
+  | `V2  -> Param_for_v2.block_size
+  | `V3  -> Param_for_v3.block_size
+  | `V11 -> Param_for_v11.block_size
+  | `V12 -> Param_for_v12.block_size
+  | `V13 -> Param_for_v13.block_size
 ;;
 
 let ver_to_data_size    (ver:version) : int =
   match ver with
-  | `V1 -> Param_for_v1.data_size
-  | `V2 -> Param_for_v2.data_size
-  | `V3 -> Param_for_v3.data_size
+  | `V1  -> Param_for_v1.data_size
+  | `V2  -> Param_for_v2.data_size
+  | `V3  -> Param_for_v3.data_size
+  | `V11 -> Param_for_v11.data_size
+  | `V12 -> Param_for_v12.data_size
+  | `V13 -> Param_for_v13.data_size
 ;;
 
 let ver_to_max_file_size (ver:version) : int64 =
@@ -127,8 +136,11 @@ let ver_to_max_file_size (ver:version) : int64 =
 
 let string_to_ver       (str:string)  : (version, string) result =
   match str with
-  | "1" -> Ok `V1
-  | "2" -> Ok `V2
-  | "3" -> Ok `V3
-  | _   -> Error "Invalid version string"
+  | "1"  -> Ok `V1
+  | "2"  -> Ok `V2
+  | "3"  -> Ok `V3
+  | "11" -> Ok `V11
+  | "12" -> Ok `V12
+  | "13" -> Ok `V13
+  | _    -> Error "Invalid version string"
 ;;
