@@ -144,3 +144,9 @@ let string_to_ver       (str:string)  : (version, string) result =
   | "13" -> Ok `V13
   | _    -> Error "Invalid version string"
 ;;
+
+let is_reedsolomon_enabled (ver:version) : bool =
+  match ver with
+  | `V11 | `V12 | `V13 -> true
+  | _ -> false
+;;

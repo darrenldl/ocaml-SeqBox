@@ -100,11 +100,38 @@ module Processor = struct
         | None   -> (fun () -> None)
         | Some s -> (fun () -> Some (Hash.get_hash_bytes s)) in
       (update_hash, get_hash_bytes) in
-    let pack_data (stats:stats) (common:Header.common_fields) (chunk:string) : string =
+    let pack_data (stats:stats) (chunk:string) : string =
       let seq_num = Uint32.of_int64 (stats.data_blocks_written <+> 1L) (* always off by +1 *) in
       let block   = Block.make_data_block ~seq_num common ~data:chunk in
       Block.to_string block in
-    let rec data_to_block_proc_internal (in_file:in_channel) (out_file:out_channel) ~(data_len:int) ~(stats:stats) ~(common:Header.common_fields) : stats * (hash_bytes option) =
+    let (cache_chunk, rs_parity_dump) : (string -> unit) * (unit -> string array option) =
+      if is_rs_enabled (common_fields_to_ver) then
+        let cache : shards_set = { data_shards = Array.make 100 ""
+                                 ; parity_shards = [||]
+                                 } in
+        let counter : int ref = ref 0 in
+        (fun chunk ->
+           cache.data_shards.(!counter) <- chunk;
+           counter := (!counter + 1) mod 100
+        ),
+        (fun () ->
+           if !counter < 100 then None
+           else Some cache.parity_shards
+        )
+      else
+        (fun chunk -> ()), (fun () -> None) in
+    let rec write_parity_shards_possibly (stats : stats) (out_file:out_channel) : stats =
+        match rs_parity_dump () with
+        | None -> stats
+        | Some arr ->
+          let res_stats = ref stats in
+          for i = 0 to pred (Array.length arr) do
+            res_stats := (Stats.add_written_data_block !res_stats ~data_len:chunk_len);
+            let block = pack_data !res_stats arr.(i) in
+            write out_file ~chunk:block
+          done;
+          !res_stats in
+    let rec data_to_block_proc_internal (in_file:in_channel) (out_file:out_channel) ~(data_len:int) ~(stats:stats) : stats * (hash_bytes option) =
       let open Read_chunk in
       let open Write_chunk in
       (* report progress *)
@@ -113,18 +140,21 @@ module Processor = struct
       | None           -> (stats, get_hash_bytes ())
       | Some { chunk } ->
         let chunk_len   = String.length chunk in
-        let block_bytes = pack_data stats common chunk in
+        let block_bytes = pack_data stats chunk in
+        (* cache data chunk for RS *)
+        cache_chunk chunk;
         (* update hash *)
         update_hash chunk;
         (* write to file *)
         write out_file ~chunk:block_bytes;
+        (* write parity shards if any *)
+        let stats = write_parity_shards_possibly stats out_file in
         data_to_block_proc_internal
           in_file
           out_file
           ~data_len
-          ~stats:(Stats.add_written_data_block stats ~data_len:chunk_len)
-          ~common in
-    data_to_block_proc_internal in_file out_file ~data_len ~stats ~common
+          ~stats:(Stats.add_written_data_block stats ~data_len:chunk_len) in
+    data_to_block_proc_internal in_file out_file ~data_len ~stats
   ;;
 
   let make_in_out_encoder ~(hash_type:hash_type) ~(common:Header.common_fields) ~(metadata:(Metadata.t list) option) : stats Stream.in_out_processor =
