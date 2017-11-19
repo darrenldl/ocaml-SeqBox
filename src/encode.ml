@@ -149,20 +149,20 @@ module Processor = struct
            (* a dummy multihash is added to make sure there is actually enough space
             * in the metadata block before the encoding starts
             *)
-           let dummy_hash_bytes           = Multihash.make_dummy_hash_bytes hash_type in
-           let dummy_fields               = (HSH dummy_hash_bytes) :: fields_except_hash in
-           let dummy_metadata_block       = Block.make_metadata_block common ~fields:dummy_fields in
+           let dummy_hash_bytes            = Multihash.make_dummy_hash_bytes hash_type in
+           let dummy_fields                = (HSH dummy_hash_bytes) :: fields_except_hash in
+           let dummy_metadata_block        = Block.make_metadata_block common ~fields:dummy_fields in
            let dummy_metadata_block_string = Block.to_string dummy_metadata_block in
            write out_file ~chunk:dummy_metadata_block_string;
            (* write data blocks *)
-           let (stats, hash_bytes)        =
+           let (stats, hash_bytes) =
              match data_to_block_proc in_file out_file ~hash_type:(Some hash_type) ~data_len ~stats:blank_stats ~common with
              | (_,     None  ) -> assert false (* there should always be a hash_bytes *)
              | (stats, Some h) -> (stats, h) in
-           let fields                     =
+           let fields              =
              (HSH hash_bytes) :: fields_except_hash in
-           let metadata_block             = Block.make_metadata_block common ~fields in
-           let metadata_block_string      = Block.to_string metadata_block in
+           let metadata_block        = Block.make_metadata_block common ~fields in
+           let metadata_block_string = Block.to_string metadata_block in
            (* go back and write metadata block *)
            LargeFile.seek_out out_file 0L;
            write out_file ~chunk:metadata_block_string;
