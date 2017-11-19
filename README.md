@@ -1,8 +1,8 @@
 # ocaml-SeqBox
-Implementation of [SeqBox](https://github.com/MarcoPon/SeqBox) in OCaml
+Enhanced implementation of [SeqBox](https://github.com/MarcoPon/SeqBox) in OCaml
 
-The original pharsing was "Port of SeqBox to OCaml", but since no direct porting/translation was actually done due to the differences between Python 3(implementation language of SeqBox) and OCaml, which also force the architecture and design of this software(ocaml-SeqBox) to be independently developed, thus this is only an implementation(not a port or translation) of SeqBox according to its technical specifications.
-This is mainly to address the different licenses being used(SeqBox was using AGPL 3.0 at the time of writing while this project uses 3-Clause BSD license).
+Transform files into format with error detecting, error recovering and sector level retrieval capability
+
 
 Official SeqBox Repo - https://github.com/MarcoPon/SeqBox
 
@@ -100,9 +100,11 @@ See [helpers](https://github.com/darrenldl/osbx-helpers)
     - This also means block corruption will not stop the decoding process
   - Allows duplicate metadata/data blocks to exist within one sbx container
     - This means you can concatenate multiple copies of sbx container together directly to increase chance of recovery in case of corruption
+  - Reed-Solomon erasure code
+    - This allows forward data recovery with adjustable level of redundancy
 
 ## Technical Specification
-The following specification is copied directly from the official specification (with possible slight modifications).
+The following specification is copied directly from the official specification with extensions.
 
 Also see section "Features currently NOT planned to be implemented" for features ocaml-SeqBox is probably not going to have.
 
@@ -165,12 +167,17 @@ N.B. Current versions differs only by blocksize.
 | SDT | sbx date & time (8 bytes) |
 | HSH | crypto hash (using [Multihash](http://multiformats.io) protocol) |
 | PID | parent UID (*not used at the moment*)|
+| ECP | (forward) error correction redundancy percentage |
+| ECA | (forward) error correction algorithm |
 
 Supported crypto hashes since 1.1.0 are
   - SHA1
   - SHA256
   - SHA512
   - BLAKE2B\_512
+  
+Supported forward error correction algorithm since 1.2.5 are
+  - Reed-Solomon erasure code(no direct error recovery)
 
 #### Features currently NOT planned to be implemented
   - Data hiding (XOR encoding/decoding in official seqbox)
