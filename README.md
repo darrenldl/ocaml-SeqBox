@@ -167,12 +167,17 @@ N.B. Current versions differs only by blocksize.
 | SDT | sbx date & time (8 bytes) |
 | HSH | crypto hash (using [Multihash](http://multiformats.io) protocol) |
 | PID | parent UID (*not used at the moment*)|
+| ECP | (forward) error correction redundancy percentage |
+| ECA | (forward) error correction algorithm |
 
 Supported crypto hashes since 1.1.0 are
   - SHA1
   - SHA256
   - SHA512
   - BLAKE2B\_512
+  
+Supported forward error correction algorithm since 1.2.5 are
+  - Reed-Solomon erasure code(no direct error recovery)
 
 #### Features currently NOT planned to be implemented
   - Data hiding (XOR encoding/decoding in official seqbox)
