@@ -1,0 +1,3 @@
+val patient_ignore : 'a Lwt.t -> unit
+
+val (>>/)         : 'a Lwt.t -> unit -> unit

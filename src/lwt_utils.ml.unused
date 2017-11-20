@@ -1,0 +1,5 @@
+let patient_ignore (x : 'a Lwt.t) : unit =
+  x >> unit
+;;
+
+let (>>/) x () = patient_ignore x
