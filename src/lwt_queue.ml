@@ -9,7 +9,7 @@ type 'a t =
   ; mutable write_pos : int
   }
 
-let create_empty ~(init_val : 'a) ~(size : int) : 'a t =
+let create ~(init_val : 'a) ~(size : int) : 'a t =
   if size <= 0 then
     raise (Invalid_argument "Size cannot be <= 0")
   else
@@ -47,12 +47,12 @@ let member_count (queue : 'a t) : int =
 ;;
 
 let rec put (queue : 'a t) (v : 'a) : unit Lwt.t =
-  let%lwt () = Lwt_mutex.lock queue.lock in
+  Lwt_mutex.lock queue.lock >>
 
   if member_count queue = queue.max then (
     (* full, try again later *)
     Lwt_mutex.unlock queue.lock;
-    let%lwt () = Lwt_condition.wait queue.in_cond in
+    Lwt_condition.wait queue.in_cond >>
     put queue v
   )
   else (
@@ -67,12 +67,12 @@ let rec put (queue : 'a t) (v : 'a) : unit Lwt.t =
 ;;
 
 let rec take (queue : 'a t) : 'a Lwt.t =
-  let%lwt () = Lwt_mutex.lock queue.lock in
+  Lwt_mutex.lock queue.lock >>
 
   if member_count queue = 0 then (
     (* empty, try again later *)
     Lwt_mutex.unlock queue.lock;
-    let%lwt () = Lwt_condition.wait queue.out_cond in
+    Lwt_condition.wait queue.out_cond >>
     take queue
   )
   else (
@@ -85,41 +85,43 @@ let rec take (queue : 'a t) : 'a Lwt.t =
   )
 ;;
 
-let create ~(init_val : 'a) ~(size : int) (v : 'a) : 'a t =
-  let res = create_empty ~init_val ~size in
-  put res v |> Lwt.ignore_result;
-  res
-;;
-
 let test () : unit Lwt.t =
-  let queue = create_empty ~init_val:None ~size:1 in
+  let queue = create ~init_val:None ~size:1 in
   print_endline "test flag 1";
   let rec work1 () : unit Lwt.t =
     match%lwt take queue with
     | None   ->
-      let%lwt () = Lwt_io.printlf "Done" in Lwt.return ()
+      let%lwt () = Lwt_io.printlf "Done" in Lwt.return_unit
     | Some x ->
       let%lwt () = Lwt_io.printlf "Got %s" x in
       work1 () in
   let work2 () : unit Lwt.t =
     for%lwt i = 1 to 10 do
-      let%lwt () = Lwt_unix.sleep 0.5 in
+      Lwt_unix.sleep 0.5 >>
       put queue (Some (string_of_int i))
     done in
   let work3 () : unit Lwt.t =
-    let%lwt () =
-      for%lwt i = 1 to 10 do
-        let%lwt () = Lwt_unix.sleep 1.0 in
-        put queue (Some (string_of_int i))
-      done in
+    for%lwt i = 1 to 10 do
+      Lwt_unix.sleep 1.0 >>
+      put queue (Some (string_of_int i))
+    done >>
     let%lwt () = put queue None in
     Lwt.return_unit in
+  let work4 () : unit Lwt.t =
+    let%lwt () =
+      for%lwt i = 100 to 150 do
+        put queue (Some (string_of_int i))
+      done in
+    Lwt_io.printlf "work4 done" in
   print_endline "test flag 2";
   Lwt.async work2;
   Lwt.async work3;
+  Lwt.async work4;
+  print_endline "test flag 3";
   let waiter1, wakener1 = Lwt.wait () in
   let worker1 = Lwt.bind waiter1 work1 in
   Lwt.wakeup wakener1 ();
+  print_endline "test flag 4";
   Lwt.join [worker1]
 ;;
 
