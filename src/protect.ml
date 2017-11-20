@@ -13,7 +13,7 @@ let protect ~(f:unit -> 'a) ~(finally:unit -> unit) : 'a =
 
 let lwt_protect ~(f:unit -> 'a Lwt.t) ~(finally:unit -> unit Lwt.t) : 'a Lwt.t =
   let finally_executed : bool ref = ref false in
-  let res : 'a Lwt.t =
+  let%lwt res =
     try%lwt
       f ()
     with
@@ -22,7 +22,7 @@ let lwt_protect ~(f:unit -> 'a Lwt.t) ~(finally:unit -> unit Lwt.t) : 'a Lwt.t =
       finally () >>
       raise e in
   if !finally_executed then
-    res
+    Lwt.return res
   else
-    (finally () >> res)
+    (finally () >> Lwt.return res)
 ;;
