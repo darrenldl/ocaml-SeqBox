@@ -6,11 +6,12 @@ type 'a t =
   ;         dummy_val : 'a
   ;         size      : int
   ;         max       : int
+  ;         overwrite : bool
   ; mutable read_pos  : int
   ; mutable write_pos : int
   }
 
-let create ~(init_val : 'a) ~(size : int) : 'a t =
+let create ?(overwrite : bool = false) ~(init_val : 'a) (size : int) : 'a t =
   if size <= 0 then
     raise (Invalid_argument "Size cannot be <= 0")
   else
@@ -21,6 +22,7 @@ let create ~(init_val : 'a) ~(size : int) : 'a t =
     ; dummy_val = init_val
     ; size      = size + 1
     ; max       = size
+    ; overwrite
     ; read_pos  = 0
     ; write_pos = 0
     }
@@ -48,19 +50,40 @@ let member_count (queue : 'a t) : int =
   (queue.write_pos - queue.read_pos + size) mod size
 ;;
 
+let write (queue : 'a t) (v : 'a) : unit =
+  queue.buffer.(queue.write_pos) <- v;
+  queue.write_pos <- queue.write_pos ++| queue.size
+;;
+
+let read (queue : 'a t) : 'a =
+  let res = queue.buffer.(queue.read_pos) in
+  (* the following line is just to allow GC to collect the member *)
+  queue.buffer.(queue.read_pos) <- queue.dummy_val;
+  queue.read_pos <- queue.read_pos ++| queue.size;
+  res
+;;
+
 let rec put (queue : 'a t) (v : 'a) : unit Lwt.t =
   Lwt_mutex.lock queue.lock >>
 
   if member_count queue = queue.max then (
-    (* full, try again later *)
-    Lwt_mutex.unlock queue.lock;
-    Lwt_condition.wait queue.in_cond >>
-    put queue v
+    if not queue.overwrite then (
+      (* full, try again later *)
+      Lwt_mutex.unlock queue.lock;
+      Lwt_condition.wait queue.in_cond >>
+      put queue v
+    )
+    else (
+      (* overwrite and shift read_pos pointer *)
+      write queue v;
+      read  queue |> ignore;
+      Lwt_mutex.unlock queue.lock;
+      Lwt.return_unit
+    )
   )
   else (
     (* has space *)
-    queue.buffer.(queue.write_pos) <- v;
-    queue.write_pos <- queue.write_pos ++| queue.size;
+    write queue v;
     (* singal threads waiting to take elements *)
     Lwt_condition.signal queue.out_cond ();
     Lwt_mutex.unlock queue.lock;
@@ -78,10 +101,7 @@ let rec take (queue : 'a t) : 'a Lwt.t =
     take queue
   )
   else (
-    let res = queue.buffer.(queue.read_pos) in
-    (* the following line is just to allow GC to collect the member *)
-    queue.buffer.(queue.read_pos) <- queue.dummy_val;
-    queue.read_pos <- queue.read_pos ++| queue.size;
+    let res = read queue in
     (* signal threads waiting to put elements *)
     Lwt_condition.signal queue.in_cond ();
     Lwt_mutex.unlock queue.lock;
@@ -89,8 +109,8 @@ let rec take (queue : 'a t) : 'a Lwt.t =
   )
 ;;
 
-(*let test () : unit Lwt.t =
-  let queue = create ~init_val:None ~size:20 in
+let test () : unit Lwt.t =
+  let queue = create ~overwrite:true ~init_val:None 1 in
   print_endline "test flag 1";
   let rec work1 () : unit Lwt.t =
     match%lwt take queue with
@@ -130,4 +150,4 @@ let rec take (queue : 'a t) : 'a Lwt.t =
   Lwt.join [worker1]
 ;;
 
-let%lwt () = test () *)
+let%lwt () = test ()
