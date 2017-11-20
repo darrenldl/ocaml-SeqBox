@@ -10,3 +10,19 @@ let protect ~(f:unit -> 'a) ~(finally:unit -> unit) : 'a =
   else
     (finally (); res)
 ;;
+
+let lwt_protect ~(f:unit -> 'a Lwt.t) ~(finally:unit -> unit Lwt.t) : 'a Lwt.t =
+  let finally_executed : bool ref = ref false in
+  let res : 'a Lwt.t =
+    try%lwt
+      f ()
+    with
+    | e ->
+      finally_executed := true;
+      finally () >>
+      raise e in
+  if !finally_executed then
+    res
+  else
+    (finally () >> res)
+;;
