@@ -20,11 +20,11 @@ let (^) (x:fuint16) (y:fuint16) =
   mask_to_uint16 (x lxor y)
 ;;
 
-let (<<) (x:fuint16) (y:int) =
+let (<<<) (x:fuint16) (y:int) =
   mask_to_uint16 (x lsl y)
 ;;
 
-let (>>) (x:fuint16) (y:int) =
+let (>>>) (x:fuint16) (y:int) =
   mask_to_uint16 (x lsr y)
 ;;
 

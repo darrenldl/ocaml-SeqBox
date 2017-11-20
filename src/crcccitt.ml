@@ -84,7 +84,7 @@ let crc_ccitt_generic ~(input:string) ~(start_val:fuint16) : fuint16 =
            ^
            crc_tabccitt.(
              to_int (
-               ((!crc >> 8) ^ (of_char (String.get input !index)))
+               ((!crc >>> 8) ^ (of_char (String.get input !index)))
                &
                mask_0x00FF
              )
