@@ -1,3 +1,8 @@
+(* Data flow diagram
+
+   Disk I/O -> File reader -> Duplicator -->    Encoder   -> File Writer -> Disk I/O
+                                         \-> Hasher >-/
+ *)
 open Stdint
 open Sbx_block
 open Sbx_specs
@@ -47,14 +52,31 @@ module Stats = struct
   ;;
 end
 
+type stats = Stats.t
+
 (* convert chunk to sbx block *)
 let gen_encoder
-    ~(in_queue  : string Lwt_queue.t)
-    ~(out_queue : Sbx_block.Block.t Lwt_queue.t)
+    ~(common : Header.common_fields)
+    ~(in_queue  : string option Lwt_queue.t)
+    ~(out_queue : string option Lwt_queue.t)
   : (unit -> unit Lwt.t) =
+  let pack_data (stats:stats) (common:Header.common_fields) (chunk:string) : string =
+    let seq_num = Uint32.of_int64 (stats.data_blocks_written <+> 1L) (* always off by +1 *) in
+    let block   = Block.make_data_block ~seq_num common ~data:chunk in
+    Block.to_string block in
   (fun () ->
-     let%lwt raw_data = Lwt_queue.take in_queue in
-      
+     let rec loop () : unit Lwt.t =
+       let ver = Header.common_fields_to_ver common in
+       let stats = Stats.make_blank_stats ~ver in
+       match%lwt Lwt_queue.take in_queue with
+       | None -> Lwt_queue.put out_queue None
+       | Some raw_data ->
+         let block_bytes = pack_data stats common raw_data in
+         Lwt_queue.put out_queue (Some block_bytes) >>
+         loop () in
+     loop ()
   )
 ;;
 
+let gen_hasher
+    ~()
