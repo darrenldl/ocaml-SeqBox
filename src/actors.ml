@@ -75,6 +75,24 @@ let gen_file_writer
   )
 ;;
 
+let gen_duplicator
+    ~(in_queue   : 'a Lwt_queue.t)
+    ~(out_queues : 'a Lwt_queue.t list)
+    ~(stop_pred  : 'a -> bool)
+  : (unit -> unit Lwt.t) =
+  (fun () ->
+     let rec loop () : unit Lwt.t =
+       let%lwt res = Lwt_queue.take in_queue in
+       if stop_pred res then Lwt.return_unit
+       else (
+         Lwt_list.iter_p
+           (fun queue -> Lwt_queue.put queue res) out_queues >>
+         loop ()
+       ) in
+     loop ()
+  )
+;;
+
 (*let read_test () : unit Lwt.t =
   let queue = Lwt_queue.create ~init_val:None 1 in
   print_endline "test flag 1";
