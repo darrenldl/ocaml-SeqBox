@@ -33,7 +33,7 @@ let (++|) (x : int) (base : int) : int =
 
 let member_count (queue : 'a t) : int =
   let size = queue.size in
-  (* Since |write_pos - read_pos| < size (1)
+  (* Since |write_pos - read_pos| < size, we denote this as (1)
    * if write_pos - read_pos >= 0 then
    *     (write_pos - read_pos + size) mod size
    *   = (write_pos - read_pos)        mod size
@@ -113,6 +113,7 @@ let test () : unit Lwt.t =
     Lwt.return_unit in
   let work4 () : unit Lwt.t =
     let%lwt () =
+      Lwt_unix.sleep 1.5 >>
       for%lwt i = 100 to 150 do
         put queue (Some (string_of_int i))
       done in
