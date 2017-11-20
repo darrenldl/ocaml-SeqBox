@@ -57,15 +57,36 @@ type stats = Stats.t
 (* convert chunk to sbx block *)
 let gen_encoder
     ~(common : Header.common_fields)
+    ~(hash_type:hash_type)
+    ~(metadata:(Metadata.t list) option)
     ~(in_queue  : string option Lwt_queue.t)
-    ~(out_queue : string option Lwt_queue.t)
+    ~(out_queue : Actors.write_req Lwt_queue.t)
   : (unit -> unit Lwt.t) =
   let pack_data (stats:stats) (common:Header.common_fields) (chunk:string) : string =
     let seq_num = Uint32.of_int64 (stats.data_blocks_written <+> 1L) (* always off by +1 *) in
     let block   = Block.make_data_block ~seq_num common ~data:chunk in
     Block.to_string block in
   (fun () ->
-     let rec loop () : unit Lwt.t =
+     let fields_except_hash =
+       List.filter (function | HSH _ -> false | _ -> true) metadata_list in
+     let put_dummy_meta () : unit Lwt.t =
+       match 
+       let open Metadata in
+         try
+           (* write a empty metadata block first to shift space and also to test length of metadata fields *)
+           let open Metadata in
+           (* a dummy multihash is added to make sure there is actually enough space
+            * in the metadata block before the encoding starts
+            *)
+           let dummy_hash_bytes           = Multihash.make_dummy_hash_bytes hash_type in
+           let dummy_fields               = (HSH dummy_hash_bytes) :: fields_except_hash in
+           let dummy_metadata_block       = Block.make_metadata_block common ~fields:dummy_fields in
+           let dummy_metadata_block_string = Block.to_string dummy_metadata_block in
+           write out_file ~chunk:dummy_metadata_block_string;
+         with
+         | Metadata.Too_much_data msg -> raise (Packaged_exn msg)
+
+     let rec data_loop () : unit Lwt.t =
        let ver = Header.common_fields_to_ver common in
        let stats = Stats.make_blank_stats ~ver in
        match%lwt Lwt_queue.take in_queue with
@@ -73,10 +94,11 @@ let gen_encoder
        | Some raw_data ->
          let block_bytes = pack_data stats common raw_data in
          Lwt_queue.put out_queue (Some block_bytes) >>
-         loop () in
-     loop ()
+         data_loop () in
+     data_loop ()
   )
 ;;
 
 let gen_hasher
-    ~()
+    ~(in_queue  : string Lwt_queue.t)
+    ~(out_queue : )
