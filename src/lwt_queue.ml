@@ -89,8 +89,8 @@ let rec take (queue : 'a t) : 'a Lwt.t =
   )
 ;;
 
-let test () : unit Lwt.t =
-  let queue = create ~init_val:None ~size:1 in
+(*let test () : unit Lwt.t =
+  let queue = create ~init_val:None ~size:20 in
   print_endline "test flag 1";
   let rec work1 () : unit Lwt.t =
     match%lwt take queue with
@@ -130,4 +130,4 @@ let test () : unit Lwt.t =
   Lwt.join [worker1]
 ;;
 
-let%lwt () = test ()
+let%lwt () = test () *)
