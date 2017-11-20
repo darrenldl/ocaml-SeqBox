@@ -70,7 +70,7 @@ let gen_file_writer
   )
 ;;
 
-let read_test () : unit Lwt.t =
+(*let read_test () : unit Lwt.t =
   let queue = Lwt_queue.create ~init_val:None 1 in
   print_endline "test flag 1";
   let read_work = gen_file_reader ~filename:"helo" ~chunk_size:1 ~out_queue:queue in
@@ -116,3 +116,4 @@ let write_test () : unit Lwt.t =
 ;;
 
 let%lwt () = read_test ()
+*)
