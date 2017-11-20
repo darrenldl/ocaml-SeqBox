@@ -1,3 +1,7 @@
+type write_req =
+  | No_location of string
+  | With_location of int64 * string
+
 let gen_file_reader
     ~(filename   : string)
     ~(chunk_size : int)
@@ -38,7 +42,7 @@ let gen_file_reader
 
 let gen_file_writer
     ~(filename : string)
-    ~(in_queue : (int64 option * string) option Lwt_queue.t)
+    ~(in_queue : write_req option Lwt_queue.t)
   : unit -> (unit, string) result Lwt.t =
   (fun () ->
      try%lwt
@@ -46,12 +50,13 @@ let gen_file_writer
          Lwt_io.open_file ~mode:Lwt_io.output filename in
        let rec write_loop () : (unit, string) result Lwt.t =
          match%lwt Lwt_queue.take in_queue with
-         | Some (pos, data) ->
-           begin
-             match pos with
-             | Some x -> Lwt_io.set_position file x
-             | None   -> Lwt.return_unit
-           end >>
+         | Some req ->
+           let%lwt data =
+             match req with
+             | With_location (pos, data) ->
+               Lwt_io.set_position file pos >>
+               Lwt.return data
+             | No_location data -> Lwt.return data in
            Lwt_io.write file data >>
            write_loop ()
          | None -> Lwt.return_ok () in
