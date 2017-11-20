@@ -3,6 +3,7 @@ type 'a t =
   ;         out_cond  : unit Lwt_condition.t
   ;         lock      : Lwt_mutex.t
   ;         buffer    : 'a array
+  ;         dummy_val : 'a
   ;         size      : int
   ;         max       : int
   ; mutable read_pos  : int
@@ -17,6 +18,7 @@ let create ~(init_val : 'a) ~(size : int) : 'a t =
     ; out_cond  = Lwt_condition.create ()
     ; lock      = Lwt_mutex.create ()
     ; buffer    = Array.make (size + 1) init_val
+    ; dummy_val = init_val
     ; size      = size + 1
     ; max       = size
     ; read_pos  = 0
@@ -77,6 +79,8 @@ let rec take (queue : 'a t) : 'a Lwt.t =
   )
   else (
     let res = queue.buffer.(queue.read_pos) in
+    (* the following line is just to allow GC to collect the member *)
+    queue.buffer.(queue.read_pos) <- queue.dummy_val;
     queue.read_pos <- queue.read_pos ++| queue.size;
     (* signal threads waiting to put elements *)
     Lwt_condition.signal queue.in_cond ();
