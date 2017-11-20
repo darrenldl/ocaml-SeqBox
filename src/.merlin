@@ -1,4 +1,5 @@
 B ../_build/default/src
+FLG -ppx '/home/tester/ocaml-SeqBox/_build/default/.ppx/lwt.ppx/ppx.exe --as-ppx'
 FLG -w -40
 PKG angstrom
 PKG bigarray
@@ -8,6 +9,9 @@ PKG cstruct
 PKG digestif
 PKG digestif.c
 PKG hex
+PKG lwt
+PKG lwt.log
+PKG lwt.unix
 PKG nocrypto
 PKG nocrypto.unix
 PKG ocplib-endian

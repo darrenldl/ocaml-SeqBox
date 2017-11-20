@@ -1,5 +1,5 @@
 (executable
- ((name           osbx)
+ ((name           lwt_queue)
   (public_name    osbx)
   (ocamlopt_flags (-nodynlink -safe-string -w "+a-4-6-9-29-40-42-44-48-50"))
   (libraries      (stdint
@@ -10,5 +10,8 @@
                    cmdliner
                    digestif
                    digestif.c
+                   lwt
+                   lwt.unix
                   ))
+  (preprocess     (pps (lwt.ppx)))
  ))
