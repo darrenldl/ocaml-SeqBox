@@ -51,15 +51,15 @@ let make_crcccitt_tab () : fuint16 array =
 
   while !i < (of_int 256) do
     crc := of_int 0;
-    c   := !i << 8;
+    c   := !i <<< 8;
 
     for _ = 0 to 7 do
       if ((!crc ^ !c) & (of_int 0x8000)) > (of_int 0) then
-        crc := (!crc << 1) ^ crc_poly_ccitt
+        crc := (!crc <<< 1) ^ crc_poly_ccitt
       else
-        crc :=  !crc << 1;
+        crc :=  !crc <<< 1;
 
-      c := !c << 1
+      c := !c <<< 1
     done;
 
     tab.(to_int !i) <- !crc;
@@ -80,7 +80,7 @@ let crc_ccitt_generic ~(input:string) ~(start_val:fuint16) : fuint16 =
   let mask_0x00FF : fuint16     = of_int 0x00FF in
 
   for _ = 0 to len - 1 do
-    crc := (!crc << 8)
+    crc := (!crc <<< 8)
            ^
            crc_tabccitt.(
              to_int (
