@@ -109,8 +109,8 @@ let rec take (queue : 'a t) : 'a Lwt.t =
   )
 ;;
 
-let test () : unit Lwt.t =
-  let queue = create ~overwrite:true ~init_val:None 1 in
+(*let test () : unit Lwt.t =
+  let queue = create ~overwrite:false ~init_val:None 1 in
   print_endline "test flag 1";
   let rec work1 () : unit Lwt.t =
     match%lwt take queue with
@@ -150,4 +150,4 @@ let test () : unit Lwt.t =
   Lwt.join [worker1]
 ;;
 
-let%lwt () = test ()
+  let%lwt () = test ()*)
