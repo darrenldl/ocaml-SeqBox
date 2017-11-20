@@ -10,16 +10,19 @@ type 'a t =
   }
 
 let create_empty ~(init_val : 'a) ~(size : int) : 'a t =
-  { in_cond   = Lwt_condition.create ()
-  ; out_cond  = Lwt_condition.create ()
-  ; lock      = Lwt_mutex.create ()
-  ; buffer    = Array.make size init_val
-  ; size
-  ; max       = size - 1
-  ; read_pos  = 0
-  ; write_pos = 0
-  }
-
+  if size <= 0 then
+    raise (Invalid_argument "Size cannot be <= 0")
+  else
+    { in_cond   = Lwt_condition.create ()
+    ; out_cond  = Lwt_condition.create ()
+    ; lock      = Lwt_mutex.create ()
+    ; buffer    = Array.make (size + 1) init_val
+    ; size      = size + 1
+    ; max       = size
+    ; read_pos  = 0
+    ; write_pos = 0
+    }
+;;
 
 let (++|) (x : int) (base : int) : int =
   if x = base - 1 then 0
@@ -59,7 +62,7 @@ let rec put (queue : 'a t) (v : 'a) : unit Lwt.t =
     (* singal threads waiting to take elements *)
     Lwt_condition.signal queue.out_cond ();
     Lwt_mutex.unlock queue.lock;
-    Lwt.return ()
+    Lwt.return_unit
   )
 ;;
 
@@ -88,22 +91,36 @@ let create ~(init_val : 'a) ~(size : int) (v : 'a) : 'a t =
   res
 ;;
 
-let test () : unit =
-  let queue = create_empty ~init_val:None ~size:4 in
+let test () : unit Lwt.t =
+  let queue = create_empty ~init_val:None ~size:1 in
   print_endline "test flag 1";
   let rec work1 () : unit Lwt.t =
     match%lwt take queue with
-    | None   -> Lwt_io.printlf "Done" |>Lwt.ignore_result; Lwt.return ()
+    | None   ->
+      let%lwt () = Lwt_io.printlf "Done" in Lwt.return ()
     | Some x ->
-      Lwt_io.printlf "got %s" x |> Lwt.ignore_result;
+      let%lwt () = Lwt_io.printlf "Got %s" x in
       work1 () in
+  let work2 () : unit Lwt.t =
+    for%lwt i = 1 to 10 do
+      let%lwt () = Lwt_unix.sleep 0.5 in
+      put queue (Some (string_of_int i))
+    done in
+  let work3 () : unit Lwt.t =
+    let%lwt () =
+      for%lwt i = 1 to 10 do
+        let%lwt () = Lwt_unix.sleep 1.0 in
+        put queue (Some (string_of_int i))
+      done in
+    let%lwt () = put queue None in
+    Lwt.return_unit in
   print_endline "test flag 2";
-  Lwt.async work1;
-  print_endline "test flag 3";
-  for i = 1 to 10 do
-    put queue (Some (string_of_int i)) |> Lwt.ignore_result
-  done;
-  put queue None |> Lwt.ignore_result
+  Lwt.async work2;
+  Lwt.async work3;
+  let waiter1, wakener1 = Lwt.wait () in
+  let worker1 = Lwt.bind waiter1 work1 in
+  Lwt.wakeup wakener1 ();
+  Lwt.join [worker1]
 ;;
 
-let () = test ()
+let%lwt () = test ()
