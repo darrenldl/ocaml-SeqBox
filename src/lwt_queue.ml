@@ -63,6 +63,13 @@ let read (queue : 'a t) : 'a =
   res
 ;;
 
+let write_and_unlock_and_signal (queue : 'a t) (v : 'a) : unit =
+  write queue v;
+  (* singal threads waiting to take elements *)
+  Lwt_condition.signal queue.out_cond ();
+  Lwt_mutex.unlock queue.lock
+;;
+
 let rec put (queue : 'a t) (v : 'a) : unit Lwt.t =
   Lwt_mutex.lock queue.lock >>
 
@@ -83,15 +90,12 @@ let rec put (queue : 'a t) (v : 'a) : unit Lwt.t =
   )
   else (
     (* has space *)
-    write queue v;
-    (* singal threads waiting to take elements *)
-    Lwt_condition.signal queue.out_cond ();
-    Lwt_mutex.unlock queue.lock;
+    write_and_unlock_and_signal queue v;
     Lwt.return_unit
   )
 ;;
 
-let read_and_lock_and_signal (queue : 'a t) : 'a =
+let read_and_unlock_and_signal (queue : 'a t) : 'a =
   let res = read queue in
   Lwt_mutex.unlock queue.lock;
   (* signal threads waiting to put elements *)
@@ -110,7 +114,7 @@ let rec take (queue : 'a t) : 'a Lwt.t =
     take queue
   )
   else (
-    Lwt.return (read_and_lock_and_signal queue)
+    Lwt.return (read_and_unlock_and_signal queue)
   )
 ;;
 
@@ -122,7 +126,7 @@ let take_no_block (queue : 'a t) : 'a option Lwt.t =
     Lwt.return None
   )
   else (
-    Lwt.return (Some (read_and_lock_and_signal queue))
+    Lwt.return (Some (read_and_unlock_and_signal queue))
   )
 ;;
 
