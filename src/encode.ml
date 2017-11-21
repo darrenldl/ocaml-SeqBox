@@ -131,9 +131,8 @@ let gen_encoder
          Stats.add_written_meta_block stats;
          Lwt_queue.put out_queue (Some (With_position (0L, str))) in
      let rec data_loop () : unit Lwt.t =
-       Lwt_io.printlf "encoder : data_loop" >>
        match%lwt Lwt_queue.take in_queue with
-       | None -> Lwt_queue.put out_queue None
+       | None -> Lwt.return_unit
        | Some raw_data ->
          let block_bytes = pack_data stats common raw_data in
          Stats.add_written_data_block stats ~data_len:(String.length raw_data);
@@ -143,6 +142,7 @@ let gen_encoder
        put_dummy_metadata_string () >>
        data_loop () >>
        put_metadata_string () >>
+       Lwt_queue.put out_queue None >>
        Lwt.return_ok stats
      with
      | Sbx_block.Header.Invalid_uid_length ->
@@ -162,7 +162,6 @@ let gen_hasher
      try
        let ctx = Hash.init hash_type in
        let rec data_loop () : unit Lwt.t =
-         Lwt_io.printlf "hasher : data_loop" >>
          match%lwt Lwt_queue.take in_queue with
          | None ->
            Lwt_queue.put out_queue (Hash.get_hash_bytes ctx)
