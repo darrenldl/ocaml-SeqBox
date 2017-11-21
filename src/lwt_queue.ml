@@ -282,7 +282,7 @@ let disable ?(dummy_val : 'a option) (queue : 'a t) : unit Lwt.t =
   )
 ;;
 
-(*let test () : unit Lwt.t =
+let test () : unit Lwt.t =
   let queue = create ~overwrite:false ~init_val:None 1 in
   print_endline "test flag 1";
   let rec work1 () : unit Lwt.t =
@@ -292,6 +292,8 @@ let disable ?(dummy_val : 'a option) (queue : 'a t) : unit Lwt.t =
     | Some x ->
       let%lwt () = Lwt_io.printlf "Got %s" x in
       work1 () in
+  let disabler () : unit Lwt.t =
+    Lwt_unix.sleep 1.5 >> disable queue in
   let work2 () : unit Lwt.t =
     for%lwt i = 1 to 10 do
       Lwt_unix.sleep 0.5 >>
@@ -312,6 +314,7 @@ let disable ?(dummy_val : 'a option) (queue : 'a t) : unit Lwt.t =
       done in
     Lwt_io.printlf "work4 done" in
   print_endline "test flag 2";
+  Lwt.async disabler;
   Lwt.async work2;
   Lwt.async work3;
   Lwt.async work4;
@@ -324,4 +327,3 @@ let disable ?(dummy_val : 'a option) (queue : 'a t) : unit Lwt.t =
 ;;
 
   let%lwt () = test ()
-*)
