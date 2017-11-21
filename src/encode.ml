@@ -9,8 +9,10 @@ open Sbx_specs
 open Multihash
 open Int64_ops
 open Actors
+open Actor_utils
 
 exception File_metadata_get_failed
+exception Packaged_exn of string
 
 module Stats = struct
   type t = {         block_size          : int
@@ -66,17 +68,14 @@ let pack_data (stats:stats) (common:Header.common_fields) (chunk:string) : strin
 let make_dummy_metadata_block_string
     (common : Header.common_fields)
     (metadata_list : Metadata.t list)
-    (hash_type     : Multihash.hash_type option)
+    (hash_type     : Multihash.hash_type)
   : string =
   let open Metadata in
   let fields_except_hash =
     List.filter (function | HSH _ -> false | _ -> true) metadata_list in
   let dummy_fields =
-    match hash_type with
-    | None -> fields_except_hash
-    | Some h ->
-      let dummy_hash_bytes           = Multihash.make_dummy_hash_bytes h in
-  (HSH dummy_hash_bytes) :: fields_except_hash in
+    let dummy_hash_bytes           = Multihash.make_dummy_hash_bytes hash_type in
+    (HSH dummy_hash_bytes) :: fields_except_hash in
   let dummy_metadata_block       = Block.make_metadata_block common ~fields:dummy_fields in
   Block.to_string dummy_metadata_block
 ;;
@@ -84,15 +83,13 @@ let make_dummy_metadata_block_string
 let make_metadata_block_string
     (common : Header.common_fields)
     (metadata_list : Metadata.t list)
-    (hash_bytes    : Multihash.hash_bytes option)
+    (hash_bytes    : Multihash.hash_bytes)
   : string =
   let open Metadata in
   let fields_except_hash =
     List.filter (function | HSH _ -> false | _ -> true) metadata_list in
   let fields =
-    match hash_bytes with
-    | None -> fields_except_hash
-    | Some h -> (HSH h) :: fields_except_hash in
+    (HSH hash_bytes) :: fields_except_hash in
   let metadata_block =
     Block.make_metadata_block common ~fields in
   Block.to_string metadata_block
@@ -107,20 +104,22 @@ let test_hash_type (hash_type : hash_type option) : unit =
 (* convert chunk to sbx block *)
 let gen_encoder
     ~(common : Header.common_fields)
-    ~(hash_type:hash_type option)
+    ~(hash_type:hash_type)
     ~(metadata:(Metadata.t list) option)
     ~(in_queue  : string option Lwt_queue.t)
-    ~(hash_queue : Multihash.hash_bytes option Lwt_queue.t)
+    ~(hash_queue : Multihash.hash_bytes Lwt_queue.t)
     ~(out_queue : Writer.write_req option Lwt_queue.t)
-  : (unit -> (unit, string) result Lwt.t) =
+  : (unit -> (stats, string) result Lwt.t) =
   (fun () ->
+     let ver = Header.common_fields_to_ver common in
+     let stats = Stats.make_blank_stats ~ver in
      let put_dummy_metadata_string () : unit Lwt.t =
        match metadata with
        | None -> Lwt.return_unit
        | Some lst ->
          let str =
            make_dummy_metadata_block_string common lst hash_type in
-         Lwt_queue.put out_queue (Some (No_location str)) in
+         Lwt_queue.put out_queue (Some (No_position str)) in
      let put_metadata_string () : unit Lwt.t =
        match metadata with
        | None -> Lwt.return_unit
@@ -129,22 +128,22 @@ let gen_encoder
            Lwt_queue.take hash_queue in
          let str =
            make_metadata_block_string common lst hash_bytes in
-         Lwt_queue.put out_queue (Some (With_location (0L, str))) in
-     let ver = Header.common_fields_to_ver common in
-     let stats = Stats.make_blank_stats ~ver in
+         Stats.add_written_meta_block stats;
+         Lwt_queue.put out_queue (Some (With_position (0L, str))) in
      let rec data_loop () : unit Lwt.t =
+       Lwt_io.printlf "data_loop" >>
        match%lwt Lwt_queue.take in_queue with
        | None -> Lwt_queue.put out_queue None
        | Some raw_data ->
          let block_bytes = pack_data stats common raw_data in
-         Lwt_queue.put out_queue (Some (No_location block_bytes)) >>
+         Stats.add_written_data_block stats ~data_len:(String.length raw_data);
+         Lwt_queue.put out_queue (Some (No_position block_bytes)) >>
          data_loop () in
      try
-       test_hash_type hash_type;
        put_dummy_metadata_string () >>
        data_loop () >>
        put_metadata_string () >>
-       Lwt.return_ok ()
+       Lwt.return_ok stats
      with
      | Sbx_block.Header.Invalid_uid_length ->
        Lwt.return_error "Invalid uid length"
@@ -156,32 +155,171 @@ let gen_encoder
 
 let gen_hasher
     ~(in_queue  : string option Lwt_queue.t)
-    ~(hash_type : Multihash.hash_type option)
-    ~(out_queue : Multihash.hash_bytes option Lwt_queue.t)
+    ~(hash_type : Multihash.hash_type)
+    ~(out_queue : Multihash.hash_bytes Lwt_queue.t)
   : (unit -> unit Lwt.t) =
   (fun () ->
      try
-       match hash_type with
-       | None -> Lwt_queue.put out_queue None
-       | Some hash_type ->
-         let ctx = Hash.init hash_type in
-         let rec data_loop () : unit Lwt.t =
-           match%lwt Lwt_queue.take in_queue with
-           | None ->
-             Lwt_queue.put out_queue (Some (Hash.get_hash_bytes ctx))
-           | Some data ->
-             Hash.feed ctx data;
-             data_loop () in
-         data_loop ()
+       let ctx = Hash.init hash_type in
+       let rec data_loop () : unit Lwt.t =
+         match%lwt Lwt_queue.take in_queue with
+         | None ->
+           Lwt_queue.put out_queue (Hash.get_hash_bytes ctx)
+         | Some data ->
+           Hash.feed ctx data;
+           data_loop () in
+       data_loop ()
      with
      | Hash.Unsupported_hash ->
        (* error reporting for unsupported hash is done by encoder *)
-       Lwt.return_unit 
+       Lwt.return_unit
   )
 ;;
 
 module Process = struct
+  let get_file_metadata ~(in_filename:string) ~(out_filename:string) : Metadata.t list =
+    try
+      let open Metadata in
+      let open File_utils in
+      let open Time_utils in
+      [ FNM (Misc_utils.path_to_file in_filename)
+      ; SNM (Misc_utils.path_to_file out_filename)
+      ; FSZ (getsize_uint64  ~filename:in_filename)
+      ; FDT (getmtime_uint64 ~filename:in_filename)
+      ; SDT (gettime_uint64 ())
+      ]
+    with
+    | _ -> raise File_metadata_get_failed
+  ;;
+
   let encode_file ~(uid:string option) ~(want_meta:bool) ~(ver:version) ~(hash:string) ~(in_filename:string) ~(out_filename:string) : (stats, string) result =
-    Ok (Stats.make_blank_stats ~ver)
+    try
+      let actor_network_setup : (stats, string) result Lwt.t =
+        (* params setup *)
+        let common =
+          match uid with
+          | Some uid -> Header.make_common_fields ~uid ver
+          | None     -> Header.make_common_fields      ver in
+        let metadata =
+          if want_meta then
+            Some (get_file_metadata ~in_filename ~out_filename)
+          else
+            None in
+        let chunk_size = ver_to_data_size ver in
+        let hash_type =
+          match string_to_hash_type hash with
+          | Error msg -> raise (Packaged_exn msg)
+          | Ok h -> test_hash_type (Some h); h in
+
+        (* communication queues setup *)
+        let read_to_dup_q  = Lwt_queue.create ~init_val:None 100 in
+        let dup_to_enc_q   = Lwt_queue.create ~init_val:None 100 in
+        let dup_to_hash_q  = Lwt_queue.create ~init_val:None 100 in
+        let hash_to_enc_q  =
+          Lwt_queue.create ~init_val:(make_dummy_hash_bytes hash_type) 100 in
+        let enc_to_write_q = Lwt_queue.create ~init_val:None 100 in
+        let write_reply_q  =
+          Lwt_queue.create ~init_val:(Writer.Position 0L) 100 in
+
+        (* result monitor queues setup *)
+        let result_q : (stats option, string) result Lwt_queue.t =
+          Lwt_queue.create ~init_val:(Ok None) 100 in
+
+        (* actors setup *)
+        let waiter, wakener = Lwt.wait () in
+
+        let reader = Lwt.bind waiter
+            (gen_file_reader
+               ~filename:in_filename
+               ~chunk_size
+               ~out_queue:read_to_dup_q) in
+
+        (*let duplicator = Lwt.bind waiter*)
+        Lwt.async (gen_duplicator
+                     ~in_queue:read_to_dup_q
+                     ~out_queues:[dup_to_hash_q; dup_to_enc_q]
+                     ~stop_pred:(fun x -> x = None));
+
+        let encoder = Lwt.bind waiter
+            (gen_encoder
+               ~common
+               ~hash_type
+               ~metadata
+               ~in_queue:dup_to_enc_q
+               ~hash_queue:hash_to_enc_q
+               ~out_queue:enc_to_write_q) in
+
+        let hasher = Lwt.bind waiter
+            (gen_hasher
+               ~in_queue:dup_to_hash_q
+               ~hash_type
+               ~out_queue:hash_to_enc_q) in
+
+        let writer = Lwt.bind waiter
+            (gen_file_writer
+               ~filename:out_filename
+               ~in_queue:enc_to_write_q
+               ~reply_queue:write_reply_q) in
+
+        (* bind results of actors to error monitor queue *)
+        let reader_mon = bind_to_queue
+            ~convert:(function
+                | Ok () -> Ok None
+                | Error msg -> Error msg)
+          reader result_q in
+
+        let encoder_mon = bind_to_queue
+            ~convert:(function
+                | Ok x -> Ok (Some x)
+                | Error msg -> Error msg)
+            encoder result_q in
+
+        let hasher_mon = bind_to_queue
+            ~convert:(fun _ -> Ok None)
+            hasher result_q in
+
+        let writer_mon = bind_to_queue
+            ~convert:(function
+                | Ok () -> Ok None
+                | Error msg -> Error msg)
+            writer result_q in
+
+        let mon_list = [
+          reader_mon;
+          encoder_mon;
+          hasher_mon;
+          writer_mon
+        ] in
+
+        (* start actors *)
+        Lwt.wakeup wakener ();
+
+        let%lwt results =
+          monitor
+            ~count:(List.length mon_list)
+            ~fail_pred:(function
+                | Error _ -> true
+                | Ok _    -> false)
+            ~monitor_queue:result_q in
+
+        let errors = List.filter (function | Error _ -> true | _ -> false) results in
+        let okays  = List.filter (function | Ok (Some _) -> true | _ -> false) results in
+
+        if List.length errors > 0 then
+          match List.hd errors with
+          | Error x -> Lwt.return_error x
+          | _       -> assert false
+        else
+          match List.hd okays with
+          | Ok (Some x) -> Lwt.return_ok x
+          | _           -> assert false
+
+      (*Lwt.return (Ok (Stats.make_blank_stats ~ver)) *)
+      in
+      Lwt_main.run actor_network_setup
+    with
+    | File_metadata_get_failed            -> Error "Failed to get file metadata"
+    | Sbx_block.Header.Invalid_uid_length -> Error "Invalid uid length"
+    | Packaged_exn msg                    -> Error msg
   ;;
 end

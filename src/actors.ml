@@ -44,8 +44,7 @@ let gen_file_reader
            Lwt.return_ok ()
          )
          else (
-           Lwt_queue.put out_queue None
-           >>
+           Lwt_queue.put out_queue None >>
            read_loop ()
          ) in
        Protect.lwt_protect
