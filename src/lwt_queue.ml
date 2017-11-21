@@ -1,7 +1,7 @@
 type 'a t =
   {         put_cond  : unit Lwt_condition.t
   ;         take_cond : unit Lwt_condition.t
-  ;         lock      : Lwt_mutex.t
+  (* ;         lock      : Lwt_mutex.t *)
   ;         buffer    : 'a array
   ;         dummy_val : 'a
   ;         size      : int
@@ -19,7 +19,7 @@ let create ?(overwrite : bool = false) ~(init_val : 'a) (size : int) : 'a t =
   else
     { put_cond  = Lwt_condition.create ()
     ; take_cond = Lwt_condition.create ()
-    ; lock      = Lwt_mutex.create ()
+    (* ; lock      = Lwt_mutex.create () *)
     ; buffer    = Array.make (size + 1) init_val
     ; dummy_val = init_val
     ; size      = size + 1
@@ -62,16 +62,16 @@ let write (queue : 'a t) (v : 'a) : unit =
 let read (queue : 'a t) : 'a =
   let res = queue.buffer.(queue.read_pos) in
   (* the following line is just to allow GC to collect the member *)
-  queue.buffer.(queue.read_pos) <- queue.dummy_val;
+  (* queue.buffer.(queue.read_pos) <- queue.dummy_val; *)
   queue.read_pos <- queue.read_pos ++| queue.size;
   res
 ;;
 
-let lock (queue : 'a t) : unit Lwt.t =
-  Lwt_mutex.lock queue.lock
-
-let unlock (queue : 'a t) : unit =
-  Lwt_mutex.unlock queue.lock
+(* let lock (queue : 'a t) : unit Lwt.t =
+ *   Lwt_mutex.lock queue.lock
+ * 
+ * let unlock (queue : 'a t) : unit =
+ *   Lwt_mutex.unlock queue.lock *)
 
 let signal_single_putter (queue : 'a t) : unit =
   Lwt_condition.signal queue.put_cond ()
@@ -97,13 +97,13 @@ let write_and_unlock_and_signal ~(overwrite : bool) (queue : 'a t) (v : 'a) : un
     if overwrite then read queue |> ignore
     else ()
   end;
-  unlock queue;
+  (* unlock queue; *)
   signal_single_taker queue
 ;;
 
 let read_and_unlock_and_signal (queue : 'a t) : 'a =
   let res = read queue in
-  unlock queue;
+  (* unlock queue; *)
   (* signal threads waiting to put elements *)
   signal_single_putter queue;
   res
@@ -118,10 +118,10 @@ let is_empty (queue : 'a t) : bool =
   member_count queue = 0
 
 let is_enabled (queue : 'a t) : bool Lwt.t =
- lock queue >> Lwt.return queue.enabled
+ (* lock queue >> *) Lwt.return queue.enabled
 
 let is_disabled (queue : 'a t) : bool Lwt.t =
- lock queue >> Lwt.return (not queue.enabled)
+ (* lock queue >> *) Lwt.return (not queue.enabled)
 
 let serve_dummy_value (queue : 'a t) : 'a =
   match queue.serve_val with
@@ -130,17 +130,17 @@ let serve_dummy_value (queue : 'a t) : 'a =
 ;;
 
 let rec put (queue : 'a t) (v : 'a) : unit Lwt.t =
-  lock queue >>
+  (* lock queue >> *)
 
   if not queue.enabled then (
-    unlock queue;
+    (* unlock queue; *)
     Lwt.return_unit
   )
   else (
     if is_full queue then (
       if not queue.overwrite then (
         (* full, try again later *)
-        unlock queue;
+        (* unlock queue; *)
         wait_to_put queue >>
         put queue v
       )
@@ -159,16 +159,16 @@ let rec put (queue : 'a t) (v : 'a) : unit Lwt.t =
 ;;
 
 let put_no_block (queue : 'a t) (v : 'a) : bool Lwt.t =
-  lock queue >>
+  (* lock queue >> *)
 
   if not queue.enabled then (
-    unlock queue;
+    (* unlock queue; *)
     Lwt.return_true
   )
   else (
     if is_full queue then (
       if not queue.overwrite then (
-        unlock queue;
+        (* unlock queue; *)
         Lwt.return_false
       )
       else (
@@ -186,16 +186,16 @@ let put_no_block (queue : 'a t) (v : 'a) : bool Lwt.t =
 ;;
 
 let rec take (queue : 'a t) : 'a Lwt.t =
-  lock queue >>
+  (* lock queue >> *)
 
   if not queue.enabled then (
-    unlock queue;
+    (* unlock queue; *)
     Lwt.return (serve_dummy_value queue)
   )
   else (
     if is_empty queue then (
       (* empty, try again later *)
-      unlock queue;
+      (* unlock queue; *)
       wait_to_take queue >>
       take queue
     )
@@ -206,15 +206,15 @@ let rec take (queue : 'a t) : 'a Lwt.t =
 ;;
 
 let take_no_block (queue : 'a t) : 'a option Lwt.t =
-  lock queue >>
+  (* lock queue >> *)
 
   if not queue.enabled then (
-    unlock queue;
+    (* unlock queue; *)
     Lwt.return (Some (serve_dummy_value queue))
   )
   else (
     if member_count queue = 0 then (
-      unlock queue;
+      (* unlock queue; *)
       Lwt.return None
     )
     else (
@@ -235,35 +235,35 @@ let clear_no_lock (queue : 'a t) : unit =
 ;;
 
 let clear (queue : 'a t) : unit Lwt.t =
-  lock queue >>
+  (* lock queue >> *)
 
   (
     clear_no_lock queue;
 
-    unlock queue;
+    (* unlock queue; *)
     signal_all_putters queue;
     Lwt.return_unit
   )
 ;;
 
 let enable (queue : 'a t) : unit Lwt.t =
-  lock queue >>
+  (* lock queue >> *)
 
   if queue.enabled then (
-    unlock queue;
+    (* unlock queue; *)
     Lwt.return_unit
   )
   else (
     queue.enabled   <- true;
     queue.serve_val <- None;
 
-    unlock queue;
+    (* unlock queue; *)
     Lwt.return_unit
   )
 ;;
 
 let disable ?(dummy_val : 'a option) (queue : 'a t) : unit Lwt.t =
-  lock queue >>
+  (* lock queue >> *)
 
   if queue.enabled then (
     clear_no_lock queue;
@@ -271,13 +271,13 @@ let disable ?(dummy_val : 'a option) (queue : 'a t) : unit Lwt.t =
     queue.enabled   <- false;
     queue.serve_val <- dummy_val;
 
-    unlock queue;
+    (* unlock queue; *)
     signal_all_takers  queue;
     signal_all_putters queue;
     Lwt.return_unit
   )
   else (
-    unlock queue;
+    (* unlock queue; *)
     Lwt.return_unit
   )
 ;;
@@ -314,7 +314,7 @@ let disable ?(dummy_val : 'a option) (queue : 'a t) : unit Lwt.t =
       done in
     Lwt_io.printlf "work4 done" in
   print_endline "test flag 2";
-  Lwt.async disabler;
+  (* Lwt.async disabler; *)
   Lwt.async work2;
   Lwt.async work3;
   Lwt.async work4;
