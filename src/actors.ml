@@ -1,7 +1,31 @@
 module Writer = struct
   type write_req =
-    | No_location of string
-    | With_location of int64 * string
+    | No_position   of string
+    | With_position of int64 * string
+    | Set_position  of int64
+    | Get_position
+
+  type reply =
+    | Position of int64
+
+  let get_position
+      ~(request_queue : write_req Lwt_queue.t)
+      ~(reply_queue   : reply Lwt_queue.t)
+    : int64 Lwt.t =
+    let rec loop () : int64 Lwt.t =
+      match%lwt Lwt_queue.take reply_queue with
+      | Position pos -> Lwt.return pos
+      (*| _ as x -> Lwt_queue.put reply_queue x >> loop ()*) in
+    Lwt_queue.put request_queue Get_position >>
+    loop ()
+  ;;
+
+  let set_position
+      ~(request_queue : write_req Lwt_queue.t)
+      (pos : int64)
+    : unit Lwt.t =
+    Lwt_queue.put request_queue (Set_position pos)
+  ;;
 end
 
 let gen_file_reader
@@ -43,8 +67,9 @@ let gen_file_reader
 ;;
 
 let gen_file_writer
-    ~(filename : string)
-    ~(in_queue : Writer.write_req option Lwt_queue.t)
+    ~(filename    : string)
+    ~(in_queue    : Writer.write_req option Lwt_queue.t)
+    ~(reply_queue : Writer.reply Lwt_queue.t)
   : unit -> (unit, string) result Lwt.t =
   (fun () ->
      try%lwt
@@ -53,13 +78,29 @@ let gen_file_writer
        let rec write_loop () : (unit, string) result Lwt.t =
          match%lwt Lwt_queue.take in_queue with
          | Some req ->
-           let%lwt data =
+           (
              match req with
-             | With_location (pos, data) ->
-               Lwt_io.set_position file pos >>
-               Lwt.return data
-             | No_location data -> Lwt.return data in
-           Lwt_io.write file data >>
+             | With_position (pos, data) ->
+               Lwt_io.set_position file pos
+             | No_position data -> Lwt.return_unit
+             | Set_position pos ->
+               Lwt_io.set_position file pos
+             | Get_position ->
+               Lwt_queue.put reply_queue (Position (Lwt_io.position file))
+           ) >>
+           let data =
+             match req with
+             | With_position (_, data) -> Some data
+             | No_position data        -> Some data
+             | Set_position _          -> None
+             | Get_position            -> None
+           in
+           (
+             match data with
+             | Some data ->
+               Lwt_io.write file data
+             | None -> Lwt.return_unit
+           ) >>
            write_loop ()
          | None -> Lwt.return_ok () in
        Protect.lwt_protect
