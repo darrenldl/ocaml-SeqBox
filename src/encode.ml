@@ -8,6 +8,7 @@ open Sbx_block
 open Sbx_specs
 open Multihash
 open Int64_ops
+open Actors
 
 module Stats = struct
   type t = {         block_size          : int
@@ -74,26 +75,46 @@ let make_dummy_metadata_block_string
   Block.to_string dummy_metadata_block
 ;;
 
+let make_metadata_block_string
+    (common : Header.common_fields)
+    (metadata_list : Metadata.t list)
+    (hash_bytes    : Multihash.hash_bytes)
+  : string =
+  let open Metadata in
+  let fields_except_hash =
+    List.filter (function | HSH _ -> false | _ -> true) metadata_list in
+  let fields = (HSH hash_bytes) :: fields_except_hash in
+  let metadata_block =
+    Block.make_metadata_block common ~fields in
+  Block.to_string metadata_block
+;;
+
 (* convert chunk to sbx block *)
 let gen_encoder
     ~(common : Header.common_fields)
     ~(hash_type:hash_type)
     ~(metadata:(Metadata.t list) option)
     ~(in_queue  : string option Lwt_queue.t)
-    ~(out_queue : Actors.write_req Lwt_queue.t)
-  : (unit -> unit Lwt.t) =
+    ~(hash_queue : Multihash.hash_bytes Lwt_queue.t)
+    ~(out_queue : Writer.write_req option Lwt_queue.t)
+  : (unit -> (unit, string) result Lwt.t) =
   (fun () ->
-     let put_dummy_meta () : unit Lwt.t =
-       match 
-       let open Metadata in
-         try
-           (* write a empty metadata block first to shift space and also to test length of metadata fields *)
-           (* a dummy multihash is added to make sure there is actually enough space
-            * in the metadata block before the encoding starts
-            *)
-         with
-         | Metadata.Too_much_data msg -> raise (Packaged_exn msg)
-
+     let put_dummy_metadata_string () : unit Lwt.t =
+       match metadata with
+       | None -> Lwt.return_unit
+       | Some lst ->
+         let str =
+           make_dummy_metadata_block_string common lst hash_type in
+         Lwt_queue.put out_queue (Some (No_location str)) in
+     let put_metadata_string () : unit Lwt.t =
+       match metadata with
+       | None -> Lwt.return_unit
+       | Some lst ->
+         let%lwt hash_bytes =
+           Lwt_queue.take hash_queue in
+         let str =
+           make_metadata_block_string common lst hash_bytes in
+         Lwt_queue.put out_queue (Some (With_location (0L, str))) in
      let rec data_loop () : unit Lwt.t =
        let ver = Header.common_fields_to_ver common in
        let stats = Stats.make_blank_stats ~ver in
@@ -101,12 +122,19 @@ let gen_encoder
        | None -> Lwt_queue.put out_queue None
        | Some raw_data ->
          let block_bytes = pack_data stats common raw_data in
-         Lwt_queue.put out_queue (Some block_bytes) >>
+         Lwt_queue.put out_queue (Some (No_location block_bytes)) >>
          data_loop () in
-     data_loop ()
+     try
+       put_dummy_metadata_string () >>
+       data_loop () >>
+       put_metadata_string () >>
+       Lwt.return_ok ()
+     with
+     | Metadata.Too_much_data msg -> Lwt.return_error msg
   )
 ;;
 
-let gen_hasher
+(*let gen_hasher
     ~(in_queue  : string Lwt_queue.t)
     ~(out_queue : )
+*)
