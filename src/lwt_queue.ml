@@ -282,7 +282,7 @@ let disable ?(dummy_val : 'a option) (queue : 'a t) : unit Lwt.t =
   )
 ;;
 
-let test () : unit Lwt.t =
+(*let test () : unit Lwt.t =
   let queue = create ~overwrite:false ~init_val:None 1 in
   print_endline "test flag 1";
   let rec work1 () : unit Lwt.t =
@@ -327,3 +327,4 @@ let test () : unit Lwt.t =
 ;;
 
   let%lwt () = test ()
+*)
