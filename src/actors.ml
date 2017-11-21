@@ -38,14 +38,13 @@ let gen_file_reader
        let%lwt file =
          Lwt_io.open_file ~mode:Lwt_io.Input filename in
        let rec read_loop () : (unit, string) result Lwt.t =
-         Lwt_io.printlf "read_loop" >>
          let%lwt chunk = Lwt_io.read ~count:chunk_size file in
          if chunk = "" then (
            Lwt_queue.put out_queue None >>
            Lwt.return_ok ()
          )
          else (
-           Lwt_queue.put out_queue None >>
+           Lwt_queue.put out_queue (Some chunk) >>
            read_loop ()
          ) in
        Protect.lwt_protect
