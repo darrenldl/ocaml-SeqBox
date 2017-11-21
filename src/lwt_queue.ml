@@ -9,6 +9,8 @@ type 'a t =
   ;         overwrite : bool
   ; mutable read_pos  : int
   ; mutable write_pos : int
+  ; mutable enabled   : bool
+  ; mutable serve_val : 'a option
   }
 
 let create ?(overwrite : bool = false) ~(init_val : 'a) (size : int) : 'a t =
@@ -25,6 +27,8 @@ let create ?(overwrite : bool = false) ~(init_val : 'a) (size : int) : 'a t =
     ; overwrite
     ; read_pos  = 0
     ; write_pos = 0
+    ; enabled   = true
+    ; serve_val = None
     }
 ;;
 
@@ -99,79 +103,176 @@ let read_and_unlock_and_signal (queue : 'a t) : 'a =
   res
 ;;
 
+(* internal use only *)
 let is_full (queue : 'a t) : bool =
   member_count queue = queue.max
 
+(* internal use only *)
 let is_empty (queue : 'a t) : bool =
   member_count queue = 0
+
+let is_enabled (queue : 'a t) : bool Lwt.t =
+ lock queue >> Lwt.return queue.enabled
+
+let is_disabled (queue : 'a t) : bool Lwt.t =
+ lock queue >> Lwt.return (not queue.enabled)
+
+let serve_dummy_value (queue : 'a t) : 'a =
+  match queue.serve_val with
+  | None   -> queue.dummy_val
+  | Some x -> x
+;;
 
 let rec put (queue : 'a t) (v : 'a) : unit Lwt.t =
   lock queue >>
 
-  if is_full queue then (
-    if not queue.overwrite then (
-      (* full, try again later *)
-      unlock queue;
-      wait_to_put queue >>
-      put queue v
-    )
-    else (
-      (* overwrite and shift read_pos pointer *)
-      write_and_unlock_and_signal ~overwrite:true queue v;
-      Lwt.return_unit
-    )
+  if not queue.enabled then (
+    unlock queue;
+    Lwt.return_unit
   )
   else (
-    (* has space *)
-    write_and_unlock_and_signal ~overwrite:false queue v;
-    Lwt.return_unit
+    if is_full queue then (
+      if not queue.overwrite then (
+        (* full, try again later *)
+        unlock queue;
+        wait_to_put queue >>
+        put queue v
+      )
+      else (
+        (* overwrite and shift read_pos pointer *)
+        write_and_unlock_and_signal ~overwrite:true queue v;
+        Lwt.return_unit
+      )
+    )
+    else (
+      (* has space *)
+      write_and_unlock_and_signal ~overwrite:false queue v;
+      Lwt.return_unit
+    )
   )
 ;;
 
 let put_no_block (queue : 'a t) (v : 'a) : bool Lwt.t =
   lock queue >>
 
-  if is_full queue then (
-    if not queue.overwrite then (
-      unlock queue;
-      Lwt.return_false
-    )
-    else (
-      (* overwrite and shift read_pos pointer *)
-      write_and_unlock_and_signal ~overwrite:true queue v;
-      Lwt.return_true
-    )
+  if not queue.enabled then (
+    unlock queue;
+    Lwt.return_false
   )
   else (
-    (* has space *)
-    write_and_unlock_and_signal ~overwrite:false queue v;
-    Lwt.return_true
+    if is_full queue then (
+      if not queue.overwrite then (
+        unlock queue;
+        Lwt.return_false
+      )
+      else (
+        (* overwrite and shift read_pos pointer *)
+        write_and_unlock_and_signal ~overwrite:true queue v;
+        Lwt.return_true
+      )
+    )
+    else (
+      (* has space *)
+      write_and_unlock_and_signal ~overwrite:false queue v;
+      Lwt.return_true
+    )
   )
 ;;
 
 let rec take (queue : 'a t) : 'a Lwt.t =
   lock queue >>
 
-  if is_empty queue then (
-    (* empty, try again later *)
+  if not queue.enabled then (
     unlock queue;
-    wait_to_take queue >>
-    take queue
+    Lwt.return (serve_dummy_value queue)
   )
   else (
-    Lwt.return (read_and_unlock_and_signal queue)
+    if is_empty queue then (
+      (* empty, try again later *)
+      unlock queue;
+      wait_to_take queue >>
+      take queue
+    )
+    else (
+      Lwt.return (read_and_unlock_and_signal queue)
+    )
   )
 ;;
 
 let take_no_block (queue : 'a t) : 'a option Lwt.t =
   lock queue >>
 
-  if member_count queue = 0 then (
+  if not queue.enabled then (
     unlock queue;
-    Lwt.return None
+    Lwt.return (Some (serve_dummy_value queue))
   )
   else (
-    Lwt.return (Some (read_and_unlock_and_signal queue))
+    if member_count queue = 0 then (
+      unlock queue;
+      Lwt.return None
+    )
+    else (
+      Lwt.return (Some (read_and_unlock_and_signal queue))
+    )
+  )
+;;
+
+let clear_no_lock (dummy_val : 'a option) (queue : 'a t) : unit =
+  queue.read_pos  <- 0;
+  queue.write_pos <- 0;
+
+  let replace_val =
+    match dummy_val with
+    | None   -> queue.dummy_val
+    | Some x -> x in
+
+  for i = 0 to pred queue.size do
+    queue.buffer.(i) <- replace_val
+  done;
+;;
+
+let clear ?(dummy_val : 'a option) (queue : 'a t) : unit Lwt.t =
+  lock queue >>
+
+  (
+    clear_no_lock dummy_val queue;
+
+    unlock queue;
+    Lwt.return_unit
+  )
+;;
+
+let enable (queue : 'a t) : unit Lwt.t =
+  lock queue >>
+
+  if queue.enabled then (
+    unlock queue;
+    Lwt.return_unit
+  )
+  else (
+    queue.enabled   <- true;
+    queue.serve_val <- None;
+
+    unlock queue;
+    Lwt.return_unit
+  )
+;;
+
+let disable ?(dummy_val : 'a option) (queue : 'a t) : unit Lwt.t =
+  lock queue >>
+
+  if queue.enabled then (
+    clear_no_lock dummy_val queue;
+
+    queue.enabled   <- false;
+    queue.serve_val <- dummy_val;
+
+    unlock queue;
+    Lwt.return_unit
+  )
+  else (
+    unlock queue;
+    Lwt.return_unit
   )
 ;;
 
