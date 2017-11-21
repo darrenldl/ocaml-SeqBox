@@ -10,6 +10,8 @@ open Multihash
 open Int64_ops
 open Actors
 
+exception File_metadata_get_failed
+
 module Stats = struct
   type t = {         block_size          : int
            ;         data_size           : int
@@ -64,13 +66,17 @@ let pack_data (stats:stats) (common:Header.common_fields) (chunk:string) : strin
 let make_dummy_metadata_block_string
     (common : Header.common_fields)
     (metadata_list : Metadata.t list)
-    (hash_type     : Multihash.hash_type)
+    (hash_type     : Multihash.hash_type option)
   : string =
   let open Metadata in
   let fields_except_hash =
     List.filter (function | HSH _ -> false | _ -> true) metadata_list in
-  let dummy_hash_bytes           = Multihash.make_dummy_hash_bytes hash_type in
-  let dummy_fields               = (HSH dummy_hash_bytes) :: fields_except_hash in
+  let dummy_fields =
+    match hash_type with
+    | None -> fields_except_hash
+    | Some h ->
+      let dummy_hash_bytes           = Multihash.make_dummy_hash_bytes h in
+  (HSH dummy_hash_bytes) :: fields_except_hash in
   let dummy_metadata_block       = Block.make_metadata_block common ~fields:dummy_fields in
   Block.to_string dummy_metadata_block
 ;;
@@ -78,28 +84,33 @@ let make_dummy_metadata_block_string
 let make_metadata_block_string
     (common : Header.common_fields)
     (metadata_list : Metadata.t list)
-    (hash_bytes    : Multihash.hash_bytes)
+    (hash_bytes    : Multihash.hash_bytes option)
   : string =
   let open Metadata in
   let fields_except_hash =
     List.filter (function | HSH _ -> false | _ -> true) metadata_list in
-  let fields = (HSH hash_bytes) :: fields_except_hash in
+  let fields =
+    match hash_bytes with
+    | None -> fields_except_hash
+    | Some h -> (HSH h) :: fields_except_hash in
   let metadata_block =
     Block.make_metadata_block common ~fields in
   Block.to_string metadata_block
 ;;
 
-let test_hash_type (hash_type : hash_type) : unit =
-  Hash.init hash_type |> ignore
+let test_hash_type (hash_type : hash_type option) : unit =
+  match hash_type with
+  | None -> ()
+  | Some h -> Hash.init h |> ignore
 ;;
 
 (* convert chunk to sbx block *)
 let gen_encoder
     ~(common : Header.common_fields)
-    ~(hash_type:hash_type)
+    ~(hash_type:hash_type option)
     ~(metadata:(Metadata.t list) option)
     ~(in_queue  : string option Lwt_queue.t)
-    ~(hash_queue : Multihash.hash_bytes Lwt_queue.t)
+    ~(hash_queue : Multihash.hash_bytes option Lwt_queue.t)
     ~(out_queue : Writer.write_req option Lwt_queue.t)
   : (unit -> (unit, string) result Lwt.t) =
   (fun () ->
@@ -119,9 +130,9 @@ let gen_encoder
          let str =
            make_metadata_block_string common lst hash_bytes in
          Lwt_queue.put out_queue (Some (With_location (0L, str))) in
+     let ver = Header.common_fields_to_ver common in
+     let stats = Stats.make_blank_stats ~ver in
      let rec data_loop () : unit Lwt.t =
-       let ver = Header.common_fields_to_ver common in
-       let stats = Stats.make_blank_stats ~ver in
        match%lwt Lwt_queue.take in_queue with
        | None -> Lwt_queue.put out_queue None
        | Some raw_data ->
@@ -144,8 +155,33 @@ let gen_encoder
 ;;
 
 let gen_hasher
-    ~(in_queue  : string Lwt_queue.t)
-    ~(hash_type : Multihash.hash_type)
-    ~(out_queue : Multihash.hash_bytes Lwt_queue.t)
-  : (unit -> unit Lwt.t)
-  
+    ~(in_queue  : string option Lwt_queue.t)
+    ~(hash_type : Multihash.hash_type option)
+    ~(out_queue : Multihash.hash_bytes option Lwt_queue.t)
+  : (unit -> unit Lwt.t) =
+  (fun () ->
+     try
+       match hash_type with
+       | None -> Lwt_queue.put out_queue None
+       | Some hash_type ->
+         let ctx = Hash.init hash_type in
+         let rec data_loop () : unit Lwt.t =
+           match%lwt Lwt_queue.take in_queue with
+           | None ->
+             Lwt_queue.put out_queue (Some (Hash.get_hash_bytes ctx))
+           | Some data ->
+             Hash.feed ctx data;
+             data_loop () in
+         data_loop ()
+     with
+     | Hash.Unsupported_hash ->
+       (* error reporting for unsupported hash is done by encoder *)
+       Lwt.return_unit 
+  )
+;;
+
+module Process = struct
+  let encode_file ~(uid:string option) ~(want_meta:bool) ~(ver:version) ~(hash:string) ~(in_filename:string) ~(out_filename:string) : (stats, string) result =
+    Ok (Stats.make_blank_stats ~ver)
+  ;;
+end
