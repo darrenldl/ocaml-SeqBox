@@ -1,6 +1,8 @@
-type write_req =
-  | No_location of string
-  | With_location of int64 * string
+module Writer : sig
+  type write_req =
+    | No_location of string
+    | With_location of int64 * string
+end
 
 val gen_file_reader :
   filename:string ->
@@ -10,7 +12,7 @@ val gen_file_reader :
 
 val gen_file_writer :
   filename:string ->
-  in_queue:(write_req option Lwt_queue.t) ->
+  in_queue:(Writer.write_req option Lwt_queue.t) ->
   (unit -> (unit, string) result Lwt.t)
 
 val gen_duplicator :

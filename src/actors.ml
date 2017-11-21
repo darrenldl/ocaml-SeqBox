@@ -1,6 +1,8 @@
-type write_req =
-  | No_location of string
-  | With_location of int64 * string
+module Writer = struct
+  type write_req =
+    | No_location of string
+    | With_location of int64 * string
+end
 
 let gen_file_reader
     ~(filename   : string)
@@ -26,7 +28,7 @@ let gen_file_reader
          ~f:read_loop
          ~finally:(fun () ->
              try%lwt
-               Lwt_io.close file 
+               Lwt_io.close file
              with
              | _ -> Lwt.return_unit)
      with
@@ -42,7 +44,7 @@ let gen_file_reader
 
 let gen_file_writer
     ~(filename : string)
-    ~(in_queue : write_req option Lwt_queue.t)
+    ~(in_queue : Writer.write_req option Lwt_queue.t)
   : unit -> (unit, string) result Lwt.t =
   (fun () ->
      try%lwt
