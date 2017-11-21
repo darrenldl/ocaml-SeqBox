@@ -91,6 +91,15 @@ let rec put (queue : 'a t) (v : 'a) : unit Lwt.t =
   )
 ;;
 
+let read_and_lock_and_signal (queue : 'a t) : 'a =
+  let res = read queue in
+  Lwt_mutex.unlock queue.lock;
+  (* signal threads waiting to put elements *)
+  Lwt_condition.signal queue.in_cond ();
+  res
+;;
+
+
 let rec take (queue : 'a t) : 'a Lwt.t =
   Lwt_mutex.lock queue.lock >>
 
@@ -101,11 +110,19 @@ let rec take (queue : 'a t) : 'a Lwt.t =
     take queue
   )
   else (
-    let res = read queue in
-    (* signal threads waiting to put elements *)
-    Lwt_condition.signal queue.in_cond ();
+    Lwt.return (read_and_lock_and_signal queue)
+  )
+;;
+
+let take_no_block (queue : 'a t) : 'a option Lwt.t =
+  Lwt_mutex.lock queue.lock >>
+
+  if member_count queue = 0 then (
     Lwt_mutex.unlock queue.lock;
-    Lwt.return res
+    Lwt.return None
+  )
+  else (
+    Lwt.return (Some (read_and_lock_and_signal queue))
   )
 ;;
 
