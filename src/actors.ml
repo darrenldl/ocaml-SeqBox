@@ -37,13 +37,16 @@ let gen_file_reader
      try%lwt
        let%lwt file =
          Lwt_io.open_file ~mode:Lwt_io.Input filename in
+       let buf = Bytes.make chunk_size '\000' in
        let rec read_loop () : (unit, string) result Lwt.t =
-         let%lwt chunk = Lwt_io.read ~count:chunk_size file in
-         if chunk = "" then (
+         let%lwt read_count =
+           Lwt_utils.IO.read_with_jitter ~buf file ~len:chunk_size in
+         if read_count = 0 then (
            Lwt_queue.put out_queue None >>
            Lwt.return_ok ()
          )
          else (
+           let chunk = Bytes.sub_string buf 0 read_count in
            Lwt_queue.put out_queue (Some chunk) >>
            read_loop ()
          ) in
