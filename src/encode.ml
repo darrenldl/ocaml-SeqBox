@@ -129,9 +129,9 @@ let gen_encoder
     ~(common : Header.common_fields)
     ~(hash_type:hash_type)
     ~(metadata:(Metadata.t list) option)
-    ~(in_queue  : string option Lwt_queue.t)
+    ~(in_queue  : string option Lwt_mvar.t)
     (* ~(hash_queue : Multihash.hash_bytes Lwt_queue.t) *)
-    ~(out_queue : Writer.write_req option Lwt_queue.t)
+    ~(out_queue : Writer.write_req option Lwt_mvar.t)
     ~(filename : string)
   : (unit -> (stats, string) result Lwt.t) =
   (fun () ->
@@ -144,7 +144,7 @@ let gen_encoder
        | Some lst ->
          let str =
            make_dummy_metadata_block_string common lst hash_type in
-         Lwt_queue.put out_queue (Some (No_position str)) in
+         Lwt_mvar.put out_queue (Some (No_position str)) in
      let put_metadata_string () : unit Lwt.t =
        match metadata with
        | None -> Lwt.return_unit
@@ -153,23 +153,23 @@ let gen_encoder
          let str =
            make_metadata_block_string common lst hash_bytes in
          Stats.add_written_meta_block stats;
-         Lwt_queue.put out_queue (Some (With_position (0L, str))) in
+         Lwt_mvar.put out_queue (Some (With_position (0L, str))) in
      let rec data_loop () : unit Lwt.t =
        Progress.report_encode
          ~start_time_src:() ~units_so_far_src:stats ~total_units_src:(stats, filename);
-       match%lwt Lwt_queue.take in_queue with
+       match%lwt Lwt_mvar.take in_queue with
        | None -> Lwt.return_unit
        | Some raw_data ->
          Hash.feed ctx raw_data;
          let block_bytes = pack_data stats common raw_data in
          Stats.add_written_data_block stats ~data_len:(String.length raw_data);
-         Lwt_queue.put out_queue (Some (No_position block_bytes)) >>
+         Lwt_mvar.put out_queue (Some (No_position block_bytes)) >>
          data_loop () in
      try
        put_dummy_metadata_string () >>
        data_loop () >>
        put_metadata_string () >>
-       Lwt_queue.put out_queue None >>
+       Lwt_mvar.put out_queue None >>
        Lwt.return_ok stats
      with
      | Sbx_block.Header.Invalid_uid_length ->
@@ -239,13 +239,13 @@ module Process = struct
           | Ok h -> test_hash_type (Some h); h in
 
         (* communication queues setup *)
-        let read_to_enc_q = Lwt_queue.create ~init_val:None 100 in
+        let read_to_enc_q = Lwt_mvar.create_empty () (* ~init_val:None 100 *) in
         (* let read_to_dup_q  = Lwt_queue.create ~init_val:None 100 in
          * let dup_to_enc_q   = Lwt_queue.create ~init_val:None 100 in
          * let dup_to_hash_q  = Lwt_queue.create ~init_val:None 100 in *)
         (* let hash_to_enc_q  =
          *   Lwt_queue.create ~init_val:(make_dummy_hash_bytes hash_type) 100 in *)
-        let enc_to_write_q = Lwt_queue.create ~init_val:None 100 in
+        let enc_to_write_q = Lwt_mvar.create_empty () (* ~init_val:None 1000 *) in
         let write_reply_q  =
           Lwt_queue.create ~init_val:(Writer.Position 0L) 100 in
 
