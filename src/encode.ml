@@ -131,7 +131,7 @@ let gen_encoder
          Stats.add_written_meta_block stats;
          Lwt_queue.put out_queue (Some (With_position (0L, str))) in
      let rec data_loop () : unit Lwt.t =
-       Lwt_io.printlf "data_loop" >>
+       Lwt_io.printlf "encoder : data_loop" >>
        match%lwt Lwt_queue.take in_queue with
        | None -> Lwt_queue.put out_queue None
        | Some raw_data ->
@@ -162,6 +162,7 @@ let gen_hasher
      try
        let ctx = Hash.init hash_type in
        let rec data_loop () : unit Lwt.t =
+         Lwt_io.printlf "hasher : data_loop" >>
          match%lwt Lwt_queue.take in_queue with
          | None ->
            Lwt_queue.put out_queue (Hash.get_hash_bytes ctx)
@@ -238,7 +239,8 @@ module Process = struct
         Lwt.async (gen_duplicator
                      ~in_queue:read_to_dup_q
                      ~out_queues:[dup_to_hash_q; dup_to_enc_q]
-                     ~stop_pred:(fun x -> x = None));
+                     ~stop_pred:(fun x -> x = None)
+                     ~forward_stopper:true);
 
         let encoder = Lwt.bind waiter
             (gen_encoder

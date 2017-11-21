@@ -38,6 +38,7 @@ let gen_file_reader
        let%lwt file =
          Lwt_io.open_file ~mode:Lwt_io.Input filename in
        let rec read_loop () : (unit, string) result Lwt.t =
+         Lwt_io.printlf "read_loop" >>
          let%lwt chunk = Lwt_io.read ~count:chunk_size file in
          if chunk = "" then (
            Lwt_queue.put out_queue None >>
@@ -121,15 +122,20 @@ let gen_duplicator
     ~(in_queue   : 'a Lwt_queue.t)
     ~(out_queues : 'a Lwt_queue.t list)
     ~(stop_pred  : 'a -> bool)
+    ~(forward_stopper:bool)
   : (unit -> unit Lwt.t) =
   (fun () ->
+     let broadcast (x:'a) : unit Lwt.t =
+       Lwt_list.iter_p
+         (fun queue -> Lwt_queue.put queue x) out_queues in
      let rec loop () : unit Lwt.t =
        let%lwt res = Lwt_queue.take in_queue in
-       if stop_pred res then Lwt.return_unit
+       if stop_pred res then (
+         if forward_stopper then broadcast res
+         else                    Lwt.return_unit
+       )
        else (
-         Lwt_list.iter_p
-           (fun queue -> Lwt_queue.put queue res) out_queues >>
-         loop ()
+         broadcast res >> loop ()
        ) in
      loop ()
   )

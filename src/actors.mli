@@ -25,4 +25,5 @@ val gen_duplicator :
   in_queue:('a Lwt_queue.t) ->
   out_queues:('a Lwt_queue.t list) ->
   stop_pred:('a -> bool) ->
+  forward_stopper:bool ->
   (unit -> unit Lwt.t)
