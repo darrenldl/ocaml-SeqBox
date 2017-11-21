@@ -59,6 +59,29 @@ end
 
 type stats = Stats.t
 
+module Progress = struct
+  let { print_progress = report_encode; _ } : (unit, stats, stats * string) Progress_report.progress_print_functions =
+    Progress_report.gen_print_generic
+      ~header:"Data encoding progress"
+      ~silence_settings:Dynamic_param.Common.silence_settings
+      ~display_while_active:Progress_report_param.Encode.Encode_progress.display_while_active
+      ~display_on_finish:Progress_report_param.Encode.Encode_progress.display_on_finish
+      ~display_on_finish_early:Progress_report_param.Encode.Encode_progress.display_on_finish_early
+      ~unit:"chunks"
+      ~print_interval:Progress_report_param.Encode.progress_report_interval
+      ~eval_start_time:Sys.time
+      ~eval_units_so_far:(fun stats -> stats.Stats.blocks_written)
+      ~eval_total_units:
+        (fun (stats, filename) ->
+          let data_size       = Int64.of_int stats.Stats.data_size in
+          let total_file_size = File_utils.getsize filename in
+          Int64.div
+            (Int64.add total_file_size (Int64.sub data_size 1L))
+            data_size
+        )
+  ;;
+end
+
 let pack_data (stats:stats) (common:Header.common_fields) (chunk:string) : string =
   let seq_num = Uint32.of_int64 (stats.data_blocks_written <+> 1L) (* always off by +1 *) in
   let block   = Block.make_data_block ~seq_num common ~data:chunk in
@@ -109,6 +132,7 @@ let gen_encoder
     ~(in_queue  : string option Lwt_queue.t)
     ~(hash_queue : Multihash.hash_bytes Lwt_queue.t)
     ~(out_queue : Writer.write_req option Lwt_queue.t)
+    ~(filename : string)
   : (unit -> (stats, string) result Lwt.t) =
   (fun () ->
      let ver = Header.common_fields_to_ver common in
@@ -131,6 +155,8 @@ let gen_encoder
          Stats.add_written_meta_block stats;
          Lwt_queue.put out_queue (Some (With_position (0L, str))) in
      let rec data_loop () : unit Lwt.t =
+       Progress.report_encode
+         ~start_time_src:() ~units_so_far_src:stats ~total_units_src:(stats, filename);
        match%lwt Lwt_queue.take in_queue with
        | None -> Lwt.return_unit
        | Some raw_data ->
@@ -248,7 +274,8 @@ module Process = struct
                ~metadata
                ~in_queue:dup_to_enc_q
                ~hash_queue:hash_to_enc_q
-               ~out_queue:enc_to_write_q) in
+               ~out_queue:enc_to_write_q
+               ~filename:in_filename) in
 
         let hasher = Lwt.bind waiter
             (gen_hasher
