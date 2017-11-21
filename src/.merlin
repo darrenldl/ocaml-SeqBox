@@ -11,6 +11,7 @@ PKG digestif.c
 PKG hex
 PKG lwt
 PKG lwt.log
+PKG lwt.preemptive
 PKG lwt.unix
 PKG nocrypto
 PKG nocrypto.unix
@@ -20,5 +21,7 @@ PKG result
 PKG sexplib
 PKG sexplib.0
 PKG stdint
+PKG threads
+PKG threads.posix
 PKG unix
 PKG zarith

@@ -130,13 +130,14 @@ let gen_encoder
     ~(hash_type:hash_type)
     ~(metadata:(Metadata.t list) option)
     ~(in_queue  : string option Lwt_queue.t)
-    ~(hash_queue : Multihash.hash_bytes Lwt_queue.t)
+    (* ~(hash_queue : Multihash.hash_bytes Lwt_queue.t) *)
     ~(out_queue : Writer.write_req option Lwt_queue.t)
     ~(filename : string)
   : (unit -> (stats, string) result Lwt.t) =
   (fun () ->
      let ver = Header.common_fields_to_ver common in
      let stats = Stats.make_blank_stats ~ver in
+     let ctx = Hash.init hash_type in
      let put_dummy_metadata_string () : unit Lwt.t =
        match metadata with
        | None -> Lwt.return_unit
@@ -148,8 +149,7 @@ let gen_encoder
        match metadata with
        | None -> Lwt.return_unit
        | Some lst ->
-         let%lwt hash_bytes =
-           Lwt_queue.take hash_queue in
+         let hash_bytes = Hash.get_hash_bytes ctx in
          let str =
            make_metadata_block_string common lst hash_bytes in
          Stats.add_written_meta_block stats;
@@ -160,6 +160,7 @@ let gen_encoder
        match%lwt Lwt_queue.take in_queue with
        | None -> Lwt.return_unit
        | Some raw_data ->
+         Hash.feed ctx raw_data;
          let block_bytes = pack_data stats common raw_data in
          Stats.add_written_data_block stats ~data_len:(String.length raw_data);
          Lwt_queue.put out_queue (Some (No_position block_bytes)) >>
@@ -179,28 +180,28 @@ let gen_encoder
   )
 ;;
 
-let gen_hasher
-    ~(in_queue  : string option Lwt_queue.t)
-    ~(hash_type : Multihash.hash_type)
-    ~(out_queue : Multihash.hash_bytes Lwt_queue.t)
-  : (unit -> unit Lwt.t) =
-  (fun () ->
-     try
-       let ctx = Hash.init hash_type in
-       let rec data_loop () : unit Lwt.t =
-         match%lwt Lwt_queue.take in_queue with
-         | None ->
-           Lwt_queue.put out_queue (Hash.get_hash_bytes ctx)
-         | Some data ->
-           Hash.feed ctx data;
-           data_loop () in
-       data_loop ()
-     with
-     | Hash.Unsupported_hash ->
-       (* error reporting for unsupported hash is done by encoder *)
-       Lwt.return_unit
-  )
-;;
+(* let gen_hasher
+ *     ~(in_queue  : string option Lwt_queue.t)
+ *     ~(hash_type : Multihash.hash_type)
+ *     ~(out_queue : Multihash.hash_bytes Lwt_queue.t)
+ *   : (unit -> unit Lwt.t) =
+ *   (fun () ->
+ *      try
+ *        let ctx = Hash.init hash_type in
+ *        let rec data_loop () : unit Lwt.t =
+ *          match%lwt Lwt_queue.take in_queue with
+ *          | None ->
+ *            Lwt_queue.put out_queue (Hash.get_hash_bytes ctx)
+ *          | Some data ->
+ *            Hash.feed ctx data;
+ *            data_loop () in
+ *        data_loop ()
+ *      with
+ *      | Hash.Unsupported_hash ->
+ *        (\* error reporting for unsupported hash is done by encoder *\)
+ *        Lwt.return_unit
+ *   )
+ * ;; *)
 
 module Process = struct
   let get_file_metadata ~(in_filename:string) ~(out_filename:string) : Metadata.t list =
@@ -238,11 +239,12 @@ module Process = struct
           | Ok h -> test_hash_type (Some h); h in
 
         (* communication queues setup *)
-        let read_to_dup_q  = Lwt_queue.create ~init_val:None 100 in
-        let dup_to_enc_q   = Lwt_queue.create ~init_val:None 100 in
-        let dup_to_hash_q  = Lwt_queue.create ~init_val:None 100 in
-        let hash_to_enc_q  =
-          Lwt_queue.create ~init_val:(make_dummy_hash_bytes hash_type) 100 in
+        let read_to_enc_q = Lwt_queue.create ~init_val:None 100 in
+        (* let read_to_dup_q  = Lwt_queue.create ~init_val:None 100 in
+         * let dup_to_enc_q   = Lwt_queue.create ~init_val:None 100 in
+         * let dup_to_hash_q  = Lwt_queue.create ~init_val:None 100 in *)
+        (* let hash_to_enc_q  =
+         *   Lwt_queue.create ~init_val:(make_dummy_hash_bytes hash_type) 100 in *)
         let enc_to_write_q = Lwt_queue.create ~init_val:None 100 in
         let write_reply_q  =
           Lwt_queue.create ~init_val:(Writer.Position 0L) 100 in
@@ -258,30 +260,30 @@ module Process = struct
             (gen_file_reader
                ~filename:in_filename
                ~chunk_size
-               ~out_queue:read_to_dup_q) in
+               ~out_queue:read_to_enc_q) in
 
         (*let duplicator = Lwt.bind waiter*)
-        Lwt.async (gen_duplicator
-                     ~in_queue:read_to_dup_q
-                     ~out_queues:[dup_to_hash_q; dup_to_enc_q]
-                     ~stop_pred:(fun x -> x = None)
-                     ~forward_stopper:true);
+        (* Lwt.async (gen_duplicator
+         *              ~in_queue:read_to_dup_q
+         *              ~out_queues:[dup_to_hash_q; dup_to_enc_q]
+         *              ~stop_pred:(fun x -> x = None)
+         *              ~forward_stopper:true); *)
 
         let encoder = Lwt.bind waiter
             (gen_encoder
                ~common
                ~hash_type
                ~metadata
-               ~in_queue:dup_to_enc_q
-               ~hash_queue:hash_to_enc_q
+               ~in_queue:read_to_enc_q
+               (* ~hash_queue:hash_to_enc_q *)
                ~out_queue:enc_to_write_q
                ~filename:in_filename) in
 
-        let hasher = Lwt.bind waiter
-            (gen_hasher
-               ~in_queue:dup_to_hash_q
-               ~hash_type
-               ~out_queue:hash_to_enc_q) in
+        (* let hasher = Lwt.bind waiter
+         *     (gen_hasher
+         *        ~in_queue:dup_to_hash_q
+         *        ~hash_type
+         *        ~out_queue:hash_to_enc_q) in *)
 
         let writer = Lwt.bind waiter
             (gen_file_writer
@@ -302,9 +304,9 @@ module Process = struct
                 | Error msg -> Error msg)
             encoder result_q in
 
-        let hasher_mon = bind_to_queue
-            ~convert:(fun _ -> Ok None)
-            hasher result_q in
+        (* let hasher_mon = bind_to_queue
+         *     ~convert:(fun _ -> Ok None)
+         *     hasher result_q in *)
 
         let writer_mon = bind_to_queue
             ~convert:(function
@@ -315,7 +317,7 @@ module Process = struct
         let mon_list = [
           reader_mon;
           encoder_mon;
-          hasher_mon;
+          (* hasher_mon; *)
           writer_mon
         ] in
 
