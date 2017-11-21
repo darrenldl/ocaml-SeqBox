@@ -1,6 +1,6 @@
 type 'a t =
-  {         in_cond   : unit Lwt_condition.t
-  ;         out_cond  : unit Lwt_condition.t
+  {         put_cond  : unit Lwt_condition.t
+  ;         take_cond : unit Lwt_condition.t
   ;         lock      : Lwt_mutex.t
   ;         buffer    : 'a array
   ;         dummy_val : 'a
@@ -15,8 +15,8 @@ let create ?(overwrite : bool = false) ~(init_val : 'a) (size : int) : 'a t =
   if size <= 0 then
     raise (Invalid_argument "Size cannot be <= 0")
   else
-    { in_cond   = Lwt_condition.create ()
-    ; out_cond  = Lwt_condition.create ()
+    { put_cond  = Lwt_condition.create ()
+    ; take_cond = Lwt_condition.create ()
     ; lock      = Lwt_mutex.create ()
     ; buffer    = Array.make (size + 1) init_val
     ; dummy_val = init_val
@@ -63,54 +63,93 @@ let read (queue : 'a t) : 'a =
   res
 ;;
 
-let write_and_unlock_and_signal (queue : 'a t) (v : 'a) : unit =
-  write queue v;
-  (* singal threads waiting to take elements *)
-  Lwt_condition.signal queue.out_cond ();
+let lock (queue : 'a t) : unit Lwt.t =
+  Lwt_mutex.lock queue.lock
+
+let unlock (queue : 'a t) : unit =
   Lwt_mutex.unlock queue.lock
+
+let signal_putters (queue : 'a t) : unit =
+  Lwt_condition.signal queue.put_cond ()
+
+let signal_takers (queue : 'a t) : unit =
+  Lwt_condition.signal queue.take_cond ()
+
+let wait_to_put (queue : 'a t) : unit Lwt.t =
+  Lwt_condition.wait queue.put_cond
+
+let wait_to_take (queue : 'a t) : unit Lwt.t =
+  Lwt_condition.wait queue.take_cond
+
+let write_and_unlock_and_signal ~(overwrite : bool) (queue : 'a t) (v : 'a) : unit =
+  write queue v;
+  begin
+    if overwrite then read queue |> ignore
+    else ()
+  end;
+  unlock queue;
+  signal_takers queue
 ;;
 
 let rec put (queue : 'a t) (v : 'a) : unit Lwt.t =
-  Lwt_mutex.lock queue.lock >>
+  lock queue >>
 
   if member_count queue = queue.max then (
     if not queue.overwrite then (
       (* full, try again later *)
-      Lwt_mutex.unlock queue.lock;
-      Lwt_condition.wait queue.in_cond >>
+      unlock queue;
+      wait_to_put queue >>
       put queue v
     )
     else (
       (* overwrite and shift read_pos pointer *)
-      write queue v;
-      read  queue |> ignore;
-      Lwt_mutex.unlock queue.lock;
+      write_and_unlock_and_signal ~overwrite:true queue v;
       Lwt.return_unit
     )
   )
   else (
     (* has space *)
-    write_and_unlock_and_signal queue v;
+    write_and_unlock_and_signal ~overwrite:false queue v;
     Lwt.return_unit
+  )
+;;
+
+let put_no_block (queue : 'a t) (v : 'a) : bool Lwt.t =
+  lock queue >>
+
+  if member_count queue = queue.max then (
+    if not queue.overwrite then (
+      unlock queue;
+      Lwt.return_false
+    )
+    else (
+      (* overwrite and shift read_pos pointer *)
+      write_and_unlock_and_signal ~overwrite:true queue v;
+      Lwt.return_true
+    )
+  )
+  else (
+    (* has space *)
+    write_and_unlock_and_signal ~overwrite:false queue v;
+    Lwt.return_true
   )
 ;;
 
 let read_and_unlock_and_signal (queue : 'a t) : 'a =
   let res = read queue in
-  Lwt_mutex.unlock queue.lock;
+  unlock queue;
   (* signal threads waiting to put elements *)
-  Lwt_condition.signal queue.in_cond ();
+  signal_putters queue;
   res
 ;;
 
-
 let rec take (queue : 'a t) : 'a Lwt.t =
-  Lwt_mutex.lock queue.lock >>
+  lock queue >>
 
   if member_count queue = 0 then (
     (* empty, try again later *)
-    Lwt_mutex.unlock queue.lock;
-    Lwt_condition.wait queue.out_cond >>
+    unlock queue;
+    wait_to_take queue >>
     take queue
   )
   else (
@@ -119,10 +158,10 @@ let rec take (queue : 'a t) : 'a Lwt.t =
 ;;
 
 let take_no_block (queue : 'a t) : 'a option Lwt.t =
-  Lwt_mutex.lock queue.lock >>
+  lock queue >>
 
   if member_count queue = 0 then (
-    Lwt_mutex.unlock queue.lock;
+    unlock queue;
     Lwt.return None
   )
   else (
@@ -130,7 +169,7 @@ let take_no_block (queue : 'a t) : 'a option Lwt.t =
   )
 ;;
 
-(*let test () : unit Lwt.t =
+let test () : unit Lwt.t =
   let queue = create ~overwrite:false ~init_val:None 1 in
   print_endline "test flag 1";
   let rec work1 () : unit Lwt.t =
@@ -171,4 +210,4 @@ let take_no_block (queue : 'a t) : 'a option Lwt.t =
   Lwt.join [worker1]
 ;;
 
-  let%lwt () = test ()*)
+  let%lwt () = test ()
