@@ -73,11 +73,17 @@ let lock (queue : 'a t) : unit Lwt.t =
 let unlock (queue : 'a t) : unit =
   Lwt_mutex.unlock queue.lock
 
-let signal_putters (queue : 'a t) : unit =
+let signal_single_putter (queue : 'a t) : unit =
   Lwt_condition.signal queue.put_cond ()
 
-let signal_takers (queue : 'a t) : unit =
+let signal_single_taker (queue : 'a t) : unit =
   Lwt_condition.signal queue.take_cond ()
+
+let signal_all_putters (queue : 'a t) : unit =
+  Lwt_condition.broadcast queue.put_cond ()
+
+let signal_all_takers (queue : 'a t) : unit =
+  Lwt_condition.broadcast queue.take_cond ()
 
 let wait_to_put (queue : 'a t) : unit Lwt.t =
   Lwt_condition.wait queue.put_cond
@@ -92,14 +98,14 @@ let write_and_unlock_and_signal ~(overwrite : bool) (queue : 'a t) (v : 'a) : un
     else ()
   end;
   unlock queue;
-  signal_takers queue
+  signal_single_taker queue
 ;;
 
 let read_and_unlock_and_signal (queue : 'a t) : 'a =
   let res = read queue in
   unlock queue;
   (* signal threads waiting to put elements *)
-  signal_putters queue;
+  signal_single_putter queue;
   res
 ;;
 
@@ -157,7 +163,7 @@ let put_no_block (queue : 'a t) (v : 'a) : bool Lwt.t =
 
   if not queue.enabled then (
     unlock queue;
-    Lwt.return_false
+    Lwt.return_true
   )
   else (
     if is_full queue then (
@@ -217,27 +223,25 @@ let take_no_block (queue : 'a t) : 'a option Lwt.t =
   )
 ;;
 
-let clear_no_lock (dummy_val : 'a option) (queue : 'a t) : unit =
+let clear_no_lock (queue : 'a t) : unit =
   queue.read_pos  <- 0;
   queue.write_pos <- 0;
 
-  let replace_val =
-    match dummy_val with
-    | None   -> queue.dummy_val
-    | Some x -> x in
+  let dummy_val = queue.dummy_val in
 
   for i = 0 to pred queue.size do
-    queue.buffer.(i) <- replace_val
+    queue.buffer.(i) <- dummy_val
   done;
 ;;
 
-let clear ?(dummy_val : 'a option) (queue : 'a t) : unit Lwt.t =
+let clear (queue : 'a t) : unit Lwt.t =
   lock queue >>
 
   (
-    clear_no_lock dummy_val queue;
+    clear_no_lock queue;
 
     unlock queue;
+    signal_all_putters queue;
     Lwt.return_unit
   )
 ;;
@@ -262,12 +266,14 @@ let disable ?(dummy_val : 'a option) (queue : 'a t) : unit Lwt.t =
   lock queue >>
 
   if queue.enabled then (
-    clear_no_lock dummy_val queue;
+    clear_no_lock queue;
 
     queue.enabled   <- false;
     queue.serve_val <- dummy_val;
 
     unlock queue;
+    signal_all_takers  queue;
+    signal_all_putters queue;
     Lwt.return_unit
   )
   else (

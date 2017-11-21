@@ -10,10 +10,11 @@ val put_no_block  : 'a t -> 'a -> bool Lwt.t
 
 val take_no_block : 'a t -> 'a option Lwt.t
 
-val clear         : ?dummy_val:'a -> 'a t -> unit Lwt.t
+val clear         : 'a t -> unit Lwt.t
 
 val enable        : 'a t -> unit Lwt.t
 
+(* This causes everything to drop silently *)
 val disable       : ?dummy_val:'a -> 'a t -> unit Lwt.t
 
 val is_enabled    : 'a t -> bool Lwt.t
