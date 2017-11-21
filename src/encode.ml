@@ -89,6 +89,10 @@ let make_metadata_block_string
   Block.to_string metadata_block
 ;;
 
+let test_hash_type (hash_type : hash_type) : unit =
+  Hash.init hash_type |> ignore
+;;
+
 (* convert chunk to sbx block *)
 let gen_encoder
     ~(common : Header.common_fields)
@@ -125,16 +129,23 @@ let gen_encoder
          Lwt_queue.put out_queue (Some (No_location block_bytes)) >>
          data_loop () in
      try
+       test_hash_type hash_type;
        put_dummy_metadata_string () >>
        data_loop () >>
        put_metadata_string () >>
        Lwt.return_ok ()
      with
+     | Sbx_block.Header.Invalid_uid_length ->
+       Lwt.return_error "Invalid uid length"
      | Metadata.Too_much_data msg -> Lwt.return_error msg
+     | Hash.Unsupported_hash ->
+       Lwt.return_error "Hash type is not supported"
   )
 ;;
 
-(*let gen_hasher
+let gen_hasher
     ~(in_queue  : string Lwt_queue.t)
-    ~(out_queue : )
-*)
+    ~(hash_type : Multihash.hash_type)
+    ~(out_queue : Multihash.hash_bytes Lwt_queue.t)
+  : (unit -> unit Lwt.t)
+  
