@@ -91,10 +91,24 @@ let write_and_unlock_and_signal ~(overwrite : bool) (queue : 'a t) (v : 'a) : un
   signal_takers queue
 ;;
 
+let read_and_unlock_and_signal (queue : 'a t) : 'a =
+  let res = read queue in
+  unlock queue;
+  (* signal threads waiting to put elements *)
+  signal_putters queue;
+  res
+;;
+
+let is_full (queue : 'a t) : bool =
+  member_count queue = queue.max
+
+let is_empty (queue : 'a t) : bool =
+  member_count queue = 0
+
 let rec put (queue : 'a t) (v : 'a) : unit Lwt.t =
   lock queue >>
 
-  if member_count queue = queue.max then (
+  if is_full queue then (
     if not queue.overwrite then (
       (* full, try again later *)
       unlock queue;
@@ -117,7 +131,7 @@ let rec put (queue : 'a t) (v : 'a) : unit Lwt.t =
 let put_no_block (queue : 'a t) (v : 'a) : bool Lwt.t =
   lock queue >>
 
-  if member_count queue = queue.max then (
+  if is_full queue then (
     if not queue.overwrite then (
       unlock queue;
       Lwt.return_false
@@ -135,18 +149,10 @@ let put_no_block (queue : 'a t) (v : 'a) : bool Lwt.t =
   )
 ;;
 
-let read_and_unlock_and_signal (queue : 'a t) : 'a =
-  let res = read queue in
-  unlock queue;
-  (* signal threads waiting to put elements *)
-  signal_putters queue;
-  res
-;;
-
 let rec take (queue : 'a t) : 'a Lwt.t =
   lock queue >>
 
-  if member_count queue = 0 then (
+  if is_empty queue then (
     (* empty, try again later *)
     unlock queue;
     wait_to_take queue >>
