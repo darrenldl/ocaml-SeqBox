@@ -73,7 +73,7 @@ module Block : sig
    *    Invalid_seq_num            if alt_seq_num is invalid
    *)
   val to_string           : ?alt_seq_num:uint32           -> t                      -> string
-  val to_bytes            : ?alt_seq_num:uint32           -> t
+  val to_bytes            : ?alt_seq_num:uint32           -> t -> bytes -> unit
 
   (* raises
    *    Header.Invalid_bytes   if header bytes are invalid

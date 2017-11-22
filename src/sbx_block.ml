@@ -173,8 +173,8 @@ end = struct
   let to_string ~(alt_seq_num:uint32 option) ~(header:t) ~(data:string) : string =
     let seq_num = determine_seq_num ~alt_seq_num ~header in
     let header_parts = make_header_parts ~seq_num ~data ~header in
-    String.make (ver_to_block_size (header_to_ver header)) 'a'
-    (* String.concat "" header_parts *)
+    (* String.make (ver_to_block_size (header_to_ver header)) 'a' *)
+    String.concat "" header_parts
   ;;
 
   let to_bytes ~(alt_seq_num:uint32 option) ~(header:t) ~(data:string) ~(buf:bytes) : unit =
@@ -524,7 +524,7 @@ end = struct
 
   let uint32_0 = Uint32.of_int 0
 
-  let determine_header_and_data (block:t) : Header.t * string =
+  let determine_header_and_data (alt_seq_num:uint32 option) (block:t) : Header.t * string =
     match block with
     | Data { header; data }    ->
       begin
@@ -549,13 +549,13 @@ end = struct
   ;;
 
   let to_string ?(alt_seq_num:uint32 option) (block:t) : string =
-    let (header, data) = determine_header_and_data block in
+    let (header, data) = determine_header_and_data alt_seq_num block in
     let header_string = Header.to_string ~alt_seq_num ~header ~data in
     String.concat "" [header_string; data]
   ;;
 
   let to_bytes ?(alt_seq_num:uint32 option) (block:t) (buf:bytes) : unit =
-    let (header, data) = determine_header_and_data block in
+    let (header, data) = determine_header_and_data alt_seq_num block in
     Header.to_bytes ~alt_seq_num ~header ~data ~buf;
     Bytes.blit_string data 0 buf sbx_header_size (String.length data)
   ;;
