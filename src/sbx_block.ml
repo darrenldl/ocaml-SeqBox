@@ -139,13 +139,15 @@ end = struct
     Data { common; seq_num }
   ;;
 
-  let to_string ~(alt_seq_num:uint32 option) ~(header:t) ~(data:string) : string =
-    let seq_num =
+  let determine_seq_num ~(alt_seq_num:uint32 option) ~(header:t) : uint32 option =
       match (alt_seq_num, (header_to_seq_num header)) with
       | (Some _, Some s) -> Some s    (* prefer existing one over provided one *)
       | (None,   Some s) -> Some s
       | (Some s, None)   -> Some s
-      | (None,   None)   -> None   in
+      | (None,   None)   -> None
+  ;;
+
+  let make_header_parts ~(seq_num:uint32 option) ~(header:t) ~(data:string) : string list =
     match seq_num with
     | Some seq_num ->
       let seq_num_string : string      = Conv_utils.uint32_to_string seq_num in
@@ -155,15 +157,31 @@ end = struct
                                          ] in
       let string_to_crc  : string      = String.concat "" things_to_crc in
       let crc_result     : string      = Helper.crc_ccitt_sbx ~ver:(header_to_ver header) ~input:string_to_crc in
-      let header_parts   : string list = [ header_to_signature header
-                                         ; ver_to_string (header_to_ver header)
-                                         ; crc_result
-                                         ; header_to_file_uid header
-                                         ; seq_num_string
-                                         ] in
-      String.concat "" header_parts
+      [ header_to_signature header
+      ; ver_to_string (header_to_ver header)
+      ; crc_result
+      ; header_to_file_uid header
+      ; seq_num_string
+      ]
     | None ->
       raise Missing_alt_seq_num
+  ;;
+
+  let to_string ~(alt_seq_num:uint32 option) ~(header:t) ~(data:string) : string =
+    let seq_num = determine_seq_num ~alt_seq_num ~header in
+    let header_parts = make_header_parts ~seq_num ~data ~header in
+    (* String.make (ver_to_block_size (header_to_ver header)) 'a' *)
+    String.concat "" header_parts
+  ;;
+
+  let to_bytes ~(alt_seq_num:uint32 option) ~(header:t) ~(data:string) ~(buf:bytes) : unit =
+    let seq_num = determine_seq_num ~alt_seq_num ~header in
+    let header_parts = make_header_parts ~seq_num ~data ~header in
+    List.iter (let pos = ref 0 in
+               (fun (s:string) ->
+                  Bytes.blit_string s 0 buf !pos (String.length s);
+                  pos := !pos + 1
+               )) header_parts
   ;;
 
   type raw_header =
