@@ -182,8 +182,9 @@ end = struct
     let header_parts = make_header_parts ~seq_num ~data ~header in
     List.iter (let pos = ref 0 in
                (fun (s:string) ->
-                  Bytes.blit_string s 0 buf !pos (String.length s);
-                  pos := !pos + 1
+                  let len = String.length s in
+                  Bytes.blit_string s 0 buf !pos len;
+                  pos := !pos + len
                )) header_parts
   ;;
 
