@@ -147,7 +147,17 @@ let gen_encoder
      let ver = Header.common_fields_to_ver common in
      let stats = Stats.make_blank_stats ~ver in
      let ctx = Hash.init hash_type in
+     let hash_data_buffer_size  = (1_000_000 * (ver_to_data_size ver)) in
+     let hash_data_buffer       = Buffer.create hash_data_buffer_size in
      (* let pack_data = gen_pack_data common in *)
+     let update_hash (raw_data:string) : unit =
+       Buffer.add_string hash_data_buffer raw_data;
+       if Buffer.length hash_data_buffer >= hash_data_buffer_size then (
+         Hash.feed ctx (Buffer.contents hash_data_buffer);
+         Buffer.clear hash_data_buffer
+       ) in
+     let flush_hash_cache () : unit =
+       Hash.feed ctx (Buffer.contents hash_data_buffer) in
      let put_dummy_metadata_string () : unit Lwt.t =
        match metadata with
        | None -> Lwt.return_unit
@@ -170,16 +180,17 @@ let gen_encoder
        match%lwt Lwt_queue.take in_queue with
        | None -> Lwt.return_unit
        | Some raw_data ->
-         Hash.feed ctx raw_data;
+         update_hash raw_data;
          (* let block_bytes = pack_data raw_data in *)
-         let block_bytes = pack_data stats common raw_data in
-         (* let block_bytes = "" in *)
+         (* let block_bytes = pack_data stats common raw_data in *)
+         let block_bytes = "" in
          Stats.add_written_data_block stats ~data_len:(String.length raw_data);
          Lwt_queue.put out_queue (Some (No_position block_bytes)) >>
          data_loop () in
      try
        put_dummy_metadata_string () >>
        data_loop () >>
+       Lwt.return (flush_hash_cache ()) >>
        put_metadata_string () >>
        Lwt_queue.put out_queue None >>
        Lwt.return_ok stats
