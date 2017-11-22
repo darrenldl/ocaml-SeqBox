@@ -153,18 +153,25 @@ let gen_encoder
      let ver = Header.common_fields_to_ver common in
      let stats = Stats.make_blank_stats ~ver in
      let ctx = Hash.init hash_type in
-     let hash_data_buffer_size  = (1_000_000 * (ver_to_data_size ver)) in
+     let hash_data_buffer_size  = (100_000 * (ver_to_data_size ver)) in
      let hash_data_buffer       = Buffer.create hash_data_buffer_size in
      let block_buffer           = Bytes.make (ver_to_block_size ver) '\000' in
      (* let pack_data = gen_pack_data common in *)
-     let update_hash (raw_data:string) : unit =
-       Buffer.add_string hash_data_buffer raw_data;
-       if Buffer.length hash_data_buffer >= hash_data_buffer_size then (
-         Hash.feed ctx (Buffer.contents hash_data_buffer);
-         Buffer.clear hash_data_buffer
-       ) in
-     let flush_hash_cache () : unit =
-       Hash.feed ctx (Buffer.contents hash_data_buffer) in
+     let update_hash : string -> unit =
+       match metadata with
+       | None -> (fun _ -> ())
+       | Some _ ->
+         (fun (raw_data:string) ->
+            Buffer.add_string hash_data_buffer raw_data;
+            if Buffer.length hash_data_buffer >= hash_data_buffer_size then (
+              Hash.feed ctx (Buffer.contents hash_data_buffer);
+              Buffer.clear hash_data_buffer
+            )) in
+     let flush_hash_cache : unit -> unit =
+       match metadata with
+       | None -> (fun _ -> ())
+       | Some _ ->
+         (fun () -> Hash.feed ctx (Buffer.contents hash_data_buffer)) in
      let put_dummy_metadata_string () : unit Lwt.t =
        match metadata with
        | None -> Lwt.return_unit
@@ -172,15 +179,16 @@ let gen_encoder
          let str =
            make_dummy_metadata_block_string common lst hash_type in
          Lwt_queue.put out_queue (Some (No_position str)) in
-     let put_metadata_string () : unit Lwt.t =
+     let put_metadata_string : unit -> unit Lwt.t =
        match metadata with
-       | None -> Lwt.return_unit
+       | None -> (fun () -> Lwt.return_unit)
        | Some lst ->
-         let hash_bytes = Hash.get_hash_bytes ctx in
-         let str =
-           make_metadata_block_string common lst hash_bytes in
-         Stats.add_written_meta_block stats;
-         Lwt_queue.put out_queue (Some (With_position (0L, str))) in
+         (fun () ->
+            let hash_bytes = Hash.get_hash_bytes ctx in
+            let str =
+              make_metadata_block_string common lst hash_bytes in
+            Stats.add_written_meta_block stats;
+            Lwt_queue.put out_queue (Some (With_position (0L, str)))) in
      let rec data_loop () : unit Lwt.t =
        Progress.report_encode
          ~start_time_src:() ~units_so_far_src:stats ~total_units_src:(stats, filename);
