@@ -164,8 +164,6 @@ end = struct
                                          ; seq_num_string
                                          ; data
                                          ] in
-      (* let string_to_crc  : string      = String.concat "" things_to_crc in *)
-      (* let crc_result     : string      = Helper.crc_ccitt_sbx ~ver:(header_to_ver header) ~input:string_to_crc in *)
       let crc_result : string = Helper.crc_ccitt_sbx_list ~ver:(header_to_ver header) ~input:things_to_crc in
       (* [] *)
       [ header_to_signature header
@@ -588,8 +586,7 @@ end = struct
                                         ; Conv_utils.uint32_to_string header.seq_num
                                         ; data
                                         ] in
-      let string_to_check              = String.concat "" parts_to_check in
-      let correct_crc_ccitt            = Helper.crc_ccitt_sbx ~ver:header.version ~input:string_to_check in
+      let correct_crc_ccitt            = Helper.crc_ccitt_sbx_list ~ver:header.version ~input:parts_to_check in
       if crc_ccitt <> correct_crc_ccitt then
         raise Invalid_bytes
     ;;
