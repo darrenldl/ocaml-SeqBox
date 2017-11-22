@@ -8,6 +8,10 @@ let (&) (x:fuint16) (y:fuint16) =
   (x land y) land bit_mask
 ;;
 
+let (&|) (x:fuint16) (y:fuint16) =
+  (x land y)
+;;
+
 let mask_to_uint16 (x:fuint16) =
   x land bit_mask
 ;;

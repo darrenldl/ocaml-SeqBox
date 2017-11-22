@@ -4,6 +4,8 @@ type fuint16
 
 val (&)       : fuint16     -> fuint16 -> fuint16
 
+val (&|)      : fuint16     -> fuint16 -> fuint16
+
 val (or)      : fuint16     -> fuint16 -> fuint16
 
 val (^)       : fuint16     -> fuint16 -> fuint16
