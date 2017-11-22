@@ -98,8 +98,22 @@ let crc_ccitt_generic ~(input:string) ~(start_val:fuint16) : fuint16 =
   !crc
 ;;
 
+let crc_ccitt_generic_list ~(input:string list) ~(start_val:fuint16) : fuint16 =
+  let rec go (input:string list) (v:fuint16) =
+    match input with
+    | [] -> v
+    | x :: xs -> go xs (crc_ccitt_generic ~input:x ~start_val:v) in
+  go input start_val
+;;
+
 let crc_ccitt_generic_uint16 ~(input:string) ~(start_val:uint16) : uint16 =
   to_uint16 (
     crc_ccitt_generic ~input ~start_val:(of_uint16 start_val)
+  )
+;;
+
+let crc_ccitt_generic_list_uint16 ~(input:string list) ~(start_val:uint16) : uint16 =
+  to_uint16 (
+    crc_ccitt_generic_list ~input ~start_val:(of_uint16 start_val)
   )
 ;;
