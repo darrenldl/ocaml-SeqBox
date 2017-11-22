@@ -24,12 +24,20 @@ let (^) (x:fuint16) (y:fuint16) =
   mask_to_uint16 (x lxor y)
 ;;
 
+let (^|) (x:fuint16) (y:fuint16) =
+  x lxor y
+;;
+
 let (<<<) (x:fuint16) (y:int) =
   mask_to_uint16 (x lsl y)
 ;;
 
 let (>>>) (x:fuint16) (y:int) =
   mask_to_uint16 (x lsr y)
+;;
+
+let (>>>|) (x:fuint16) (y:int) =
+  x lsr y
 ;;
 
 let add1 (x:fuint16 ref) : unit =
@@ -49,7 +57,8 @@ let to_int (x:fuint16) : int =
 ;;
 
 let of_char (x:char) =
-  mask_to_uint16 (Char.code x)
+  (* mask_to_uint16 (Char.code x) *)
+  Char.code x
 ;;
 
 let to_uint16 (x:fuint16) : uint16 =

@@ -10,9 +10,13 @@ val (or)      : fuint16     -> fuint16 -> fuint16
 
 val (^)       : fuint16     -> fuint16 -> fuint16
 
+val (^|)      : fuint16     -> fuint16 -> fuint16
+
 val (<<<)     : fuint16     -> int     -> fuint16
 
 val (>>>)     : fuint16     -> int     -> fuint16
+
+val (>>>|)    : fuint16     -> int     -> fuint16
 
 val add1      : fuint16 ref -> unit
 
