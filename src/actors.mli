@@ -12,12 +12,12 @@ end
 val gen_file_reader :
   filename:string ->
   chunk_size:int ->
-  out_queue:string option Lwt_mvar.t ->
+  out_queue:string option Lwt_queue.t ->
   (unit -> (unit, string) result Lwt.t)
 
 val gen_file_writer :
   filename:string ->
-  in_queue:Writer.write_req option Lwt_mvar.t ->
+  in_queue:Writer.write_req option Lwt_queue.t ->
   reply_queue:Writer.reply Lwt_queue.t ->
   (unit -> (unit, string) result Lwt.t)
 

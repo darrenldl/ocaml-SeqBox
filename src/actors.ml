@@ -31,7 +31,7 @@ end
 let gen_file_reader
     ~(filename   : string)
     ~(chunk_size : int)
-    ~(out_queue  : string option Lwt_mvar.t)
+    ~(out_queue  : string option Lwt_queue.t)
   : unit -> (unit, string) result Lwt.t =
   (fun () ->
      try%lwt
@@ -42,12 +42,12 @@ let gen_file_reader
          let%lwt read_count =
            Lwt_utils.IO.read_with_jitter ~buf file ~len:chunk_size in
          if read_count = 0 then (
-           Lwt_mvar.put out_queue None >>
+           Lwt_queue.put out_queue None >>
            Lwt.return_ok ()
          )
          else (
            let chunk = Bytes.sub_string buf 0 read_count in
-           Lwt_mvar.put out_queue (Some chunk) >>
+           Lwt_queue.put out_queue (Some chunk) >>
            read_loop ()
          ) in
        Protect.lwt_protect
@@ -59,9 +59,9 @@ let gen_file_reader
              | _ -> Lwt.return_unit)
      with
      | End_of_file       ->
-       Lwt_mvar.put out_queue None >> Lwt.return_ok ()
+       Lwt_queue.put out_queue None >> Lwt.return_ok ()
      | Unix.Unix_error (e, _, _) ->
-       Lwt_mvar.put out_queue None >>
+       Lwt_queue.put out_queue None >>
        Lwt.return_error (Printf.sprintf
                            "Error when reading file : %s - %s"
                            filename (Unix.error_message e))
@@ -70,7 +70,7 @@ let gen_file_reader
 
 let gen_file_writer
     ~(filename    : string)
-    ~(in_queue    : Writer.write_req option Lwt_mvar.t)
+    ~(in_queue    : Writer.write_req option Lwt_queue.t)
     ~(reply_queue : Writer.reply Lwt_queue.t)
   : unit -> (unit, string) result Lwt.t =
   (fun () ->
@@ -78,7 +78,7 @@ let gen_file_writer
        let%lwt file =
          Lwt_io.open_file ~mode:Lwt_io.output filename in
        let rec write_loop () : (unit, string) result Lwt.t =
-         match%lwt Lwt_mvar.take in_queue with
+         match%lwt Lwt_queue.take in_queue with
          | Some req ->
            (
              match req with
