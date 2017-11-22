@@ -499,6 +499,8 @@ end = struct
       raise Too_much_data
   ;;
 
+  let uint32_0 = Uint32.of_int 0
+
   let to_string ?(alt_seq_num:uint32 option) (block:t) : string =
     let (header, data) =
       match block with
