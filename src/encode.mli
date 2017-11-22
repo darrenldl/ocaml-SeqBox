@@ -5,14 +5,7 @@ open Sbx_specs
 exception File_metadata_get_failed
 
 module Stats : sig
-  type t = {         block_size          : int
-           ;         data_size           : int
-           ; mutable blocks_written      : int64
-           ; mutable meta_blocks_written : int64
-           ; mutable data_blocks_written : int64
-           ; mutable total_data_encoded  : int64
-           ;         start_time          : float 
-           }
+  type t
 
   val print_stats : t -> unit
 end
