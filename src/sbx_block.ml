@@ -52,6 +52,8 @@ module Header : sig
 
   val to_string            : alt_seq_num:uint32 option -> header:t      -> data:string    -> string
 
+  val to_bytes             : alt_seq_num:uint32 option -> header:t      -> data:string    -> buf:bytes -> unit
+
   val header_to_ver        : t -> version
 
   val header_to_file_uid   : t -> string
@@ -157,6 +159,7 @@ end = struct
                                          ] in
       let string_to_crc  : string      = String.concat "" things_to_crc in
       let crc_result     : string      = Helper.crc_ccitt_sbx ~ver:(header_to_ver header) ~input:string_to_crc in
+      (* [] *)
       [ header_to_signature header
       ; ver_to_string (header_to_ver header)
       ; crc_result
@@ -170,8 +173,8 @@ end = struct
   let to_string ~(alt_seq_num:uint32 option) ~(header:t) ~(data:string) : string =
     let seq_num = determine_seq_num ~alt_seq_num ~header in
     let header_parts = make_header_parts ~seq_num ~data ~header in
-    (* String.make (ver_to_block_size (header_to_ver header)) 'a' *)
-    String.concat "" header_parts
+    String.make (ver_to_block_size (header_to_ver header)) 'a'
+    (* String.concat "" header_parts *)
   ;;
 
   let to_bytes ~(alt_seq_num:uint32 option) ~(header:t) ~(data:string) ~(buf:bytes) : unit =
@@ -460,6 +463,8 @@ module Block : sig
 
   val to_string           : ?alt_seq_num:uint32           -> t                      -> string
 
+  val to_bytes            : ?alt_seq_num:uint32           -> t -> bytes -> unit
+
   val of_string           : ?raw_header:Header.raw_header -> ?skipped_already:bool  -> string -> t
 
   val block_to_ver        : t -> version
@@ -519,31 +524,40 @@ end = struct
 
   let uint32_0 = Uint32.of_int 0
 
+  let determine_header_and_data (block:t) : Header.t * string =
+    match block with
+    | Data { header; data }    ->
+      begin
+        match alt_seq_num with
+        | None   -> (header, data)
+        | Some n ->
+          if (Uint32.to_int n) = 0 then
+            raise Invalid_seq_num
+          else
+            (header, data)
+      end
+    | Meta { header; data; _ } ->
+      begin
+        match alt_seq_num with
+        | None   -> (header, data)
+        | Some n ->
+          if (Uint32.to_int n) <> 0 then
+            raise Invalid_seq_num
+          else
+            (header, data)
+      end
+  ;;
+
   let to_string ?(alt_seq_num:uint32 option) (block:t) : string =
-    let (header, data) =
-      match block with
-      | Data { header; data }    ->
-        begin
-          match alt_seq_num with
-          | None   -> (header, data)
-          | Some n ->
-            if (Uint32.to_int n) = 0 then
-              raise Invalid_seq_num
-            else
-              (header, data)
-        end
-      | Meta { header; data; _ } ->
-        begin
-          match alt_seq_num with
-          | None   -> (header, data)
-          | Some n ->
-            if (Uint32.to_int n) <> 0 then
-              raise Invalid_seq_num
-            else
-              (header, data)
-        end in
+    let (header, data) = determine_header_and_data block in
     let header_string = Header.to_string ~alt_seq_num ~header ~data in
     String.concat "" [header_string; data]
+  ;;
+
+  let to_bytes ?(alt_seq_num:uint32 option) (block:t) (buf:bytes) : unit =
+    let (header, data) = determine_header_and_data block in
+    Header.to_bytes ~alt_seq_num ~header ~data ~buf;
+    Bytes.blit_string data 0 buf sbx_header_size (String.length data)
   ;;
 
   type raw_block =
