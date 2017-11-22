@@ -7,6 +7,8 @@ module Helper : sig
 
   val crc_ccitt_sbx              : ver:version -> input:string -> string
 
+  val crc_ccitt_sbx_list    : ver:version -> input:string list -> string
+
 end = struct
 
   let pad_header_or_block_string (old_string:string) (new_len:int) : string =
@@ -15,6 +17,11 @@ end = struct
 
   let crc_ccitt_sbx ~(ver:version) ~(input:string) : string =
     let res = crc_ccitt_generic_uint16 ~input ~start_val:(ver_to_uint16 ver) in
+    Conv_utils.uint16_to_string res
+  ;;
+
+  let crc_ccitt_sbx_list ~(ver:version) ~(input:string list) : string =
+    let res = crc_ccitt_generic_list_uint16 ~input ~start_val:(ver_to_uint16 ver) in
     Conv_utils.uint16_to_string res
   ;;
 end
@@ -157,8 +164,9 @@ end = struct
                                          ; seq_num_string
                                          ; data
                                          ] in
-      let string_to_crc  : string      = String.concat "" things_to_crc in
-      let crc_result     : string      = Helper.crc_ccitt_sbx ~ver:(header_to_ver header) ~input:string_to_crc in
+      (* let string_to_crc  : string      = String.concat "" things_to_crc in *)
+      (* let crc_result     : string      = Helper.crc_ccitt_sbx ~ver:(header_to_ver header) ~input:string_to_crc in *)
+      let crc_result : string = Helper.crc_ccitt_sbx_list ~ver:(header_to_ver header) ~input:things_to_crc in
       (* [] *)
       [ header_to_signature header
       ; ver_to_string (header_to_ver header)
