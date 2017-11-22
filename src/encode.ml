@@ -88,6 +88,12 @@ let pack_data (stats:stats) (common:Header.common_fields) (chunk:string) : strin
   Block.to_string block
 ;;
 
+let pack_data_bytes (stats:stats) (common:Header.common_fields) (chunk:string) (buf:bytes) : unit =
+  let seq_num = Uint32.of_int64 (stats.data_blocks_written <+> 1L) (* always off by +1 *) in
+  let block   = Block.make_data_block ~seq_num common ~data:chunk in
+  Block.to_bytes block buf
+;;
+
 let gen_pack_data (common:Header.common_fields) : string -> string =
   let seq_num = ref (Uint32.of_int 1) in
   (fun data ->
@@ -149,6 +155,7 @@ let gen_encoder
      let ctx = Hash.init hash_type in
      let hash_data_buffer_size  = (1_000_000 * (ver_to_data_size ver)) in
      let hash_data_buffer       = Buffer.create hash_data_buffer_size in
+     let block_buffer           = Bytes.make (ver_to_block_size ver) '\000' in
      (* let pack_data = gen_pack_data common in *)
      let update_hash (raw_data:string) : unit =
        Buffer.add_string hash_data_buffer raw_data;
@@ -183,9 +190,11 @@ let gen_encoder
          update_hash raw_data;
          (* let block_bytes = pack_data raw_data in *)
          (* let block_bytes = pack_data stats common raw_data in *)
-         let block_bytes = "" in
+         (* let block_bytes = "" in *)
+         pack_data_bytes stats common raw_data block_buffer;
          Stats.add_written_data_block stats ~data_len:(String.length raw_data);
-         Lwt_queue.put out_queue (Some (No_position block_bytes)) >>
+         (* Lwt_queue.put out_queue (Some (No_position block_bytes)) >> *)
+         Lwt_queue.put out_queue (Some (No_position (Bytes.to_string block_buffer))) >>
          data_loop () in
      try
        put_dummy_metadata_string () >>
