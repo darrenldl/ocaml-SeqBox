@@ -75,22 +75,23 @@ let crc_tabccitt = make_crcccitt_tab ();;
 
 let crc_ccitt_generic ~(input:string) ~(start_val:fuint16) : fuint16 =
   let crc         : fuint16 ref = ref start_val in
-  let index       : int     ref = ref 0 in
+  (* let index       : int     ref = ref 0 in *)
   let len         : int         = String.length input in
   let mask_0x00FF : fuint16     = of_int 0x00FF in
 
-  for _ = 0 to len - 1 do
+  for index = 0 to len - 1 do
     crc := (!crc <<< 8)
            ^
            crc_tabccitt.(
              to_int (
-               ((!crc >>> 8) ^ (of_char (String.get input !index)))
+               (* ((!crc >>> 8) ^ (of_char (String.get input !index))) *)
+               ((!crc >>> 8) ^ (of_char (String.get input index)))
                &
                mask_0x00FF
              )
            );
 
-    index := !index + 1
+    (* index := !index + 1 *)
   done;
 
   !crc
