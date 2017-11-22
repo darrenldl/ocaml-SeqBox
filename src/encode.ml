@@ -147,7 +147,7 @@ let gen_encoder
      let ver = Header.common_fields_to_ver common in
      let stats = Stats.make_blank_stats ~ver in
      let ctx = Hash.init hash_type in
-     let pack_data = gen_pack_data common in
+     (* let pack_data = gen_pack_data common in *)
      let put_dummy_metadata_string () : unit Lwt.t =
        match metadata with
        | None -> Lwt.return_unit
@@ -170,8 +170,9 @@ let gen_encoder
        match%lwt Lwt_mvar.take in_queue with
        | None -> Lwt.return_unit
        | Some raw_data ->
-         (* Hash.feed ctx raw_data; *)
-         let block_bytes = pack_data raw_data in
+         Hash.feed ctx raw_data;
+         (* let block_bytes = pack_data raw_data in *)
+         let block_bytes = pack_data stats common raw_data in
          (* let block_bytes = "" in *)
          Stats.add_written_data_block stats ~data_len:(String.length raw_data);
          Lwt_mvar.put out_queue (Some (No_position block_bytes)) >>
