@@ -9,7 +9,7 @@ let (&) (x:fuint16) (y:fuint16) =
 ;;
 
 let mask_to_uint16 (x:fuint16) =
-  x & bit_mask
+  x land bit_mask
 ;;
 
 let (or) (x:fuint16) (y:fuint16) =
