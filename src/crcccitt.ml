@@ -73,11 +73,12 @@ let make_crcccitt_tab () : fuint16 array =
 
 let crc_tabccitt = make_crcccitt_tab ();;
 
+let mask_0x00FF : fuint16     = of_int 0x00FF
+
 let crc_ccitt_generic ~(input:string) ~(start_val:fuint16) : fuint16 =
   let crc         : fuint16 ref = ref start_val in
   (* let index       : int     ref = ref 0 in *)
   let len         : int         = String.length input in
-  let mask_0x00FF : fuint16     = of_int 0x00FF in
 
   for index = 0 to len - 1 do
     crc := (!crc <<< 8)
