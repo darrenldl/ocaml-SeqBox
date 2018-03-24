@@ -1,4 +1,8 @@
 # ocaml-SeqBox
+
+## No longer maintained, use rsbx instead
+This project has been superseded by [rsbx](https://github.com/darrenldl/rust-SeqBox) and is no longer actively developed or maintained due to lack of active users(I no longer use this program as well).
+
 Implementation of [SeqBox](https://github.com/MarcoPon/SeqBox) in OCaml
 
 The original pharsing was "Port of SeqBox to OCaml", but since no direct porting/translation was actually done due to the differences between Python 3(implementation language of SeqBox) and OCaml, which also force the architecture and design of this software(ocaml-SeqBox) to be independently developed, thus this is only an implementation(not a port or translation) of SeqBox according to its technical specifications.
